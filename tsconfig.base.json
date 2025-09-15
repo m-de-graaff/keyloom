@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM"],
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@keyloom/core": ["packages/core/src/index.ts"],
+      "@keyloom/nextjs": ["packages/nextjs/src/index.ts"],
+      "@keyloom/react": ["packages/react/src/index.ts"],
+      "@keyloom/providers": ["packages/providers/src/shared/types.ts"],
+      "@keyloom/providers/*": ["packages/providers/src/*/index.ts"],
+      "@keyloom/adapters": ["packages/adapters/src/shared/types.ts"],
+      "@keyloom/adapters/*": ["packages/adapters/src/*/index.ts"],
+      "@keyloom/email": ["packages/email/src/index.ts"],
+      "@keyloom/cli": ["packages/cli/src/index.ts"]
+    }
+  }
+}

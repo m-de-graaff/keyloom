@@ -1,0 +1,14 @@
+{
+  "name": "@keyloom-example/express",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch server.mjs",
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "@keyloom/core": "workspace:*",
+    "@keyloom/adapters": "workspace:*"
+  }
+}
