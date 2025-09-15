@@ -1,4 +1,6 @@
-![Keyloom](./keyloom.png)
+<p align="center">
+  <img src="./keyloom.png" width="350" title="Keyloom logo">
+</p>
 
 ## Keyloom
 
