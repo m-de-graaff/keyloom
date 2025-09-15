@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./keyloom.png" width="350" title="Keyloom logo">
+  <img src="./keyloom_banner.png" height="150" width="830" title="Keyloom Banner">
 </p>
 
 ## Keyloom
