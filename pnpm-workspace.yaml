@@ -1,6 +1,0 @@
-packages:
-  - 'packages/*'
-  - 'packages/providers'
-  - 'packages/adapters'
-  - 'packages/email'
-  - 'examples/*'
