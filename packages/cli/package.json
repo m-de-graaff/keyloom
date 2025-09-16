@@ -1,0 +1,27 @@
+{
+  "name": "@keyloom/cli",
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "keyloom": "./dist/bin.cjs"
+  },
+  "main": "./dist/bin.cjs",
+  "module": "./dist/bin.js",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "lint": "biome check ."
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.4"
+  }
+}

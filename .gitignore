@@ -1,0 +1,76 @@
+
+# Node.js dependencies and build outputs
+node_modules/
+dist/
+lib/
+build/
+out/
+
+# Next.js build outputs
+.next/
+out/
+
+# Turbo build cache
+.turbo/
+
+# TypeScript
+*.tsbuildinfo
+
+# Build artifacts that shouldn't be in src
+packages/*/src/*.d.ts
+packages/*/src/*.d.ts.map
+packages/*/src/*.js
+packages/*/src/*.js.map
+*.map
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env*
+.envrc
+.keyloomrc.json
+
+# IDE/editor folders
+.vscode/
+.idea/
+.history/
+.DS_Store
+Thumbs.db
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# pnpm and turbo
+pnpm-lock.yaml
+turbo/
+.turbo/
+
+# Misc
+*.swp
+*.swo
+
+# Ignore build artifacts in packages
+packages/*/dist/
+packages/*/lib/
+packages/*/build/
+packages/*/out/
+packages/*/.next/
+packages/*/.turbo/
+
+# Ignore build artifacts in examples
+examples/*/dist/
+examples/*/lib/
+examples/*/build/
+examples/*/out/
+examples/*/.next/
+examples/*/.turbo/
+

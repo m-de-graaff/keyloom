@@ -1,0 +1,63 @@
+{
+  "name": "@keyloom/core",
+  "version": "0.0.0",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": {
+        "development": "./src/index.ts",
+        "default": "./dist/index.js"
+      },
+      "require": "./dist/index.cjs"
+    },
+    "./runtime/register": {
+      "types": "./dist/runtime/register.d.ts",
+      "import": "./dist/runtime/register.js",
+      "require": "./dist/runtime/register.cjs"
+    },
+    "./runtime/login": {
+      "types": "./dist/runtime/login.d.ts",
+      "import": "./dist/runtime/login.js",
+      "require": "./dist/runtime/login.cjs"
+    },
+    "./runtime/logout": {
+      "types": "./dist/runtime/logout.d.ts",
+      "import": "./dist/runtime/logout.js",
+      "require": "./dist/runtime/logout.cjs"
+    },
+    "./runtime/current-session": {
+      "types": "./dist/runtime/current-session.d.ts",
+      "import": "./dist/runtime/current-session.js",
+      "require": "./dist/runtime/current-session.cjs"
+    },
+    "./guard/csrf": {
+      "types": "./dist/guard/csrf.d.ts",
+      "import": "./dist/guard/csrf.js",
+      "require": "./dist/guard/csrf.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup && pnpm build:types",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist --skipLibCheck",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "lint": "biome check ."
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.0",
+    "tsup": "^8.5.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.4"
+  }
+}

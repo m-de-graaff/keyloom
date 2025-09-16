@@ -1,0 +1,29 @@
+{
+  "name": "keyloom",
+  "private": true,
+  "packageManager": "pnpm@10.16.1",
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel --filter=@keyloom-example/*",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "lint": "biome check --reporter=summary .",
+    "format": "biome format --write .",
+    "format-and-lint:fix": "biome check . --write --unsafe",
+    "changeset": "changeset",
+    "release": "changeset version && pnpm i -w && turbo run build && changeset publish",
+    "clean": "git clean -xdf -e node_modules -e .pnpm-store",
+    "bump-deps": "npx npm-check-updates --deep -u -x react-day-picker && pnpm install"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.4",
+    "@changesets/cli": "^2.29.7",
+    "@types/node": "^24.5.0",
+    "turbo": "^2.5.6",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
