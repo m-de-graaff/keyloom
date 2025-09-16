@@ -26,6 +26,7 @@ model User {
   credentials   Credential?
   authKeys      AuthKey[]
   auditLogs     AuditLog[]
+  refreshTokens RefreshToken[]
 }
 
 model Account {
@@ -112,5 +113,28 @@ model AuditLog {
   @@index([userId])
   @@index([type])
   @@index([at])
+}
+
+model RefreshToken {
+  id          String   @id @default(cuid())
+  familyId    String   // all tokens in a rotation family share this id
+  jti         String   @unique
+  userId      String
+  sessionId   String?  // JWT mode may not store DB sessions; optional device id
+  tokenHash   String   // HMAC-SHA256(token, AUTH_SECRET)
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+  rotatedAt   DateTime?
+  revokedAt   DateTime?
+  parentJti   String?  // previous token in chain (for lineage)
+  ip          String?
+  userAgent   String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
+  @@index([tokenHash])
 }
 ```

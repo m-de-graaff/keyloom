@@ -10,6 +10,11 @@ export * from './errors'
 // guards
 export * as csrf from './guard/csrf'
 export * as rateLimit from './guard/rate-limit'
+// JWT functionality
+export * as jwt from './jwt'
+// Configuration
+export * from './config'
+export * from './secrets'
 export * from './runtime/current-session'
 export * from './runtime/login'
 export * from './runtime/logout'

@@ -39,6 +39,11 @@
       "types": "./dist/guard/csrf.d.ts",
       "import": "./dist/guard/csrf.js",
       "require": "./dist/guard/csrf.cjs"
+    },
+    "./jwt": {
+      "types": "./dist/jwt/index.d.ts",
+      "import": "./dist/jwt/index.js",
+      "require": "./dist/jwt/index.cjs"
     }
   },
   "files": [

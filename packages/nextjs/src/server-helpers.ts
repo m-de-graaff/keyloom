@@ -3,6 +3,7 @@ import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { parseCookieValue } from './cookies'
 import type { NextKeyloomConfig } from './types'
+import { getJwtSession, requireJwtAuth, createJwtConfig, type JwtConfig } from './jwt-server'
 
 // Module-local cache of adapter/config to avoid re-instantiations
 let _config: NextKeyloomConfig | undefined
@@ -16,7 +17,16 @@ function ensure(config?: NextKeyloomConfig) {
 }
 
 export async function getSession(config?: NextKeyloomConfig) {
-  const { adapter } = ensure(config)
+  const { config: cfg, adapter } = ensure(config)
+
+  // Check if JWT strategy is enabled
+  if (cfg.sessionStrategy === 'jwt' && cfg.jwt) {
+    const jwtConfig = createJwtConfig(cfg.jwt)
+    const result = await getJwtSession(jwtConfig)
+    return { session: result.session, user: result.user }
+  }
+
+  // Fallback to database session strategy
   const cookieHeader = (await headers()).get('cookie') ?? cookies().toString()
   const sid = parseCookieValue(cookieHeader)
   const { session, user } = await getCurrentSession(sid, adapter)
@@ -38,24 +48,40 @@ export async function guard(
   },
   config?: NextKeyloomConfig,
 ) {
-  const { adapter } = ensure(config)
-  const cookieHeader = (await headers()).get('cookie') ?? cookies().toString()
-  const sid = parseCookieValue(cookieHeader)
+  const { config: cfg, adapter } = ensure(config)
 
   const isPublic = rule?.visibility === 'public'
   if (isPublic) return
 
-  const { session, user } = await getCurrentSession(sid, adapter)
+  let session: any = null
+  let user: any = null
+
+  // Check if JWT strategy is enabled
+  if (cfg.sessionStrategy === 'jwt' && cfg.jwt) {
+    const jwtConfig = createJwtConfig(cfg.jwt)
+    const result = await getJwtSession(jwtConfig)
+    session = result.session
+    user = result.user
+  } else {
+    // Fallback to database session strategy
+    const cookieHeader = (await headers()).get('cookie') ?? cookies().toString()
+    const sid = parseCookieValue(cookieHeader)
+    const sessionResult = await getCurrentSession(sid, adapter)
+    session = sessionResult.session
+    user = sessionResult.user
+  }
+
   if (!session || !user) return redirect(rule?.redirectTo ?? '/sign-in')
 
   const needsRole = (rule?.roles && rule.roles.length > 0) || rule?.visibility?.startsWith('role:')
   if (needsRole) {
     const need = rule?.visibility?.startsWith('role:')
       ? [rule.visibility.slice(5)]
-      : (rule!.roles as string[])
+      : (rule?.roles as string[])
 
     // If role is checked, require an active org unless explicitly disabled
     const orgRequired = rule?.org === 'required' || rule?.org === true || true
+    const cookieHeader = (await headers()).get('cookie') ?? cookies().toString()
     const orgId = parseCookieValue(cookieHeader, '__keyloom_org')
     if (orgRequired && !orgId) return redirect('/select-org')
 
@@ -66,6 +92,7 @@ export async function guard(
   }
 
   if (rule?.org === 'required') {
+    const cookieHeader = (await headers()).get('cookie') ?? cookies().toString()
     const orgId = parseCookieValue(cookieHeader, '__keyloom_org')
     if (!orgId) return redirect('/select-org')
     return { session, user, orgId }

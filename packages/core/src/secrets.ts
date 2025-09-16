@@ -1,0 +1,182 @@
+import { createHash, randomBytes } from 'node:crypto'
+
+/**
+ * JWT secrets configuration
+ */
+export interface JwtSecrets {
+  authSecret: string
+  jwtSecret?: string
+  jwksPath?: string
+}
+
+/**
+ * Validate secrets configuration
+ */
+export function validateSecrets(secrets: JwtSecrets): void {
+  if (!secrets.authSecret) {
+    throw new Error('AUTH_SECRET is required')
+  }
+
+  if (secrets.authSecret.length < 16) {
+    throw new Error('AUTH_SECRET must be at least 16 characters long')
+  }
+
+  // Warn about weak secrets in development
+  if (secrets.authSecret === 'dev-secret-change-in-production') {
+    console.warn('⚠️  Using default AUTH_SECRET. Change this in production!')
+  }
+}
+
+/**
+ * Generate a secure random secret
+ */
+export function generateSecret(length = 32): string {
+  return randomBytes(length).toString('base64url')
+}
+
+/**
+ * Derive JWT signing key from auth secret
+ */
+export function deriveJwtSecret(authSecret: string, purpose = 'jwt-signing'): string {
+  return createHash('sha256')
+    .update(authSecret)
+    .update(purpose)
+    .digest('base64url')
+}
+
+/**
+ * Get secrets from environment variables
+ */
+export function getSecretsFromEnv(): JwtSecrets {
+  const authSecret = process.env.AUTH_SECRET || process.env.KEYLOOM_AUTH_SECRET
+  
+  if (!authSecret) {
+    throw new Error('AUTH_SECRET environment variable is required')
+  }
+
+  return {
+    authSecret,
+    jwtSecret: process.env.JWT_SECRET || process.env.KEYLOOM_JWT_SECRET,
+    jwksPath: process.env.JWKS_PATH || process.env.KEYLOOM_JWKS_PATH
+  }
+}
+
+/**
+ * Create secrets configuration with validation
+ */
+export function createSecrets(secrets: Partial<JwtSecrets>): JwtSecrets {
+  const envSecrets = getSecretsFromEnv()
+  
+  const finalSecrets: JwtSecrets = {
+    authSecret: secrets.authSecret || envSecrets.authSecret,
+    jwtSecret: secrets.jwtSecret || envSecrets.jwtSecret,
+    jwksPath: secrets.jwksPath || envSecrets.jwksPath
+  }
+
+  validateSecrets(finalSecrets)
+  return finalSecrets
+}
+
+/**
+ * Get effective JWT secret (derived from auth secret if not provided)
+ */
+export function getEffectiveJwtSecret(secrets: JwtSecrets): string {
+  return secrets.jwtSecret || deriveJwtSecret(secrets.authSecret)
+}
+
+/**
+ * Get JWKS file path with defaults
+ */
+export function getJwksPath(secrets: JwtSecrets, defaultPath = './jwks.json'): string {
+  return secrets.jwksPath || defaultPath
+}
+
+/**
+ * Secrets manager for JWT operations
+ */
+export class SecretsManager {
+  private secrets: JwtSecrets
+
+  constructor(secrets: Partial<JwtSecrets> = {}) {
+    this.secrets = createSecrets(secrets)
+  }
+
+  getAuthSecret(): string {
+    return this.secrets.authSecret
+  }
+
+  getJwtSecret(): string {
+    return getEffectiveJwtSecret(this.secrets)
+  }
+
+  getJwksPath(): string {
+    return getJwksPath(this.secrets)
+  }
+
+  updateSecrets(newSecrets: Partial<JwtSecrets>): void {
+    this.secrets = createSecrets({
+      ...this.secrets,
+      ...newSecrets
+    })
+  }
+
+  /**
+   * Generate HMAC for refresh token hashing
+   */
+  createTokenHash(token: string): string {
+    return createHash('sha256')
+      .update(token)
+      .update(this.secrets.authSecret)
+      .digest('hex')
+  }
+
+  /**
+   * Verify token hash
+   */
+  verifyTokenHash(token: string, hash: string): boolean {
+    const expectedHash = this.createTokenHash(token)
+    return expectedHash === hash
+  }
+
+  /**
+   * Create a derived key for specific purposes
+   */
+  deriveKey(purpose: string, length = 32): string {
+    const derived = createHash('sha256')
+      .update(this.secrets.authSecret)
+      .update(purpose)
+      .digest()
+
+    return derived.subarray(0, length).toString('base64url')
+  }
+}
+
+/**
+ * Global secrets manager instance
+ */
+let globalSecretsManager: SecretsManager | null = null
+
+/**
+ * Get or create global secrets manager
+ */
+export function getSecretsManager(secrets?: Partial<JwtSecrets>): SecretsManager {
+  if (!globalSecretsManager) {
+    globalSecretsManager = new SecretsManager(secrets)
+  }
+  return globalSecretsManager
+}
+
+/**
+ * Initialize global secrets manager
+ */
+export function initializeSecrets(secrets: Partial<JwtSecrets>): SecretsManager {
+  globalSecretsManager = new SecretsManager(secrets)
+  return globalSecretsManager
+}
+
+/**
+ * Reset global secrets manager (for testing)
+ */
+export function resetSecretsManager(): void {
+  globalSecretsManager = null
+}

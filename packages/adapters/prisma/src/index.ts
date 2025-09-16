@@ -7,15 +7,47 @@ import type {
   User,
   VerificationToken,
 } from '@keyloom/core'
+import type { RbacAdapter } from '@keyloom/core'
+import type {
+  KeyloomAdapter,
+  AdapterCapabilities,
+  BaseAdapterConfig
+} from '@keyloom/core/adapter-types'
 // Note: We intentionally avoid tight coupling to Prisma types to keep this package buildable without a generated client
 // If you have @prisma/client installed, your app will get proper intellisense
-import { mapPrismaError } from './errors'
+import { mapPrismaError, mapError } from './errors'
+import { rbacAdapter } from './rbac'
+import { createRefreshTokenStore } from './jwt'
+import { normalizeEmail, createTimestamp } from '@keyloom/core/adapter-types'
 
 type AnyPrismaClient = any
-import type { RbacAdapter } from '@keyloom/core'
-import { rbacAdapter } from './rbac'
 
-export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & RbacAdapter & {
+/**
+ * Prisma adapter configuration
+ */
+export interface PrismaAdapterConfig extends BaseAdapterConfig {
+  /** Enable case-insensitive email queries using database features */
+  useCitext?: boolean
+  /** Enable debug logging for Prisma queries */
+  enableQueryLogging?: boolean
+}
+
+/**
+ * Prisma adapter capabilities
+ */
+export const capabilities: AdapterCapabilities = {
+  transactions: true,
+  json: true,
+  ttlIndex: false, // Prisma doesn't support TTL indexes directly
+  caseInsensitiveEmail: 'app-normalize', // Can be 'citext' if using PostgreSQL with citext
+  upsert: true,
+  maxIdentifierLength: 191 // MySQL limitation, can be higher for PostgreSQL
+}
+
+export default function prismaAdapter(
+  prisma: AnyPrismaClient,
+  config: PrismaAdapterConfig = {}
+): KeyloomAdapter & {
   // credentials extension:
   createCredential(userId: ID, hash: string): Promise<{ id: ID; userId: ID }>
   getCredentialByUserId(userId: ID): Promise<{ id: ID; userId: ID; hash: string } | null>
@@ -44,7 +76,9 @@ export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & RbacAd
       return (u as unknown as User | null) ?? null
     },
     async getUserByEmail(email: string) {
-      const u = await prisma.user.findUnique({ where: { email } })
+      // Normalize email for consistent lookup
+      const normalizedEmail = normalizeEmail(email)
+      const u = await prisma.user.findUnique({ where: { email: normalizedEmail } })
       return (u as unknown as User | null) ?? null
     },
     async updateUser(id: ID, data: Partial<User>) {
@@ -184,10 +218,71 @@ export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & RbacAd
       await prisma.credential.update({ where: { userId }, data: { hash } })
     },
   }
-  const extended = Object.assign(base, rbacAdapter(prisma))
+
+  // Create refresh token store
+  const refreshTokenStore = createRefreshTokenStore(prisma)
+
+  // Combine all adapter capabilities
+  const extended = Object.assign(base, rbacAdapter(prisma), refreshTokenStore, {
+    // Adapter capabilities
+    capabilities,
+
+    // Optional methods
+    async cleanup() {
+      const now = new Date()
+
+      // Clean up expired sessions
+      const expiredSessions = await prisma.session.deleteMany({
+        where: { expiresAt: { lt: now } }
+      })
+
+      // Clean up expired verification tokens
+      const expiredTokens = await prisma.verificationToken.deleteMany({
+        where: { expiresAt: { lt: now } }
+      })
+
+      // Clean up expired refresh tokens
+      const expiredRefreshTokens = await refreshTokenStore.cleanupExpired(now)
+
+      return {
+        sessions: expiredSessions.count || 0,
+        tokens: expiredTokens.count || 0,
+        refreshTokens: expiredRefreshTokens
+      }
+    },
+
+    async healthCheck() {
+      try {
+        // Simple query to test database connectivity
+        await prisma.$queryRaw`SELECT 1`
+        return { status: 'healthy' as const }
+      } catch (error) {
+        return {
+          status: 'unhealthy' as const,
+          details: { error: error instanceof Error ? error.message : 'Unknown error' }
+        }
+      }
+    },
+
+    async close() {
+      if (prisma.$disconnect) {
+        await prisma.$disconnect()
+      }
+    }
+  })
+
   return extended
 }
+
+// Export capabilities and types for external use
+export { capabilities, type PrismaAdapterConfig }
+export { createRefreshTokenStore } from './jwt'
+export { rbacAdapter } from './rbac'
+export { mapPrismaError, mapError } from './errors'
 
 
 // Optional named export alias for convenience
 export { prismaAdapter as PrismaAdapter }
+
+// JWT-related exports
+export * from './jwt'

@@ -1,0 +1,49 @@
+{
+  "name": "@keyloom/adapter-drizzle",
+  "version": "0.1.0",
+  "description": "Drizzle adapter for Keyloom authentication",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schema": {
+      "types": "./dist/schema.d.ts",
+      "import": "./dist/schema.js"
+    }
+  },
+  "files": [
+    "dist",
+    "SCHEMA.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "test": "vitest",
+    "test:contracts": "vitest run src/adapter.test.ts"
+  },
+  "dependencies": {
+    "@keyloom/core": "workspace:*",
+    "drizzle-orm": "^0.29.0"
+  },
+  "devDependencies": {
+    "@keyloom/adapters/_contracts": "workspace:*",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "peerDependencies": {
+    "drizzle-orm": "^0.29.0"
+  },
+  "keywords": [
+    "keyloom",
+    "adapter",
+    "drizzle",
+    "postgresql",
+    "mysql",
+    "sqlite",
+    "authentication"
+  ]
+}

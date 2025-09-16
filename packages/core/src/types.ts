@@ -70,5 +70,26 @@ export type KeyloomConfig = {
     domain?: string
     maxAgeSec?: number
   }
-  // Add other config options as needed
+  session?: {
+    strategy?: 'database' | 'jwt'
+    ttlMinutes?: number
+    rolling?: boolean
+  }
+  jwt?: {
+    issuer?: string
+    audience?: string | string[]
+    accessTTL?: string // e.g., '10m', '15m'
+    refreshTTL?: string // e.g., '30d', '7d'
+    algorithm?: 'EdDSA' | 'ES256'
+    clockSkewSec?: number
+    includeOrgRoleInAccess?: boolean
+    jwksPath?: string
+    keyRotationDays?: number
+    keyOverlapDays?: number
+  }
+  secrets?: {
+    authSecret?: string
+    jwtSecret?: string
+  }
+  baseUrl?: string
 }

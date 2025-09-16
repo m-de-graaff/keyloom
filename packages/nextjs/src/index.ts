@@ -3,6 +3,10 @@ export { createAuthMiddleware } from './middleware'
 export { getSession, getUser, guard } from './server-helpers'
 export { getActiveOrgId, setActiveOrgCookie, withRole } from './rbac'
 
+// JWT exports
+export * from './jwt-middleware'
+export * from './jwt-server'
+
 
 // Pages Router bridge (optional):
 export function createPagesApiHandler(config: any) {

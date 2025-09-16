@@ -8,6 +8,7 @@ export default defineConfig({
     'src/runtime/logout.ts',
     'src/runtime/current-session.ts',
     'src/guard/csrf.ts',
+    'src/jwt/index.ts',
   ],
   format: ['cjs', 'esm'],
   dts: false,

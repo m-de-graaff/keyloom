@@ -20,7 +20,21 @@ export function rbacAdapter(prisma: any): RbacAdapter {
       const o = await prisma.organization.findUnique({ where: { id } })
       return (o as unknown as Organization | null) ?? null
     },
-    async getOrganizationsByUser(userId) {
+    async getOrganizationBySlug(slug: string) {
+      const o = await prisma.organization.findUnique({ where: { slug } })
+      return (o as unknown as Organization | null) ?? null
+    },
+    async updateOrganization(id: ID, data: Partial<Organization>) {
+      const o = await prisma.organization.update({
+        where: { id },
+        data: {
+          name: data.name,
+          slug: data.slug
+        }
+      })
+      return o as unknown as Organization
+    },
+    async getUserOrganizations(userId: ID) {
       const orgs = await prisma.organization.findMany({
         where: { members: { some: { userId, status: 'active' } } },
         orderBy: { createdAt: 'asc' },
@@ -28,18 +42,23 @@ export function rbacAdapter(prisma: any): RbacAdapter {
       return orgs as unknown as Organization[]
     },
 
-    async addMember({ userId, orgId, role }) {
+    async addMember(orgId: ID, userId: ID, role: string) {
       const m = await prisma.membership.create({
         data: { userId, orgId, role, status: 'active' },
       })
       return m as unknown as Membership
     },
-    async updateMember(id, data) {
-      const m = await prisma.membership.update({ where: { id }, data })
+    async updateMemberRole(orgId: ID, userId: ID, role: string) {
+      const m = await prisma.membership.update({
+        where: { userId_orgId: { userId, orgId } },
+        data: { role }
+      })
       return m as unknown as Membership
     },
-    async removeMember(id) {
-      await prisma.membership.delete({ where: { id } }).catch(() => {})
+    async removeMember(orgId: ID, userId: ID) {
+      await prisma.membership.delete({
+        where: { userId_orgId: { userId, orgId } }
+      }).catch(() => {})
     },
     async getMembership(userId, orgId) {
       const m = await prisma.membership.findUnique({
@@ -47,7 +66,7 @@ export function rbacAdapter(prisma: any): RbacAdapter {
       })
       return (m as unknown as Membership | null) ?? null
     },
-    async listMembers(orgId) {
+    async getOrganizationMembers(orgId: ID) {
       const rows = await prisma.membership.findMany({
         where: { orgId },
         include: { user: true },
@@ -63,33 +82,69 @@ export function rbacAdapter(prisma: any): RbacAdapter {
       })
       return inv as unknown as Invite
     },
-    async getInviteByTokenHash(orgId, tokenHash) {
+    async getInviteByToken(orgId: ID, tokenHash: string) {
       const inv = await prisma.invite.findUnique({
         where: { orgId_tokenHash: { orgId, tokenHash } },
       })
       return (inv as unknown as Invite | null) ?? null
     },
-    async consumeInvite(inviteId) {
-      await prisma.invite.update({
-        where: { id: inviteId },
-        data: { acceptedAt: new Date() },
+    async acceptInvite(orgId: ID, tokenHash: string, userId: ID) {
+      // Use transaction to atomically accept invite and create membership
+      const result = await prisma.$transaction(async (tx: any) => {
+        // Update invite
+        const invite = await tx.invite.update({
+          where: { orgId_tokenHash: { orgId, tokenHash } },
+          data: { acceptedAt: new Date() },
+        })
+
+        // Create membership
+        const membership = await tx.membership.create({
+          data: {
+            userId,
+            orgId,
+            role: invite.role,
+            status: 'active'
+          }
+        })
+
+        return {
+          invite: invite as unknown as Invite,
+          membership: membership as unknown as Membership
+        }
       })
+
+      return result
+    },
+    async getOrganizationInvites(orgId: ID) {
+      const invites = await prisma.invite.findMany({
+        where: { orgId, acceptedAt: null },
+        orderBy: { createdAt: 'desc' }
+      })
+      return invites as unknown as Invite[]
+    },
+    async revokeInvite(orgId: ID, tokenHash: string) {
+      await prisma.invite.delete({
+        where: { orgId_tokenHash: { orgId, tokenHash } }
+      }).catch(() => {})
     },
 
-    async getEntitlements(orgId) {
+    async getEntitlement(orgId: ID) {
       const e = await prisma.entitlement.findUnique({ where: { orgId } })
       if (!e) return null
       const { plan, seats, features, limits, validUntil } = e
       return {
+        orgId,
         plan: plan ?? undefined,
         seats: seats ?? undefined,
         features: (features as unknown as Record<string, boolean>) ?? {},
         limits: (limits as unknown as Record<string, number>) ?? {},
         validUntil: validUntil ?? null,
-      } as Entitlements
+        createdAt: e.createdAt,
+        updatedAt: e.updatedAt
+      } as Entitlements & { orgId: ID; createdAt: Date; updatedAt: Date }
     },
-    async setEntitlements(orgId, ent) {
-      await prisma.entitlement.upsert({
+    async setEntitlement(orgId: ID, ent: Partial<Entitlements>) {
+      const result = await prisma.entitlement.upsert({
         where: { orgId },
         update: {
           plan: ent.plan ?? null,
@@ -107,6 +162,17 @@ export function rbacAdapter(prisma: any): RbacAdapter {
           validUntil: ent.validUntil ?? null,
         },
       })
+
+      return {
+        orgId,
+        plan: result.plan ?? undefined,
+        seats: result.seats ?? undefined,
+        features: (result.features as unknown as Record<string, boolean>) ?? {},
+        limits: (result.limits as unknown as Record<string, number>) ?? {},
+        validUntil: result.validUntil ?? null,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt
+      } as Entitlements & { orgId: ID; createdAt: Date; updatedAt: Date }
     },
   }
 }
