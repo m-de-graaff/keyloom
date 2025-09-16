@@ -28,7 +28,30 @@ yarn add @keyloom/adapters-prisma prisma @prisma/client
 npx prisma init
 ```
 
-### 2. Update your Prisma schema
+### 2. Create a Prisma connector (singleton)
+
+Create a `db.ts` (or `lib/db.ts`) file in your app:
+
+```ts
+import { PrismaClient } from "@prisma/client";
+
+declare global {
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClient | undefined;
+}
+
+export const db = globalThis.prisma || new PrismaClient();
+
+if (process.env.NODE_ENV !== "production") globalThis.prisma = db;
+```
+
+Use this `db` when creating the adapter: `adapter: prismaAdapter(db)`.
+
+### 3. Update your Prisma schema
+
+See SCHEMA.md for the default Keyloom schema. Copy the models you need into your `schema.prisma`.
+
+### Example: Minimal schema (subset)
 
 Add the required models to your `schema.prisma`:
 
@@ -61,42 +84,34 @@ npx prisma db push
 ## Usage
 
 ```typescript
-import { createKeyloom } from '@keyloom/core'
-import { prismaAdapter } from '@keyloom/adapters-prisma'
-import { PrismaClient } from '@prisma/client'
+import { createKeyloom } from "@keyloom/core";
+import prismaAdapter from "@keyloom/adapters-prisma";
+import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 const keyloom = createKeyloom({
   adapter: prismaAdapter(prisma),
   session: {
-    strategy: 'database',
+    strategy: "database",
     ttlMinutes: 60,
-    rolling: true
+    rolling: true,
   },
   secrets: {
-    authSecret: process.env.AUTH_SECRET
-  }
-})
+    authSecret: process.env.AUTH_SECRET,
+  },
+});
 
 // Now you can use keyloom with Prisma backend
 const user = await keyloom.register({
-  email: 'user@example.com',
-  password: 'secure-password'
-})
+  email: "user@example.com",
+  password: "secure-password",
+});
 ```
 
 ## Configuration
 
-The adapter automatically maps to your Prisma models:
-
-```typescript
-const adapter = prismaAdapter(prisma, {
-  // Optional: customize model names
-  userModel: 'User',      // Default: 'User'
-  sessionModel: 'Session' // Default: 'Session'
-})
-```
+The adapter expects the default Keyloom models. See SCHEMA.md for the reference schema. Currently, model names are fixed to the defaults (User, Account, Session, VerificationToken, Credential, AuthKey, AuditLog).
 
 ## Database Support
 
@@ -166,8 +181,8 @@ npx prisma studio
 Full TypeScript support with Prisma's generated types:
 
 ```typescript
-import type { User, Session } from '@prisma/client'
-import type { PrismaAdapter } from '@keyloom/adapters-prisma'
+import type { User, Session } from "@prisma/client";
+import type { PrismaAdapter } from "@keyloom/adapters-prisma";
 ```
 
 ## License

@@ -47,7 +47,7 @@ export default async function Dashboard() {
                 {JSON.stringify(
                   {
                     sessionId: session?.id,
-                    expiresAt: session?.expiresAt,
+                    userId: session?.userId,
                   },
                   null,
                   2,

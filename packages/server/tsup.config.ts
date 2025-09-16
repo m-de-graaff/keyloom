@@ -8,5 +8,5 @@ export default defineConfig({
   clean: true,
   target: 'node18',
   platform: 'node',
-  external: ['@keyloom/core', '@keyloom/adapters/prisma'],
+  external: ['@keyloom/core', '@keyloom/adapters'],
 })

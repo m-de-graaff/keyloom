@@ -1,4 +1,5 @@
-import prismaAdapter from '@keyloom/adapters/prisma'
+import { PrismaAdapter } from '@keyloom/adapters/prisma'
+import { PrismaClient } from '@prisma/client'
 import * as core from '@keyloom/core'
 import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify'
 
@@ -17,7 +18,8 @@ export function buildServer(env: {
   COOKIE_SAMESITE: 'lax' | 'strict' | 'none'
 }) {
   const app = Fastify({ trustProxy: true })
-  const adapter = prismaAdapter()
+  const db = new PrismaClient()
+  const adapter = PrismaAdapter(db)
   const hasher = core.argon2idHasher
 
   app.get('/v1/auth/csrf', async (_req, reply) => {

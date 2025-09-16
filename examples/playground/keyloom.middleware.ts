@@ -2,7 +2,7 @@
 const defineKeyloom = <T>(config: T) => config
 
 export default defineKeyloom({
-  baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:5173',
   session: { strategy: 'database', ttlMinutes: 60, rolling: true },
   // No adapter needed for middleware - it only checks cookies
   providers: [

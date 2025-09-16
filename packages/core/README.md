@@ -24,31 +24,31 @@ yarn add @keyloom/core
 ## Quick Start
 
 ```typescript
-import { createKeyloom, memoryAdapter } from '@keyloom/core'
+import { createKeyloom, memoryAdapter } from "@keyloom/core";
 
 const keyloom = createKeyloom({
   adapter: memoryAdapter(),
   session: {
-    strategy: 'database',
+    strategy: "database",
     ttlMinutes: 60,
-    rolling: true
+    rolling: true,
   },
   secrets: {
-    authSecret: process.env.AUTH_SECRET
-  }
-})
+    authSecret: process.env.AUTH_SECRET,
+  },
+});
 
 // Register a user
 const user = await keyloom.register({
-  email: 'user@example.com',
-  password: 'secure-password'
-})
+  email: "user@example.com",
+  password: "secure-password",
+});
 
 // Login
 const session = await keyloom.login({
-  email: 'user@example.com',
-  password: 'secure-password'
-})
+  email: "user@example.com",
+  password: "secure-password",
+});
 ```
 
 ## Core Concepts
@@ -58,14 +58,14 @@ const session = await keyloom.login({
 Adapters provide database abstraction for storing users and sessions:
 
 ```typescript
-import { prismaAdapter } from '@keyloom/adapters/prisma'
-import { memoryAdapter } from '@keyloom/core'
+import { PrismaAdapter } from "@keyloom/adapters/prisma";
+import { memoryAdapter } from "@keyloom/core";
 
 // Production: Use Prisma adapter
-const adapter = prismaAdapter(prisma)
+const adapter = PrismaAdapter(prisma);
 
 // Development: Use memory adapter
-const adapter = memoryAdapter()
+const adapter = memoryAdapter();
 ```
 
 ### Session Management
@@ -75,11 +75,11 @@ Sessions are stored in the database with configurable TTL and rolling expiration
 ```typescript
 const config = {
   session: {
-    strategy: 'database' as const,
-    ttlMinutes: 60,        // Session expires after 60 minutes
-    rolling: true          // Extend session on activity
-  }
-}
+    strategy: "database" as const,
+    ttlMinutes: 60, // Session expires after 60 minutes
+    rolling: true, // Extend session on activity
+  },
+};
 ```
 
 ### CSRF Protection
@@ -87,13 +87,13 @@ const config = {
 Built-in CSRF protection using double-submit cookie pattern:
 
 ```typescript
-import { issueCsrfToken, validateDoubleSubmit } from '@keyloom/core/guard/csrf'
+import { issueCsrfToken, validateDoubleSubmit } from "@keyloom/core/guard/csrf";
 
 // Issue CSRF token
-const token = issueCsrfToken()
+const token = issueCsrfToken();
 
 // Validate CSRF token
-const isValid = validateDoubleSubmit(token, cookieValue)
+const isValid = validateDoubleSubmit(token, cookieValue);
 ```
 
 ## API Reference
@@ -117,12 +117,12 @@ const isValid = validateDoubleSubmit(token, cookieValue)
 Full TypeScript support with comprehensive type definitions:
 
 ```typescript
-import type { 
+import type {
   KeyloomConfig,
   SessionData,
   UserData,
-  Adapter
-} from '@keyloom/core'
+  Adapter,
+} from "@keyloom/core";
 ```
 
 ## License

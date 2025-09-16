@@ -65,7 +65,7 @@ import { memoryAdapter } from "@keyloom/core";
 import github from "@keyloom/providers/github";
 
 export default {
-  baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:5173",
   session: {
     strategy: "database",
     ttlMinutes: 60,
@@ -145,12 +145,13 @@ await fetch("/api/auth/logout", { method: "POST" });
 ### Prisma Adapter
 
 ```typescript
-import prismaAdapter from "@keyloom/adapters/prisma";
+import { PrismaAdapter } from "@keyloom/adapters/prisma";
+import { PrismaClient } from "@prisma/client";
+
+const db = new PrismaClient();
 
 export default {
-  adapter: prismaAdapter({
-    url: process.env.DATABASE_URL,
-  }),
+  adapter: PrismaAdapter(db),
   // ... other config
 };
 ```
@@ -256,7 +257,7 @@ Run examples:
 # Start all examples
 pnpm dev
 
-# Playground runs on http://localhost:3000
+# Playground runs on http://localhost:5173
 # Next.js example runs on http://localhost:3001
 ```
 

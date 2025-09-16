@@ -2,15 +2,15 @@
   "name": "@keyloom-example/playground",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev -p 5173",
     "build": "next build",
-    "start": "next start -p 3000"
+    "start": "next start -p 5173"
   },
   "dependencies": {
-    "@keyloom/adapters/prisma": "workspace:*",
+    "@keyloom/adapters-prisma": "workspace:*",
     "@keyloom/core": "workspace:*",
     "@keyloom/nextjs": "workspace:*",
-    "@keyloom/providers/github": "workspace:*",
+    "@keyloom/providers": "workspace:*",
     "@node-rs/argon2": "^2.0.2",
     "@prisma/client": "^6.16.1",
     "bcryptjs": "^3.0.2",

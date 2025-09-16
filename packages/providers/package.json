@@ -1,6 +1,6 @@
 {
-  "name": "@keyloom/providers-github",
-  "version": "1.4.2",
+  "name": "@keyloom/providers",
+  "version": "1.4.4",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -8,15 +8,18 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": {
-        "development": "./src/index.ts",
-        "default": "./dist/index.js"
-      },
+      "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./github": {
+      "types": "./dist/github.d.ts",
+      "import": "./dist/github.js",
+      "require": "./dist/github.cjs"
     }
   },
   "files": [
-    "dist"
+    "dist/**/*",
+    "README.md"
   ],
   "sideEffects": false,
   "scripts": {
@@ -31,5 +34,9 @@
   },
   "peerDependencies": {
     "typescript": ">=5.4"
-  }
+  },
+  "license": "MIT",
+  "author": "Keyloom Contributors",
+  "description": "OAuth providers for Keyloom (GitHub, etc.)",
+  "keywords": ["keyloom", "auth", "oauth", "providers"]
 }

@@ -1,0 +1,28 @@
+# @keyloom/adapters
+
+Consolidated database adapters for Keyloom. Start with Prisma:
+
+## Installation
+
+```bash
+npm install @keyloom/adapters @prisma/client prisma
+# or
+pnpm add @keyloom/adapters @prisma/client prisma
+```
+
+## Quick Start (Prisma)
+
+```ts
+import { PrismaAdapter } from '@keyloom/adapters/prisma'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+
+export default {
+  adapter: PrismaAdapter(prisma),
+  // ...
+}
+```
+
+Use SCHEMA.md in the Prisma adapter package for the reference schema.
+

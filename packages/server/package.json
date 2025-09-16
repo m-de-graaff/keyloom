@@ -23,7 +23,7 @@
     "typescript": ">=5.4"
   },
   "dependencies": {
-    "@keyloom/adapters/prisma": "workspace:*",
+    "@keyloom/adapters": "workspace:*",
     "@keyloom/core": "workspace:*",
     "@node-rs/argon2": "^2.0.2",
     "@prisma/client": "^6.16.1",

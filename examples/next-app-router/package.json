@@ -7,10 +7,10 @@
     "start": "next start -p 3001"
   },
   "dependencies": {
-    "@keyloom/adapters/prisma": "workspace:*",
+    "@keyloom/adapters": "workspace:*",
     "@keyloom/core": "workspace:*",
     "@keyloom/nextjs": "workspace:*",
-    "@keyloom/providers/github": "workspace:*",
+    "@keyloom/providers": "workspace:*",
     "@prisma/client": "^6.16.1",
     "next": "^15.5.3",
     "react": "^19.1.1",

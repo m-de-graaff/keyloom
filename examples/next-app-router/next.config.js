@@ -3,8 +3,8 @@ const nextConfig = {
   transpilePackages: [
     '@keyloom/core',
     '@keyloom/nextjs',
-    '@keyloom/providers/github',
-    '@keyloom/adapters/prisma',
+    '@keyloom/providers',
+    '@keyloom/adapters',
   ],
   webpack: (config, { isServer }) => {
     if (isServer) {

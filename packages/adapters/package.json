@@ -1,0 +1,44 @@
+{
+  "name": "@keyloom/adapters",
+  "version": "1.4.4",
+  "type": "module",
+  "description": "Database adapters for Keyloom (Prisma, etc.)",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./prisma": {
+      "types": "./dist/prisma.d.ts",
+      "import": "./dist/prisma.js",
+      "require": "./dist/prisma.cjs"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "@keyloom/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "@prisma/client": ">=5",
+    "typescript": ">=5.4"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0"
+  },
+  "license": "MIT",
+  "keywords": ["keyloom", "adapter", "prisma", "auth"],
+  "author": "Keyloom Contributors"
+}
+

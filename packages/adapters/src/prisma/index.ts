@@ -7,28 +7,35 @@ import type {
   User,
   VerificationToken,
 } from '@keyloom/core'
-// Note: We intentionally avoid tight coupling to Prisma types to keep this package buildable without a generated client
-// If you have @prisma/client installed, your app will get proper intellisense
-import { mapPrismaError } from './errors'
+// Keep types loose to avoid requiring generated Prisma client at build time
+export type AnyPrismaClient = any
 
-type AnyPrismaClient = any
+// Minimal error mapping to keep nice messages without depending on Prisma types
+function mapPrismaError(e: unknown) {
+  const code = (e as { code?: string }).code
+  if (code === 'P2002') {
+    // unique constraint failed
+    return new Error('Unique constraint failed')
+  }
+  return e
+}
+
 export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
   // credentials extension:
   createCredential(userId: ID, hash: string): Promise<{ id: ID; userId: ID }>
   getCredentialByUserId(userId: ID): Promise<{ id: ID; userId: ID; hash: string } | null>
   updateCredential(userId: ID, hash: string): Promise<void>
 } {
-
   return {
     // Users
     async createUser(data: Partial<User>) {
       try {
         const u = await prisma.user.create({
           data: {
-            email: data.email ?? null,
-            emailVerified: data.emailVerified ?? null,
-            name: data.name ?? null,
-            image: data.image ?? null,
+            email: (data as any).email ?? null,
+            emailVerified: (data as any).emailVerified ?? null,
+            name: (data as any).name ?? null,
+            image: (data as any).image ?? null,
           },
         })
         return u as unknown as User
@@ -70,11 +77,11 @@ export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
             userId: acc.userId,
             provider: acc.provider,
             providerAccountId: acc.providerAccountId,
-            accessToken: acc.accessToken ?? null,
-            refreshToken: acc.refreshToken ?? null,
-            tokenType: acc.tokenType ?? null,
-            scope: acc.scope ?? null,
-            expiresAt: acc.expiresAt ?? null,
+            accessToken: (acc as any).accessToken ?? null,
+            refreshToken: (acc as any).refreshToken ?? null,
+            tokenType: (acc as any).tokenType ?? null,
+            scope: (acc as any).scope ?? null,
+            expiresAt: (acc as any).expiresAt ?? null,
           },
         })
         return a as unknown as Account
@@ -94,7 +101,7 @@ export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
       const sess = await prisma.session.create({
         data: {
           userId: s.userId,
-          expiresAt: s.expiresAt,
+          expiresAt: (s as any).expiresAt,
         },
       })
       return sess as unknown as Session
@@ -112,14 +119,14 @@ export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
       const vt = await prisma.verificationToken.create({
         data: {
           identifier: v.identifier,
-          tokenHash: (v as unknown as { tokenHash?: string }).tokenHash ?? v.token,
+          tokenHash: (v as any).tokenHash ?? (v as any).token,
           expiresAt: v.expiresAt,
         },
       })
       return {
         id: vt.id as ID,
         identifier: vt.identifier,
-        token: v.token ?? '***',
+        token: (v as any).token ?? '***',
         expiresAt: vt.expiresAt,
         createdAt: vt.createdAt,
         consumedAt: vt.consumedAt ?? null,
@@ -127,15 +134,11 @@ export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
     },
     async useVerificationToken(identifier: string, tokenHashOrToken: string) {
       const vt = await prisma.verificationToken.findUnique({
-        where: {
-          identifier_tokenHash: { identifier, tokenHash: tokenHashOrToken },
-        },
+        where: { identifier_tokenHash: { identifier, tokenHash: tokenHashOrToken } },
       })
       if (!vt) return null
       await prisma.verificationToken.delete({
-        where: {
-          identifier_tokenHash: { identifier, tokenHash: tokenHashOrToken },
-        },
+        where: { identifier_tokenHash: { identifier, tokenHash: tokenHashOrToken } },
       })
       return {
         id: vt.id as ID,
@@ -153,9 +156,9 @@ export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
         data: {
           type: event.type,
           userId: event.userId ?? null,
-          actorId: event.actorId ?? null,
-          ip: event.ip ?? null,
-          ua: event.ua ?? null,
+          actorId: (event as any).actorId ?? null,
+          ip: (event as any).ip ?? null,
+          ua: (event as any).ua ?? null,
           at: event.at ?? new Date(),
           meta: (event.meta as unknown) ?? null,
         },
@@ -170,11 +173,7 @@ export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
     async getCredentialByUserId(userId: ID) {
       const c = await prisma.credential.findUnique({ where: { userId } })
       return c
-        ? {
-            id: c.id as ID,
-            userId: c.userId as ID,
-            hash: c.hash,
-          }
+        ? { id: c.id as ID, userId: c.userId as ID, hash: c.hash }
         : null
     },
     async updateCredential(userId: ID, hash: string) {
@@ -183,6 +182,5 @@ export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
   }
 }
 
-
-// Optional named export alias for convenience
 export { prismaAdapter as PrismaAdapter }
+

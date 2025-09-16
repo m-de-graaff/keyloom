@@ -2,10 +2,10 @@
 const defineKeyloom = <T>(config: T) => config
 
 import { memoryAdapter } from '@keyloom/core'
-import github from '@keyloom/providers/github'
+import { github } from '@keyloom/providers/github'
 
 export default defineKeyloom({
-  baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:5173',
   session: { strategy: 'database', ttlMinutes: 60, rolling: true },
   adapter: memoryAdapter(),
   providers: [

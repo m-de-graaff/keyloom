@@ -1,12 +1,13 @@
 import { defineConfig } from 'tsup'
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: {
+    index: 'src/index.ts',
+    github: 'src/github/index.ts'
+  },
   format: ['cjs', 'esm'],
   dts: true,
-  sourcemap: true,
   clean: true,
-  treeshake: true,
+  external: ['@keyloom/core'],
   target: 'node18',
-  platform: 'node',
 })

@@ -20,7 +20,13 @@
     "changeset": "changeset",
     "release": "changeset version && pnpm i -w && turbo run build && changeset publish",
     "clean": "git clean -xdf -e node_modules -e .pnpm-store",
-    "bump-deps": "npx npm-check-updates --deep -u -x react-day-picker && pnpm install"
+    "bump-deps": "npx npm-check-updates --deep -u -x react-day-picker && pnpm install",
+
+    "releaseit:core": "pnpm -C packages/core exec release-it",
+    "releaseit:nextjs": "pnpm -C packages/nextjs exec release-it",
+    "releaseit:providers": "pnpm -C packages/providers exec release-it",
+    "releaseit:adapters": "pnpm -C packages/adapters exec release-it",
+    "releaseit:all": "pnpm run releaseit:core && pnpm run releaseit:nextjs && pnpm run releaseit:providers && pnpm run releaseit:adapters"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
