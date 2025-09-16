@@ -3,6 +3,7 @@
   "git": {
     "commitMessage": "chore(@keyloom/adapters): release v${version}",
     "tagName": "@keyloom/adapters-v${version}",
+    "tagMatch": "@keyloom/adapters-v*",
     "requireCleanWorkingDir": true,
     "requireBranch": "main"
   },

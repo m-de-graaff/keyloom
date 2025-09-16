@@ -3,6 +3,7 @@
   "git": {
     "commitMessage": "chore(@keyloom/providers): release v${version}",
     "tagName": "@keyloom/providers-v${version}",
+    "tagMatch": "@keyloom/providers-v*",
     "requireCleanWorkingDir": true,
     "requireBranch": "main"
   },
