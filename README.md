@@ -110,3 +110,131 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/keyloom_app
 AUTH_SECRET=your-super-secret-key-change-in-production
 ```
+
+## 🔧 Usage Examples
+
+### Server Components (App Router)
+
+```typescript
+// app/dashboard/page.tsx
+import { getSession } from "@keyloom/nextjs";
+import { redirect } from "next/navigation";
+
+export default async function Dashboard() {
+  const { session, user } = await getSession();
+
+  if (!session) {
+    redirect("/sign-in");
+  }
+
+  return (
+    <div>
+      <h1>Welcome back, {user?.email}!</h1>
+      <p>Session ID: {session.id}</p>
+    </div>
+  );
+}
+```
+
+### Client Components
+
+```typescript
+"use client";
+
+import { useState } from "react";
+
+function getCsrf() {
+  const part = document.cookie
+    .split("; ")
+    .find((x) => x.startsWith("__keyloom_csrf="));
+  return part?.split("=")[1] ?? "";
+}
+
+export default function SignIn() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+
+  async function ensureCsrf() {
+    await fetch("/api/auth/csrf", { cache: "no-store" });
+  }
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    await ensureCsrf();
+
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-keyloom-csrf": getCsrf(),
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const result = await response.json();
+    setMessage(JSON.stringify(result));
+
+    if (response.ok) {
+      window.location.href = "/dashboard";
+    }
+  }
+
+  return (
+    <form onSubmit={handleLogin} className="space-y-4">
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+        required
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+        required
+      />
+      <button type="submit">Sign In</button>
+      {message && <pre>{message}</pre>}
+    </form>
+  );
+}
+```
+
+### Middleware Configuration
+
+```typescript
+// middleware.ts - Advanced configuration
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "./keyloom.config";
+
+export default createAuthMiddleware(config, {
+  publicRoutes: [
+    "/",
+    "/sign-in",
+    "/sign-up",
+    "/api/auth/csrf",
+    /^\/blog\/.*/, // Regex patterns supported
+  ],
+  // Optional: verify session at edge (lower performance)
+  verifyAtEdge: false,
+  // Custom logic after auth check
+  afterAuth: ({ authed, req, next, redirect }) => {
+    const { pathname } = req.nextUrl;
+
+    // Redirect authenticated users away from auth pages
+    if (authed && ["/sign-in", "/sign-up"].includes(pathname)) {
+      return redirect("/dashboard");
+    }
+
+    // Redirect unauthenticated users to sign-in
+    if (!authed && pathname.startsWith("/dashboard")) {
+      return redirect("/sign-in");
+    }
+
+    return next();
+  },
+});
+```
