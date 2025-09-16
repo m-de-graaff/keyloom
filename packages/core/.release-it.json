@@ -3,6 +3,7 @@
   "git": {
     "commitMessage": "chore(@keyloom/core): release v${version}",
     "tagName": "@keyloom/core-v${version}",
+    "tagMatch": "@keyloom/core-v*",
     "requireCleanWorkingDir": true,
     "requireBranch": "main"
   },

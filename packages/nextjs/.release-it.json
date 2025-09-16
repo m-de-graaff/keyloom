@@ -3,6 +3,7 @@
   "git": {
     "commitMessage": "chore(@keyloom/nextjs): release v${version}",
     "tagName": "@keyloom/nextjs-v${version}",
+    "tagMatch": "@keyloom/nextjs-v*",
     "requireCleanWorkingDir": true,
     "requireBranch": "main"
   },

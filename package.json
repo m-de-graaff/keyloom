@@ -17,10 +17,10 @@
     "release": "changeset version && pnpm i -w && turbo run build && changeset publish",
     "clean": "git clean -xdf -e node_modules -e .pnpm-store",
     "bump-deps": "npx npm-check-updates --deep -u -x react-day-picker && pnpm install",
-    "releaseit:core": "pnpm -w -C packages/core exec release-it",
-    "releaseit:nextjs": "pnpm -w -C packages/nextjs exec release-it",
-    "releaseit:providers": "pnpm -w -C packages/providers exec release-it",
-    "releaseit:adapters": "pnpm -w -C packages/adapters exec release-it",
+    "releaseit:core": "pnpm -C packages/core exec release-it",
+    "releaseit:nextjs": "pnpm -C packages/nextjs exec release-it",
+    "releaseit:providers": "pnpm -C packages/providers exec release-it",
+    "releaseit:adapters": "pnpm -C packages/adapters exec release-it",
     "releaseit:all": "pnpm run releaseit:core && pnpm run releaseit:nextjs && pnpm run releaseit:providers && pnpm run releaseit:adapters"
   },
   "devDependencies": {
@@ -31,6 +31,5 @@
     "turbo": "^2.5.6",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
-  },
-  "version": "1.6.0"
+  }
 }
