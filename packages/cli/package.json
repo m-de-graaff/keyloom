@@ -1,6 +1,6 @@
 {
   "name": "@keyloom/cli",
-  "version": "0.0.0",
+  "version": "1.6.0",
   "description": "Keyloom command-line tools: init, migrate, routes, doctor",
   "type": "module",
   "bin": {
@@ -13,7 +13,9 @@
     "templates/**/*",
     "README.md"
   ],
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/keyloom/keyloom.git"
