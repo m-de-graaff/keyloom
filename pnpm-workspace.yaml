@@ -3,4 +3,4 @@ packages:
   - "packages/providers/*"
   - "packages/adapters/*"
   - "examples/*"
-
+  - "docs"

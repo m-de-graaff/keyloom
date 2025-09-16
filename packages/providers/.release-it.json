@@ -11,7 +11,7 @@
     "access": "public"
   },
   "hooks": {
-    "before:init": "pnpm test",
+    "before:init": "pnpm build",
     "after:bump": "pnpm build"
   }
 }
