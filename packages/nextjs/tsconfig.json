@@ -1,5 +1,17 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": { "outDir": "dist", "rootDir": "src" },
-  "include": ["src"]
+  "files": [
+    "src/index.ts",
+    "src/middleware.ts",
+    "src/edge.ts",
+    "src/route-types.ts",
+    "src/server-helpers.ts",
+    "src/handler.ts",
+    "src/rbac.ts",
+    "src/cookies.ts",
+    "src/cookies-edge.ts",
+    "src/routing.ts",
+    "src/types.ts"
+  ]
 }

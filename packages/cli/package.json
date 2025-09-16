@@ -3,10 +3,10 @@
   "version": "0.0.0",
   "type": "module",
   "bin": {
-    "keyloom": "./dist/bin.cjs"
+    "keyloom": "./dist/keyloom.cjs"
   },
-  "main": "./dist/bin.cjs",
-  "module": "./dist/bin.js",
+  "main": "./dist/keyloom.cjs",
+  "module": "./dist/keyloom.js",
   "files": [
     "dist"
   ],

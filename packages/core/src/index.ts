@@ -26,3 +26,11 @@ export { startOAuth, completeOAuth } from './oauth/flow'
 
 // utilities & facades
 export * as util from './util/time'
+
+
+// RBAC API
+export * from './rbac/types'
+export * from './rbac/policy'
+export * from './rbac/context'
+export * from './rbac/with-role'
+export * from './rbac/invites'

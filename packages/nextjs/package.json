@@ -15,6 +15,10 @@
     },
     "./edge": {
       "import": "./dist/edge.js"
+    },
+    "./route-types": {
+      "import": "./dist/route-types.js",
+      "require": "./dist/route-types.cjs"
     }
   },
   "files": [

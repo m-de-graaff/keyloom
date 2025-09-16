@@ -12,14 +12,17 @@ import type {
 import { mapPrismaError } from './errors'
 
 type AnyPrismaClient = any
-export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
+import type { RbacAdapter } from '@keyloom/core'
+import { rbacAdapter } from './rbac'
+
+export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & RbacAdapter & {
   // credentials extension:
   createCredential(userId: ID, hash: string): Promise<{ id: ID; userId: ID }>
   getCredentialByUserId(userId: ID): Promise<{ id: ID; userId: ID; hash: string } | null>
   updateCredential(userId: ID, hash: string): Promise<void>
 } {
 
-  return {
+  const base = {
     // Users
     async createUser(data: Partial<User>) {
       try {
@@ -181,6 +184,8 @@ export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
       await prisma.credential.update({ where: { userId }, data: { hash } })
     },
   }
+  const extended = Object.assign(base, rbacAdapter(prisma))
+  return extended
 }
 
 

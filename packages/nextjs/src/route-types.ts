@@ -1,0 +1,23 @@
+export type Visibility = 'public' | 'private' | `role:${string}`
+
+export type KeyloomRouteRule = {
+  visibility: Visibility
+  roles?: string[]
+  org?: boolean | 'required'
+  redirectTo?: string
+  mode?: 'redirect' | '401'
+  verify?: 'cookie' | 'session' | 'membership'
+}
+
+export type KeyloomRouteEntry = {
+  pattern: string
+  rule: KeyloomRouteRule
+  file?: string
+  specificity: number
+}
+
+export type KeyloomRoutesManifest = {
+  generatedAt: string
+  entries: KeyloomRouteEntry[]
+}
+

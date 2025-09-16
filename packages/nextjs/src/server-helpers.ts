@@ -1,5 +1,6 @@
 import { getCurrentSession } from '@keyloom/core/runtime/current-session'
 import { cookies, headers } from 'next/headers'
+import { redirect } from 'next/navigation'
 import { parseCookieValue } from './cookies'
 import type { NextKeyloomConfig } from './types'
 
@@ -27,18 +28,48 @@ export async function getUser(config?: NextKeyloomConfig) {
   return out.user
 }
 
-// Throw/redirect early in RSC
+// Server-side guard for App Router
 export async function guard(
-  opts?: { roles?: string[]; redirectTo?: string },
+  rule?: {
+    visibility?: 'public' | 'private' | `role:${string}`
+    roles?: string[]
+    org?: boolean | 'required'
+    redirectTo?: string
+  },
   config?: NextKeyloomConfig,
 ) {
-  const { session, user } = await getSession(config)
-  if (!session) {
-    const to = opts?.redirectTo ?? '/sign-in'
-    // App Router redirect
-    // eslint-disable-next-line no-throw-literal
-    throw { redirect: to } // The consuming code should catch and use next/navigation redirect() if needed
+  const { adapter } = ensure(config)
+  const cookieHeader = (await headers()).get('cookie') ?? cookies().toString()
+  const sid = parseCookieValue(cookieHeader)
+
+  const isPublic = rule?.visibility === 'public'
+  if (isPublic) return
+
+  const { session, user } = await getCurrentSession(sid, adapter)
+  if (!session || !user) return redirect(rule?.redirectTo ?? '/sign-in')
+
+  const needsRole = (rule?.roles && rule.roles.length > 0) || rule?.visibility?.startsWith('role:')
+  if (needsRole) {
+    const need = rule?.visibility?.startsWith('role:')
+      ? [rule.visibility.slice(5)]
+      : (rule!.roles as string[])
+
+    // If role is checked, require an active org unless explicitly disabled
+    const orgRequired = rule?.org === 'required' || rule?.org === true || true
+    const orgId = parseCookieValue(cookieHeader, '__keyloom_org')
+    if (orgRequired && !orgId) return redirect('/select-org')
+
+    const m = await adapter.getMembership(user.id, orgId)
+    if (!m || !need.includes(m.role)) return redirect('/403')
+
+    return { session, user, role: m.role as string, orgId }
   }
-  // Role check hooks will be added when RBAC is on (Phase 5)
+
+  if (rule?.org === 'required') {
+    const orgId = parseCookieValue(cookieHeader, '__keyloom_org')
+    if (!orgId) return redirect('/select-org')
+    return { session, user, orgId }
+  }
+
   return { session, user }
 }
