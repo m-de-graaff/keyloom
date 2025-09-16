@@ -1,8 +1,8 @@
 import type { NextFetchEvent, NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { parseCookieValue } from './cookies-edge'
+import type { KeyloomRouteRule, KeyloomRoutesManifest } from './route-types'
 import type { NextKeyloomConfig } from './types'
-import type { KeyloomRoutesManifest, KeyloomRouteRule } from './route-types'
 
 type Options = {
   publicRoutes?: (string | RegExp)[]
@@ -70,7 +70,7 @@ export function createAuthMiddleware(_config: NextKeyloomConfig, opts: Options =
 
       if (rule.visibility === 'public') return NextResponse.next()
 
-      let sid = parseCookieValue(cookieHeader)
+      const sid = parseCookieValue(cookieHeader)
       let authed = !!sid
 
       const verify = rule.verify ?? 'cookie'

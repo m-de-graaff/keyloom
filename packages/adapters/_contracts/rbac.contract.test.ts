@@ -1,14 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import type { KeyloomAdapter } from '@keyloom/core/adapter-types'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  TestDataManager,
+  expectMembership,
+  expectNotFound,
+  expectOrganization,
+  futureDate,
   randomEmail,
   randomOrg,
-  futureDate,
-  expectOrganization,
-  expectMembership,
-  expectUniqueViolation,
-  expectNotFound
+  TestDataManager,
 } from './helpers'
 
 /**
@@ -64,7 +63,7 @@ export function createRbacContractTests(createAdapter: () => KeyloomAdapter) {
       it('should update organization', async () => {
         const org = await testData.createOrg()
         const updateData = {
-          name: 'Updated Organization Name'
+          name: 'Updated Organization Name',
         }
 
         const updated = await adapter.updateOrganization(org.id, updateData)
@@ -77,9 +76,7 @@ export function createRbacContractTests(createAdapter: () => KeyloomAdapter) {
         const slug = 'unique-org-slug'
         await testData.createOrg({ slug })
 
-        await expect(
-          testData.createOrg({ slug })
-        ).rejects.toThrow()
+        await expect(testData.createOrg({ slug })).rejects.toThrow()
       })
 
       it('should list user organizations', async () => {
@@ -94,8 +91,8 @@ export function createRbacContractTests(createAdapter: () => KeyloomAdapter) {
         const orgs = await adapter.getUserOrganizations(user.id)
 
         expect(orgs).toHaveLength(2)
-        expect(orgs.map(o => o.id)).toContain(org1.id)
-        expect(orgs.map(o => o.id)).toContain(org2.id)
+        expect(orgs.map((o) => o.id)).toContain(org1.id)
+        expect(orgs.map((o) => o.id)).toContain(org2.id)
       })
     })
 
@@ -164,8 +161,8 @@ export function createRbacContractTests(createAdapter: () => KeyloomAdapter) {
         const members = await adapter.getOrganizationMembers(org.id)
 
         expect(members).toHaveLength(2)
-        expect(members.map(m => m.userId)).toContain(user1.id)
-        expect(members.map(m => m.userId)).toContain(user2.id)
+        expect(members.map((m) => m.userId)).toContain(user1.id)
+        expect(members.map((m) => m.userId)).toContain(user2.id)
       })
 
       it('should enforce unique user-org membership', async () => {
@@ -174,9 +171,7 @@ export function createRbacContractTests(createAdapter: () => KeyloomAdapter) {
 
         await adapter.addMember(org.id, user.id, 'member')
 
-        await expect(
-          adapter.addMember(org.id, user.id, 'admin')
-        ).rejects.toThrow()
+        await expect(adapter.addMember(org.id, user.id, 'admin')).rejects.toThrow()
       })
     })
 
@@ -190,7 +185,7 @@ export function createRbacContractTests(createAdapter: () => KeyloomAdapter) {
           email,
           role: 'member',
           tokenHash: 'hashed-token',
-          expiresAt: futureDate()
+          expiresAt: futureDate(),
         })
 
         expect(invite.orgId).toBe(org.id)
@@ -209,7 +204,7 @@ export function createRbacContractTests(createAdapter: () => KeyloomAdapter) {
           email: randomEmail(),
           role: 'member',
           tokenHash,
-          expiresAt: futureDate()
+          expiresAt: futureDate(),
         })
 
         const retrieved = await adapter.getInviteByToken(org.id, tokenHash)
@@ -221,12 +216,12 @@ export function createRbacContractTests(createAdapter: () => KeyloomAdapter) {
         const org = await testData.createOrg()
         const tokenHash = 'invitation-token'
 
-        const invite = await adapter.createInvite({
+        const _invite = await adapter.createInvite({
           orgId: org.id,
           email: user.email!,
           role: 'member',
           tokenHash,
-          expiresAt: futureDate()
+          expiresAt: futureDate(),
         })
 
         const result = await adapter.acceptInvite(org.id, tokenHash, user.id)
@@ -245,7 +240,7 @@ export function createRbacContractTests(createAdapter: () => KeyloomAdapter) {
           email: randomEmail(),
           role: 'member',
           tokenHash: 'token1',
-          expiresAt: futureDate()
+          expiresAt: futureDate(),
         })
 
         await adapter.createInvite({
@@ -253,7 +248,7 @@ export function createRbacContractTests(createAdapter: () => KeyloomAdapter) {
           email: randomEmail(),
           role: 'admin',
           tokenHash: 'token2',
-          expiresAt: futureDate()
+          expiresAt: futureDate(),
         })
 
         const invites = await adapter.getOrganizationInvites(org.id)
@@ -269,7 +264,7 @@ export function createRbacContractTests(createAdapter: () => KeyloomAdapter) {
           email: randomEmail(),
           role: 'member',
           tokenHash,
-          expiresAt: futureDate()
+          expiresAt: futureDate(),
         })
 
         await adapter.revokeInvite(org.id, tokenHash)
@@ -287,7 +282,7 @@ export function createRbacContractTests(createAdapter: () => KeyloomAdapter) {
           seats: 10,
           features: { analytics: true, api: true },
           limits: { requests: 10000, storage: 100 },
-          validUntil: futureDate()
+          validUntil: futureDate(),
         }
 
         const entitlement = await adapter.setEntitlement(org.id, entitlementData)
@@ -304,7 +299,7 @@ export function createRbacContractTests(createAdapter: () => KeyloomAdapter) {
         const entitlementData = {
           plan: 'enterprise',
           seats: 50,
-          validUntil: futureDate()
+          validUntil: futureDate(),
         }
 
         await adapter.setEntitlement(org.id, entitlementData)
@@ -319,12 +314,12 @@ export function createRbacContractTests(createAdapter: () => KeyloomAdapter) {
 
         await adapter.setEntitlement(org.id, {
           plan: 'basic',
-          seats: 5
+          seats: 5,
         })
 
         const updated = await adapter.setEntitlement(org.id, {
           plan: 'pro',
-          seats: 15
+          seats: 15,
         })
 
         expect(updated.plan).toBe('pro')

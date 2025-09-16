@@ -1,6 +1,6 @@
 import type { Adapter } from './adapter'
-import type { RbacAdapter } from './rbac'
 import type { RefreshTokenStore } from './jwt'
+import type { RbacAdapter } from './rbac/types'
 
 /**
  * Adapter capability flags
@@ -29,10 +29,10 @@ export const ADAPTER_ERRORS = {
   TXN_FAILED: 'ADAPTER_TXN_FAILED',
   CONNECTION_FAILED: 'ADAPTER_CONNECTION_FAILED',
   CONSTRAINT_VIOLATION: 'ADAPTER_CONSTRAINT_VIOLATION',
-  INVALID_DATA: 'ADAPTER_INVALID_DATA'
+  INVALID_DATA: 'ADAPTER_INVALID_DATA',
 } as const
 
-export type AdapterErrorCode = typeof ADAPTER_ERRORS[keyof typeof ADAPTER_ERRORS]
+export type AdapterErrorCode = (typeof ADAPTER_ERRORS)[keyof typeof ADAPTER_ERRORS]
 
 /**
  * Adapter error class
@@ -55,13 +55,20 @@ export class AdapterError extends Error {
 export interface KeyloomAdapter extends Adapter, RbacAdapter, RefreshTokenStore {
   /** Adapter capability flags */
   capabilities: AdapterCapabilities
-  
+
   /** Optional cleanup method for expired tokens/sessions */
-  cleanup?(): Promise<{ sessions: number; tokens: number; refreshTokens: number }>
-  
+  cleanup?(): Promise<{
+    sessions: number
+    tokens: number
+    refreshTokens: number
+  }>
+
   /** Optional health check method */
-  healthCheck?(): Promise<{ status: 'healthy' | 'unhealthy'; details?: Record<string, unknown> }>
-  
+  healthCheck?(): Promise<{
+    status: 'healthy' | 'unhealthy'
+    details?: Record<string, unknown>
+  }>
+
   /** Optional connection close method */
   close?(): Promise<void>
 }
@@ -126,14 +133,13 @@ export function getTableName(baseName: string, prefix?: string): string {
  * Utility for handling case-insensitive email queries
  */
 export function prepareEmailForQuery(
-  email: string, 
-  capability: AdapterCapabilities['caseInsensitiveEmail']
+  email: string,
+  capability: AdapterCapabilities['caseInsensitiveEmail'],
 ): string {
   switch (capability) {
     case 'citext':
     case 'collation':
       return email // Database handles case-insensitivity
-    case 'app-normalize':
     default:
       return normalizeEmail(email)
   }
@@ -156,7 +162,7 @@ export abstract class BaseErrorMapper implements ErrorMapper {
     return new AdapterError(
       ADAPTER_ERRORS.UNIQUE_VIOLATION,
       message || 'Unique constraint violation',
-      originalError
+      originalError,
     )
   }
 
@@ -164,7 +170,7 @@ export abstract class BaseErrorMapper implements ErrorMapper {
     return new AdapterError(
       ADAPTER_ERRORS.NOT_FOUND,
       message || 'Resource not found',
-      originalError
+      originalError,
     )
   }
 
@@ -172,7 +178,7 @@ export abstract class BaseErrorMapper implements ErrorMapper {
     return new AdapterError(
       ADAPTER_ERRORS.TXN_FAILED,
       message || 'Transaction failed',
-      originalError
+      originalError,
     )
   }
 
@@ -180,7 +186,7 @@ export abstract class BaseErrorMapper implements ErrorMapper {
     return new AdapterError(
       ADAPTER_ERRORS.CONNECTION_FAILED,
       message || 'Database connection failed',
-      originalError
+      originalError,
     )
   }
 }
@@ -217,34 +223,33 @@ export type TransactionCallback<T> = (ctx: TransactionContext) => Promise<T>
  * Adapter registry for dynamic adapter loading
  */
 export class AdapterRegistry {
-  private static adapters = new Map<string, AdapterFactory>()
+  private static adapters = new Map<string, AdapterFactory<any>>()
   private static metadata = new Map<string, AdapterMetadata>()
 
-  static register<T>(
-    name: string, 
-    factory: AdapterFactory<T>, 
-    metadata: AdapterMetadata
-  ): void {
-    this.adapters.set(name, factory)
-    this.metadata.set(name, metadata)
+  static register(name: string, factory: AdapterFactory<unknown>, metadata: AdapterMetadata): void {
+    AdapterRegistry.adapters.set(name, factory)
+    AdapterRegistry.metadata.set(name, metadata)
   }
 
-  static get(name: string): AdapterFactory | undefined {
-    return this.adapters.get(name)
+  static get(name: string): AdapterFactory<unknown> | undefined {
+    return AdapterRegistry.adapters.get(name)
   }
 
   static getMetadata(name: string): AdapterMetadata | undefined {
-    return this.metadata.get(name)
+    return AdapterRegistry.metadata.get(name)
   }
 
   static list(): string[] {
-    return Array.from(this.adapters.keys())
+    return Array.from(AdapterRegistry.adapters.keys())
   }
 
-  static listWithMetadata(): Array<{ name: string; metadata: AdapterMetadata }> {
-    return Array.from(this.adapters.keys()).map(name => ({
+  static listWithMetadata(): Array<{
+    name: string
+    metadata: AdapterMetadata
+  }> {
+    return Array.from(AdapterRegistry.adapters.keys()).map((name) => ({
       name,
-      metadata: this.metadata.get(name)!
+      metadata: AdapterRegistry.metadata.get(name)!,
     }))
   }
 }

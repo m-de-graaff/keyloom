@@ -50,10 +50,7 @@ export interface RbacAdapter {
 
   // Memberships
   addMember(data: { userId: ID; orgId: ID; role: Role }): Promise<Membership>
-  updateMember(
-    id: ID,
-    data: Partial<Pick<Membership, 'role' | 'status'>>,
-  ): Promise<Membership>
+  updateMember(id: ID, data: Partial<Pick<Membership, 'role' | 'status'>>): Promise<Membership>
   removeMember(id: ID): Promise<void>
   getMembership(userId: ID, orgId: ID): Promise<Membership | null>
   listMembers(orgId: ID): Promise<(Membership & { userEmail?: string | null })[]>
@@ -73,4 +70,3 @@ export interface RbacAdapter {
   getEntitlements(orgId: ID): Promise<Entitlements | null>
   setEntitlements(orgId: ID, ent: Entitlements): Promise<void>
 }
-

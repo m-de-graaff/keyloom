@@ -7,7 +7,7 @@ export function createJwtHeader(alg: JwtAlg, kid: string): JwtHeader {
   return {
     alg,
     kid,
-    typ: 'JWT'
+    typ: 'JWT',
   }
 }
 
@@ -20,7 +20,7 @@ export function validateJwtHeader(header: unknown): header is JwtHeader {
   }
 
   const h = header as Record<string, unknown>
-  
+
   return (
     typeof h.alg === 'string' &&
     (h.alg === 'EdDSA' || h.alg === 'ES256') &&
@@ -32,7 +32,7 @@ export function validateJwtHeader(header: unknown): header is JwtHeader {
 /**
  * Get the WebCrypto algorithm parameters for a JWT algorithm
  */
-export function getWebCryptoAlgorithm(alg: JwtAlg): AlgorithmIdentifier {
+export function getWebCryptoAlgorithm(alg: JwtAlg): AlgorithmIdentifier | EcdsaParams {
   switch (alg) {
     case 'EdDSA':
       return { name: 'Ed25519' }
@@ -46,7 +46,9 @@ export function getWebCryptoAlgorithm(alg: JwtAlg): AlgorithmIdentifier {
 /**
  * Get the key generation parameters for a JWT algorithm
  */
-export function getKeyGenParams(alg: JwtAlg): RsaHashedKeyGenParams | EcKeyGenParams | { name: string } {
+export function getKeyGenParams(
+  alg: JwtAlg,
+): RsaHashedKeyGenParams | EcKeyGenParams | { name: string } {
   switch (alg) {
     case 'EdDSA':
       return { name: 'Ed25519' }

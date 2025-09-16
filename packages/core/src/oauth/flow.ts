@@ -1,9 +1,9 @@
-import type { OAuthProvider } from './types'
-import { createPkce } from './pkce'
-import { sealState, openState } from './state'
-import { newSession } from '../session/model'
 import type { Adapter } from '../adapter'
+import { newSession } from '../session/model'
+import { createPkce } from './pkce'
 import type { OAuthStatePayload } from './state'
+import { openState, sealState } from './state'
+import type { OAuthProvider } from './types'
 
 export async function startOAuth(opts: {
   provider: OAuthProvider & { clientId: string; clientSecret: string }
@@ -29,7 +29,9 @@ export async function startOAuth(opts: {
     state: `${sealed.nonce}.${sealed.ct}`,
   }
   const extra = provider.authorization.params ?? {}
-  Object.entries({ ...params, ...extra }).forEach(([k, v]) => authUrl.searchParams.set(k, String(v)))
+  Object.entries({ ...params, ...extra }).forEach(([k, v]) =>
+    authUrl.searchParams.set(k, String(v)),
+  )
 
   return {
     authorizeUrl: authUrl.toString(),
@@ -48,7 +50,17 @@ export async function completeOAuth(opts: {
   secrets: { authSecret: string }
   linkToUserId?: string
 }) {
-  const { provider, adapter, baseUrl, callbackPath, stateCookie, stateParam, code, secrets, linkToUserId } = opts
+  const {
+    provider,
+    adapter,
+    baseUrl,
+    callbackPath,
+    stateCookie,
+    stateParam,
+    code,
+    secrets,
+    linkToUserId,
+  } = opts
   if (!stateCookie || !stateParam || stateCookie !== stateParam) throw new Error('state_mismatch')
 
   const parts = (stateParam as string).split('.')
@@ -72,7 +84,7 @@ export async function completeOAuth(opts: {
       throw new Error('account_already_linked')
     }
     // Ensure user exists
-    let user = await adapter.getUser(linkToUserId)
+    const user = await adapter.getUser(linkToUserId)
     if (!user) throw new Error('link_target_not_found')
     // Link account if not yet linked
     if (!existingAcc) {
@@ -106,7 +118,7 @@ export async function completeOAuth(opts: {
     }
     await adapter.linkAccount({
       id: undefined as any,
-      userId: user!.id,
+      userId: user?.id,
       provider: provider.id,
       providerAccountId: profile?.id ?? 'no-id',
       accessToken: tokens.access_token,
@@ -117,8 +129,7 @@ export async function completeOAuth(opts: {
     } as any)
   }
 
-  const session = await adapter.createSession(newSession(user!.id))
+  const session = await adapter.createSession(newSession(user?.id))
 
   return { session, redirectTo: st.r ?? '/' }
 }
-

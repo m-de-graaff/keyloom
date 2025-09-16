@@ -17,7 +17,9 @@ export function randomEmail(): string {
  * Generate random string
  */
 export function randomString(length = 10): string {
-  return Math.random().toString(36).substring(2, 2 + length)
+  return Math.random()
+    .toString(36)
+    .substring(2, 2 + length)
 }
 
 /**
@@ -27,7 +29,7 @@ export function randomUser() {
   return {
     email: randomEmail(),
     name: `Test User ${randomString(5)}`,
-    image: `https://example.com/avatar/${randomString(8)}.jpg`
+    image: `https://example.com/avatar/${randomString(8)}.jpg`,
   }
 }
 
@@ -38,7 +40,7 @@ export function randomOrg() {
   const name = `Test Org ${randomString(5)}`
   return {
     name,
-    slug: name.toLowerCase().replace(/\s+/g, '-')
+    slug: name.toLowerCase().replace(/\s+/g, '-'),
   }
 }
 
@@ -46,7 +48,7 @@ export function randomOrg() {
  * Sleep utility for testing timing-sensitive operations
  */
 export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 /**
@@ -100,7 +102,7 @@ export class TestDataManager {
   async createSession(userId: string, expiresAt?: Date) {
     const session = await this.adapter.createSession({
       userId,
-      expiresAt: expiresAt || futureDate()
+      expiresAt: expiresAt || futureDate(),
     })
     this.createdSessions.push(session.id)
     return session
@@ -116,7 +118,7 @@ export class TestDataManager {
       }
     }
 
-    for (const orgId of this.createdOrgs) {
+    for (const _orgId of this.createdOrgs) {
       try {
         // Note: This assumes we have a deleteOrganization method
         // If not available, we'll need to clean up manually
@@ -125,7 +127,7 @@ export class TestDataManager {
       }
     }
 
-    for (const userId of this.createdUsers) {
+    for (const _userId of this.createdUsers) {
       try {
         // Note: This assumes we have a deleteUser method
         // If not available, users will be cleaned up by foreign key constraints
@@ -211,8 +213,8 @@ export function expectNotFound(result: any) {
 export function runIfCapable<T>(
   adapter: KeyloomAdapter,
   capability: keyof KeyloomAdapter['capabilities'],
-  testFn: () => T
-): T | void {
+  testFn: () => T,
+): T | undefined {
   if (adapter.capabilities[capability]) {
     return testFn()
   } else {
@@ -225,8 +227,8 @@ export function runIfCapable<T>(
  */
 export async function testWithTransaction<T>(
   adapter: KeyloomAdapter,
-  testFn: () => Promise<T>
-): Promise<T | void> {
+  testFn: () => Promise<T>,
+): Promise<T | undefined> {
   if (!adapter.capabilities.transactions) {
     console.log('Skipping transaction test - adapter does not support transactions')
     return
@@ -241,10 +243,10 @@ export async function testWithTransaction<T>(
 export async function expectEventualConsistency<T>(
   testFn: () => Promise<T>,
   maxAttempts = 5,
-  delayMs = 100
+  delayMs = 100,
 ): Promise<T> {
   let lastError: unknown
-  
+
   for (let i = 0; i < maxAttempts; i++) {
     try {
       return await testFn()
@@ -255,6 +257,6 @@ export async function expectEventualConsistency<T>(
       }
     }
   }
-  
+
   throw lastError
 }

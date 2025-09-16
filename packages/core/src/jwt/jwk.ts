@@ -1,21 +1,21 @@
 import { getKeyGenParams } from './header'
-import type { JwtAlg } from './types'
+import type { Jwk, JwtAlg } from './types'
 
 /**
  * Generate a new key pair for JWT signing
  */
 export async function generateKeyPair(alg: JwtAlg): Promise<{
   kid: string
-  publicJwk: JsonWebKey
-  privateJwk: JsonWebKey
+  publicJwk: Jwk
+  privateJwk: Jwk
 }> {
   // Generate key pair using WebCrypto
   const keyGenParams = getKeyGenParams(alg)
-  const { publicKey, privateKey } = await crypto.subtle.generateKey(
-    keyGenParams as any,
+  const { publicKey, privateKey } = (await crypto.subtle.generateKey(
+    keyGenParams,
     true, // extractable
-    ['sign', 'verify']
-  )
+    ['sign', 'verify'],
+  )) as CryptoKeyPair
 
   // Export keys as JWK
   const publicJwk = await crypto.subtle.exportKey('jwk', publicKey)
@@ -25,24 +25,24 @@ export async function generateKeyPair(alg: JwtAlg): Promise<{
   const kid = crypto.randomUUID()
 
   // Add metadata to JWKs
-  const enrichedPublicJwk: JsonWebKey = {
+  const enrichedPublicJwk: Jwk = {
     ...publicJwk,
     kid,
     alg,
-    use: 'sig'
+    use: 'sig',
   }
 
-  const enrichedPrivateJwk: JsonWebKey = {
+  const enrichedPrivateJwk: Jwk = {
     ...privateJwk,
     kid,
     alg,
-    use: 'sig'
+    use: 'sig',
   }
 
   return {
     kid,
     publicJwk: enrichedPublicJwk,
-    privateJwk: enrichedPrivateJwk
+    privateJwk: enrichedPrivateJwk,
   }
 }
 
@@ -51,13 +51,13 @@ export async function generateKeyPair(alg: JwtAlg): Promise<{
  */
 export async function importPrivateKey(jwk: JsonWebKey, alg: JwtAlg): Promise<CryptoKey> {
   const keyGenParams = getKeyGenParams(alg)
-  
+
   return crypto.subtle.importKey(
     'jwk',
     jwk,
-    keyGenParams as any,
+    keyGenParams,
     false, // not extractable for security
-    ['sign']
+    ['sign'],
   )
 }
 
@@ -66,22 +66,24 @@ export async function importPrivateKey(jwk: JsonWebKey, alg: JwtAlg): Promise<Cr
  */
 export async function importPublicKey(jwk: JsonWebKey, alg: JwtAlg): Promise<CryptoKey> {
   const keyGenParams = getKeyGenParams(alg)
-  
+
   return crypto.subtle.importKey(
     'jwk',
     jwk,
-    keyGenParams as any,
+    keyGenParams,
     false, // not extractable
-    ['verify']
+    ['verify'],
   )
 }
 
 /**
  * Create a public JWKS (JSON Web Key Set) from an array of public JWKs
  */
-export function createPublicJwks(publicJwks: JsonWebKey[]): { keys: JsonWebKey[] } {
+export function createPublicJwks(publicJwks: Jwk[]): {
+  keys: Jwk[]
+} {
   // Filter out private key components and ensure only public parts are included
-  const publicKeys = publicJwks.map(jwk => {
+  const publicKeys = publicJwks.map((jwk) => {
     const { d, p, q, dp, dq, qi, ...publicParts } = jwk
     return publicParts
   })
@@ -92,7 +94,7 @@ export function createPublicJwks(publicJwks: JsonWebKey[]): { keys: JsonWebKey[]
 /**
  * Validate a JWK structure
  */
-export function validateJwk(jwk: JsonWebKey, alg: JwtAlg): boolean {
+export function validateJwk(jwk: Jwk, alg: JwtAlg): boolean {
   if (!jwk.kid || !jwk.kty) {
     return false
   }
@@ -110,7 +112,7 @@ export function validateJwk(jwk: JsonWebKey, alg: JwtAlg): boolean {
 /**
  * Extract public JWK from private JWK
  */
-export function extractPublicJwk(privateJwk: JsonWebKey): JsonWebKey {
+export function extractPublicJwk(privateJwk: Jwk): Jwk {
   const { d, p, q, dp, dq, qi, ...publicParts } = privateJwk
   return publicParts
 }
@@ -118,7 +120,7 @@ export function extractPublicJwk(privateJwk: JsonWebKey): JsonWebKey {
 /**
  * Check if a JWK contains private key material
  */
-export function isPrivateJwk(jwk: JsonWebKey): boolean {
+export function isPrivateJwk(jwk: Jwk): boolean {
   // Check for common private key components
   return !!(jwk.d || jwk.p || jwk.q)
 }
@@ -130,11 +132,11 @@ export async function generateKeyPairWithKeys(alg: JwtAlg): Promise<{
   kid: string
   publicKey: CryptoKey
   privateKey: CryptoKey
-  publicJwk: JsonWebKey
-  privateJwk: JsonWebKey
+  publicJwk: Jwk
+  privateJwk: Jwk
 }> {
   const { kid, publicJwk, privateJwk } = await generateKeyPair(alg)
-  
+
   const publicKey = await importPublicKey(publicJwk, alg)
   const privateKey = await importPrivateKey(privateJwk, alg)
 
@@ -143,6 +145,6 @@ export async function generateKeyPairWithKeys(alg: JwtAlg): Promise<{
     publicKey,
     privateKey,
     publicJwk,
-    privateJwk
+    privateJwk,
   }
 }

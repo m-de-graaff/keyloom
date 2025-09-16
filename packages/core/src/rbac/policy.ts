@@ -1,4 +1,4 @@
-import type { Role, Permission } from './types'
+import type { Permission, Role } from './types'
 
 export type PermissionMap = Record<Permission, Role[]>
 
@@ -13,4 +13,3 @@ export function can(role: Role, perm: Permission, map: PermissionMap) {
   const allowed = map[perm] ?? []
   return allowed.includes(role)
 }
-

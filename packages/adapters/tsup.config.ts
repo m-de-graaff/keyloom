@@ -11,4 +11,3 @@ export default defineConfig({
   target: 'node18',
   external: ['@keyloom/core', '@prisma/client'],
 })
-

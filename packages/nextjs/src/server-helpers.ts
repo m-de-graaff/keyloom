@@ -2,8 +2,8 @@ import { getCurrentSession } from '@keyloom/core/runtime/current-session'
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { parseCookieValue } from './cookies'
+import { createJwtConfig, getJwtSession } from './jwt-server'
 import type { NextKeyloomConfig } from './types'
-import { getJwtSession, requireJwtAuth, createJwtConfig, type JwtConfig } from './jwt-server'
 
 // Module-local cache of adapter/config to avoid re-instantiations
 let _config: NextKeyloomConfig | undefined

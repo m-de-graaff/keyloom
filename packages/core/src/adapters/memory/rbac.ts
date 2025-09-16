@@ -1,11 +1,5 @@
+import type { Entitlements, Invite, Membership, Organization, RbacAdapter } from '../../rbac/types'
 import type { ID } from '../../types'
-import type {
-  Entitlements,
-  Invite,
-  Membership,
-  Organization,
-  RbacAdapter,
-} from '../../rbac/types'
 import { newId } from '../../util/ids'
 import { now } from '../../util/time'
 import type { MemoryStore } from './store'
@@ -35,7 +29,9 @@ export function memoryRbac(store: MemoryStore): RbacAdapter {
       for (const m of store.memberships.values()) {
         if (m.userId === userId && m.status === 'active') orgIds.add(m.orgId)
       }
-      return Array.from(orgIds).map((oid) => store.orgs.get(oid)!).filter(Boolean)
+      return Array.from(orgIds)
+        .map((oid) => store.orgs.get(oid)!)
+        .filter(Boolean)
     },
 
     async addMember(data: { userId: ID; orgId: ID; role: string }): Promise<Membership> {
@@ -60,7 +56,10 @@ export function memoryRbac(store: MemoryStore): RbacAdapter {
       return m
     },
 
-    async updateMember(id: ID, data: Partial<Pick<Membership, 'role' | 'status'>>): Promise<Membership> {
+    async updateMember(
+      id: ID,
+      data: Partial<Pick<Membership, 'role' | 'status'>>,
+    ): Promise<Membership> {
       const prev = store.memberships.get(id)
       if (!prev) throw new Error('membership_not_found')
       const next: Membership = { ...prev, ...data, updatedAt: now() }
@@ -77,12 +76,13 @@ export function memoryRbac(store: MemoryStore): RbacAdapter {
 
     async getMembership(userId: ID, orgId: ID) {
       const mid = store.membershipByUserOrg.get(`${userId}:${orgId}`)
-      return mid ? store.memberships.get(mid) ?? null : null
+      return mid ? (store.memberships.get(mid) ?? null) : null
     },
 
     async listMembers(orgId: ID) {
       const out: (Membership & { userEmail?: string | null })[] = []
-      for (const m of store.memberships.values()) if (m.orgId === orgId) out.push({ ...m, userEmail: null })
+      for (const m of store.memberships.values())
+        if (m.orgId === orgId) out.push({ ...m, userEmail: null })
       return out
     },
 
@@ -111,7 +111,7 @@ export function memoryRbac(store: MemoryStore): RbacAdapter {
 
     async getInviteByTokenHash(orgId: ID, tokenHash: string) {
       const id = store.inviteByOrgToken.get(`${orgId}:${tokenHash}`)
-      return id ? store.invites.get(id) ?? null : null
+      return id ? (store.invites.get(id) ?? null) : null
     },
 
     async consumeInvite(inviteId: ID) {
@@ -129,4 +129,3 @@ export function memoryRbac(store: MemoryStore): RbacAdapter {
     },
   }
 }
-

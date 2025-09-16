@@ -1,24 +1,15 @@
+import type { Account, AuditEvent, ID, Session, User, VerificationToken } from '@keyloom/core'
 import type {
-  Account,
-  Adapter,
-  AuditEvent,
-  ID,
-  Session,
-  User,
-  VerificationToken,
-} from '@keyloom/core'
-import type { RbacAdapter } from '@keyloom/core'
-import type {
-  KeyloomAdapter,
   AdapterCapabilities,
-  BaseAdapterConfig
+  BaseAdapterConfig,
+  KeyloomAdapter,
 } from '@keyloom/core/adapter-types'
+import { normalizeEmail } from '@keyloom/core/adapter-types'
 // Note: We intentionally avoid tight coupling to Prisma types to keep this package buildable without a generated client
 // If you have @prisma/client installed, your app will get proper intellisense
-import { mapPrismaError, mapError } from './errors'
-import { rbacAdapter } from './rbac'
+import { mapPrismaError } from './errors'
 import { createRefreshTokenStore } from './jwt'
-import { normalizeEmail, createTimestamp } from '@keyloom/core/adapter-types'
+import { rbacAdapter } from './rbac'
 
 type AnyPrismaClient = any
 
@@ -41,19 +32,18 @@ export const capabilities: AdapterCapabilities = {
   ttlIndex: false, // Prisma doesn't support TTL indexes directly
   caseInsensitiveEmail: 'app-normalize', // Can be 'citext' if using PostgreSQL with citext
   upsert: true,
-  maxIdentifierLength: 191 // MySQL limitation, can be higher for PostgreSQL
+  maxIdentifierLength: 191, // MySQL limitation, can be higher for PostgreSQL
 }
 
 export default function prismaAdapter(
   prisma: AnyPrismaClient,
-  config: PrismaAdapterConfig = {}
+  _config: PrismaAdapterConfig = {},
 ): KeyloomAdapter & {
   // credentials extension:
   createCredential(userId: ID, hash: string): Promise<{ id: ID; userId: ID }>
   getCredentialByUserId(userId: ID): Promise<{ id: ID; userId: ID; hash: string } | null>
   updateCredential(userId: ID, hash: string): Promise<void>
 } {
-
   const base = {
     // Users
     async createUser(data: Partial<User>) {
@@ -78,14 +68,17 @@ export default function prismaAdapter(
     async getUserByEmail(email: string) {
       // Normalize email for consistent lookup
       const normalizedEmail = normalizeEmail(email)
-      const u = await prisma.user.findUnique({ where: { email: normalizedEmail } })
+      const u = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      })
       return (u as unknown as User | null) ?? null
     },
     async updateUser(id: ID, data: Partial<User>) {
       try {
         const updateData: any = {}
         if (typeof (data as any).email !== 'undefined') updateData.email = (data as any).email
-        if (typeof (data as any).emailVerified !== 'undefined') updateData.emailVerified = (data as any).emailVerified
+        if (typeof (data as any).emailVerified !== 'undefined')
+          updateData.emailVerified = (data as any).emailVerified
         if (typeof (data as any).name !== 'undefined') updateData.name = (data as any).name
         if (typeof (data as any).image !== 'undefined') updateData.image = (data as any).image
 
@@ -233,12 +226,12 @@ export default function prismaAdapter(
 
       // Clean up expired sessions
       const expiredSessions = await prisma.session.deleteMany({
-        where: { expiresAt: { lt: now } }
+        where: { expiresAt: { lt: now } },
       })
 
       // Clean up expired verification tokens
       const expiredTokens = await prisma.verificationToken.deleteMany({
-        where: { expiresAt: { lt: now } }
+        where: { expiresAt: { lt: now } },
       })
 
       // Clean up expired refresh tokens
@@ -247,7 +240,7 @@ export default function prismaAdapter(
       return {
         sessions: expiredSessions.count || 0,
         tokens: expiredTokens.count || 0,
-        refreshTokens: expiredRefreshTokens
+        refreshTokens: expiredRefreshTokens,
       }
     },
 
@@ -259,7 +252,9 @@ export default function prismaAdapter(
       } catch (error) {
         return {
           status: 'unhealthy' as const,
-          details: { error: error instanceof Error ? error.message : 'Unknown error' }
+          details: {
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
         }
       }
     },
@@ -268,21 +263,16 @@ export default function prismaAdapter(
       if (prisma.$disconnect) {
         await prisma.$disconnect()
       }
-    }
+    },
   })
 
   return extended
 }
 
-// Export capabilities and types for external use
-export { capabilities, type PrismaAdapterConfig }
+export { mapError, mapPrismaError } from './errors'
+// Export selected helpers without re-declaring existing exports
 export { createRefreshTokenStore } from './jwt'
 export { rbacAdapter } from './rbac'
-export { mapPrismaError, mapError } from './errors'
-
 
 // Optional named export alias for convenience
 export { prismaAdapter as PrismaAdapter }
-
-// JWT-related exports
-export * from './jwt'

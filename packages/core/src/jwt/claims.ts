@@ -9,15 +9,21 @@ export function parseDurationToSeconds(duration: string): number {
     throw new Error(`Invalid duration format: ${duration}. Use format like '10m', '1h', '30d'`)
   }
 
-  const [, value, unit] = match
+  const value = match[1] as string
+  const unit = match[2] as 's' | 'm' | 'h' | 'd'
   const num = parseInt(value, 10)
 
   switch (unit) {
-    case 's': return num
-    case 'm': return num * 60
-    case 'h': return num * 60 * 60
-    case 'd': return num * 60 * 60 * 24
-    default: throw new Error(`Unsupported time unit: ${unit}`)
+    case 's':
+      return num
+    case 'm':
+      return num * 60
+    case 'h':
+      return num * 60 * 60
+    case 'd':
+      return num * 60 * 60 * 24
+    default:
+      throw new Error(`Unsupported time unit: ${unit}`)
   }
 }
 
@@ -86,7 +92,7 @@ export function validateJwtClaims(claims: unknown): claims is JwtClaims {
  */
 export function isExpired(claims: JwtClaims, clockSkewSec = 0): boolean {
   const now = Math.floor(Date.now() / 1000)
-  return claims.exp < (now - clockSkewSec)
+  return claims.exp < now - clockSkewSec
 }
 
 /**
@@ -95,7 +101,7 @@ export function isExpired(claims: JwtClaims, clockSkewSec = 0): boolean {
 export function isNotYetValid(claims: JwtClaims & { nbf?: number }, clockSkewSec = 0): boolean {
   if (!claims.nbf) return false
   const now = Math.floor(Date.now() / 1000)
-  return claims.nbf > (now + clockSkewSec)
+  return claims.nbf > now + clockSkewSec
 }
 
 /**
@@ -103,7 +109,7 @@ export function isNotYetValid(claims: JwtClaims & { nbf?: number }, clockSkewSec
  */
 export function validateClaimsTiming(
   claims: JwtClaims & { nbf?: number },
-  clockSkewSec = 60
+  clockSkewSec = 60,
 ): void {
   if (isExpired(claims, clockSkewSec)) {
     throw new Error('JWT token has expired')
@@ -126,20 +132,19 @@ export function validateIssuer(claims: JwtClaims, expectedIssuer: string): void 
 /**
  * Validate JWT audience
  */
-export function validateAudience(
-  claims: JwtClaims,
-  expectedAudience?: string | string[]
-): void {
+export function validateAudience(claims: JwtClaims, expectedAudience?: string | string[]): void {
   if (!expectedAudience) return
 
   const audiences = Array.isArray(expectedAudience) ? expectedAudience : [expectedAudience]
   const claimAudiences = Array.isArray(claims.aud) ? claims.aud : claims.aud ? [claims.aud] : []
 
-  const hasValidAudience = audiences.some(expected =>
-    claimAudiences.includes(expected)
-  )
+  const hasValidAudience = audiences.some((expected) => claimAudiences.includes(expected))
 
   if (!hasValidAudience) {
-    throw new Error(`Invalid audience. Expected one of: ${audiences.join(', ')}, got: ${claimAudiences.join(', ')}`)
+    throw new Error(
+      `Invalid audience. Expected one of: ${audiences.join(
+        ', ',
+      )}, got: ${claimAudiences.join(', ')}`,
+    )
   }
 }

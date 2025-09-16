@@ -2,7 +2,9 @@ import type { OAuthProvider } from '@keyloom/core'
 
 type GitHubProviderOptions = { clientId: string; clientSecret: string }
 
-export function github(opts: GitHubProviderOptions): OAuthProvider & { clientId: string; clientSecret: string } {
+export function github(
+  opts: GitHubProviderOptions,
+): OAuthProvider & { clientId: string; clientSecret: string } {
   return {
     id: 'github',
     authorization: {

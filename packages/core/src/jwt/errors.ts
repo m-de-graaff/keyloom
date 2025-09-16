@@ -11,27 +11,27 @@ export const JWT_ERRORS = {
   JWT_INVALID_AUDIENCE: 'jwt_invalid_audience',
   JWT_UNKNOWN_KID: 'jwt_unknown_kid',
   JWT_UNSUPPORTED_ALGORITHM: 'jwt_unsupported_algorithm',
-  
+
   // Refresh token errors
   REFRESH_TOKEN_INVALID: 'refresh_token_invalid',
   REFRESH_TOKEN_EXPIRED: 'refresh_token_expired',
   REFRESH_TOKEN_REVOKED: 'refresh_token_revoked',
   REFRESH_TOKEN_REUSE_DETECTED: 'refresh_token_reuse_detected',
   REFRESH_TOKEN_FAMILY_REVOKED: 'refresh_token_family_revoked',
-  
+
   // Keystore errors
   KEYSTORE_NO_ACTIVE_KEY: 'keystore_no_active_key',
   KEYSTORE_KEY_NOT_FOUND: 'keystore_key_not_found',
   KEYSTORE_INVALID_KEY: 'keystore_invalid_key',
 } as const
 
-export type JwtErrorCode = typeof JWT_ERRORS[keyof typeof JWT_ERRORS]
+export type JwtErrorCode = (typeof JWT_ERRORS)[keyof typeof JWT_ERRORS]
 
 export class JwtError extends Error {
   constructor(
     public code: JwtErrorCode,
     message?: string,
-    public cause?: Error
+    override cause?: unknown,
   ) {
     super(message || code)
     this.name = 'JwtError'

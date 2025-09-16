@@ -1,5 +1,5 @@
-import { cookies } from 'next/headers'
 import type { ResponseCookies } from 'next/dist/compiled/@edge-runtime/cookies'
+import { cookies } from 'next/headers'
 
 // JWT Cookie names
 export const ACCESS_COOKIE = '__keyloom_access'
@@ -21,7 +21,7 @@ export interface JwtCookieOptions {
 export function setAccessTokenCookie(
   cookieStore: ResponseCookies,
   accessToken: string,
-  options: JwtCookieOptions = {}
+  options: JwtCookieOptions = {},
 ): void {
   cookieStore.set(ACCESS_COOKIE, accessToken, {
     httpOnly: true,
@@ -29,7 +29,7 @@ export function setAccessTokenCookie(
     sameSite: options.sameSite ?? 'lax',
     path: '/',
     domain: options.domain,
-    maxAge: options.maxAge ?? 600 // 10 minutes default
+    maxAge: options.maxAge ?? 600, // 10 minutes default
   })
 }
 
@@ -39,7 +39,7 @@ export function setAccessTokenCookie(
 export function setRefreshTokenCookie(
   cookieStore: ResponseCookies,
   refreshToken: string,
-  options: JwtCookieOptions = {}
+  options: JwtCookieOptions = {},
 ): void {
   cookieStore.set(REFRESH_COOKIE, refreshToken, {
     httpOnly: true,
@@ -47,7 +47,7 @@ export function setRefreshTokenCookie(
     sameSite: options.sameSite ?? 'lax',
     path: '/',
     domain: options.domain,
-    maxAge: options.maxAge ?? 2592000 // 30 days default
+    maxAge: options.maxAge ?? 2592000, // 30 days default
   })
 }
 
@@ -58,16 +58,16 @@ export function setJwtCookies(
   cookieStore: ResponseCookies,
   tokens: { accessToken: string; refreshToken: string },
   ttl: { accessTTLSec: number; refreshTTLSec: number },
-  options: JwtCookieOptions = {}
+  options: JwtCookieOptions = {},
 ): void {
   setAccessTokenCookie(cookieStore, tokens.accessToken, {
     ...options,
-    maxAge: ttl.accessTTLSec
+    maxAge: ttl.accessTTLSec,
   })
-  
+
   setRefreshTokenCookie(cookieStore, tokens.refreshToken, {
     ...options,
-    maxAge: ttl.refreshTTLSec
+    maxAge: ttl.refreshTTLSec,
   })
 }
 
@@ -76,7 +76,7 @@ export function setJwtCookies(
  */
 export function clearJwtCookies(
   cookieStore: ResponseCookies,
-  options: Pick<JwtCookieOptions, 'domain' | 'sameSite'> = {}
+  options: Pick<JwtCookieOptions, 'domain' | 'sameSite'> = {},
 ): void {
   cookieStore.set(ACCESS_COOKIE, '', {
     httpOnly: true,
@@ -84,7 +84,7 @@ export function clearJwtCookies(
     sameSite: options.sameSite ?? 'lax',
     path: '/',
     domain: options.domain,
-    maxAge: 0
+    maxAge: 0,
   })
 
   cookieStore.set(REFRESH_COOKIE, '', {
@@ -93,7 +93,7 @@ export function clearJwtCookies(
     sameSite: options.sameSite ?? 'lax',
     path: '/',
     domain: options.domain,
-    maxAge: 0
+    maxAge: 0,
   })
 }
 
@@ -130,7 +130,7 @@ export function getJwtTokensFromCookies(): {
 } {
   return {
     accessToken: getAccessTokenFromCookies(),
-    refreshToken: getRefreshTokenFromCookies()
+    refreshToken: getRefreshTokenFromCookies(),
   }
 }
 
@@ -149,19 +149,20 @@ export function parseJwtCookiesFromHeader(cookieHeader: string): {
   accessToken?: string
   refreshToken?: string
 } {
-  const cookies = cookieHeader
-    .split('; ')
-    .reduce((acc, cookie) => {
+  const cookies = cookieHeader.split('; ').reduce(
+    (acc, cookie) => {
       const [name, value] = cookie.split('=')
       if (name && value) {
         acc[name] = value
       }
       return acc
-    }, {} as Record<string, string>)
+    },
+    {} as Record<string, string>,
+  )
 
   return {
     accessToken: cookies[ACCESS_COOKIE],
-    refreshToken: cookies[REFRESH_COOKIE]
+    refreshToken: cookies[REFRESH_COOKIE],
   }
 }
 
@@ -171,26 +172,26 @@ export function parseJwtCookiesFromHeader(cookieHeader: string): {
 export function createJwtCookieString(
   tokens: { accessToken: string; refreshToken: string },
   ttl: { accessTTLSec: number; refreshTTLSec: number },
-  options: JwtCookieOptions = {}
+  options: JwtCookieOptions = {},
 ): string[] {
   const baseOptions = [
     'HttpOnly',
     'Secure',
     `SameSite=${options.sameSite ?? 'lax'}`,
     'Path=/',
-    options.domain ? `Domain=${options.domain}` : null
+    options.domain ? `Domain=${options.domain}` : null,
   ].filter(Boolean)
 
   const accessCookie = [
     `${ACCESS_COOKIE}=${tokens.accessToken}`,
     `Max-Age=${ttl.accessTTLSec}`,
-    ...baseOptions
+    ...baseOptions,
   ].join('; ')
 
   const refreshCookie = [
     `${REFRESH_COOKIE}=${tokens.refreshToken}`,
     `Max-Age=${ttl.refreshTTLSec}`,
-    ...baseOptions
+    ...baseOptions,
   ].join('; ')
 
   return [accessCookie, refreshCookie]
@@ -200,7 +201,7 @@ export function createJwtCookieString(
  * Create cookie string for clearing JWT tokens
  */
 export function createClearJwtCookieString(
-  options: Pick<JwtCookieOptions, 'domain' | 'sameSite'> = {}
+  options: Pick<JwtCookieOptions, 'domain' | 'sameSite'> = {},
 ): string[] {
   const baseOptions = [
     'HttpOnly',
@@ -208,7 +209,7 @@ export function createClearJwtCookieString(
     `SameSite=${options.sameSite ?? 'lax'}`,
     'Path=/',
     'Max-Age=0',
-    options.domain ? `Domain=${options.domain}` : null
+    options.domain ? `Domain=${options.domain}` : null,
   ].filter(Boolean)
 
   const clearAccess = [`${ACCESS_COOKIE}=`, ...baseOptions].join('; ')

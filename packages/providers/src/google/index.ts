@@ -1,7 +1,9 @@
 import type { OAuthProvider } from '@keyloom/core'
 
-export default function google(opts: { clientId: string; clientSecret: string }):
-  OAuthProvider & { clientId: string; clientSecret: string } {
+export default function google(opts: {
+  clientId: string
+  clientSecret: string
+}): OAuthProvider & { clientId: string; clientSecret: string } {
   return {
     id: 'google',
     discovery: { issuer: 'https://accounts.google.com' },
@@ -25,4 +27,3 @@ export default function google(opts: { clientId: string; clientSecret: string })
     clientSecret: opts.clientSecret,
   }
 }
-

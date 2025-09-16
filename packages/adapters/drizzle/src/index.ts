@@ -7,24 +7,23 @@ import type {
   User,
   VerificationToken,
 } from '@keyloom/core'
-import type { RbacAdapter } from '@keyloom/core'
-import type { 
-  KeyloomAdapter, 
+import type {
   AdapterCapabilities,
-  BaseAdapterConfig 
+  BaseAdapterConfig,
+  KeyloomAdapter,
 } from '@keyloom/core/adapter-types'
-import { normalizeEmail, createTimestamp } from '@keyloom/core/adapter-types'
-import { eq, and, desc, lt } from 'drizzle-orm'
+import { normalizeEmail } from '@keyloom/core/adapter-types'
+import { and, eq, lt } from 'drizzle-orm'
 import type { DrizzleD1Database } from 'drizzle-orm/d1'
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
 import type { MySql2Database } from 'drizzle-orm/mysql2'
-import { mapError, withErrorMapping } from './errors'
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
+import { withErrorMapping } from './errors'
 import { createRbacAdapter } from './rbac'
 import { createRefreshTokenStore } from './refresh'
 import * as schema from './schema'
 
 // Union type for supported Drizzle database instances
-type DrizzleDatabase = 
+type DrizzleDatabase =
   | NodePgDatabase<typeof schema>
   | MySql2Database<typeof schema>
   | DrizzleD1Database<typeof schema>
@@ -47,7 +46,7 @@ function getCapabilities(dialect: string): AdapterCapabilities {
     transactions: true,
     json: true,
     upsert: true,
-    maxIdentifierLength: 191
+    maxIdentifierLength: 191,
   }
 
   switch (dialect) {
@@ -56,26 +55,26 @@ function getCapabilities(dialect: string): AdapterCapabilities {
         ...base,
         ttlIndex: false, // PostgreSQL doesn't have native TTL
         caseInsensitiveEmail: 'citext', // Can use citext extension
-        maxIdentifierLength: 63
+        maxIdentifierLength: 63,
       }
-    
+
     case 'mysql':
       return {
         ...base,
         ttlIndex: false,
         caseInsensitiveEmail: 'collation', // Use utf8mb4_unicode_ci
-        maxIdentifierLength: 191 // utf8mb4 limitation
+        maxIdentifierLength: 191, // utf8mb4 limitation
       }
-    
+
     case 'sqlite':
       return {
         ...base,
         ttlIndex: false,
         caseInsensitiveEmail: 'app-normalize', // No native case-insensitive support
         json: 'limited', // SQLite JSON support is limited
-        maxIdentifierLength: undefined // No practical limit
+        maxIdentifierLength: undefined, // No practical limit
       }
-    
+
     default:
       return base
   }
@@ -86,7 +85,7 @@ function getCapabilities(dialect: string): AdapterCapabilities {
  */
 export default function drizzleAdapter(
   db: DrizzleDatabase,
-  config: DrizzleAdapterConfig
+  config: DrizzleAdapterConfig,
 ): KeyloomAdapter {
   const capabilities = getCapabilities(config.dialect)
 
@@ -111,12 +110,8 @@ export default function drizzleAdapter(
 
     async getUser(id: ID) {
       return withErrorMapping(async () => {
-        const [user] = await db
-          .select()
-          .from(schema.users)
-          .where(eq(schema.users.id, id))
-          .limit(1)
-        
+        const [user] = await db.select().from(schema.users).where(eq(schema.users.id, id)).limit(1)
+
         return (user as User) || null
       })
     },
@@ -129,7 +124,7 @@ export default function drizzleAdapter(
           .from(schema.users)
           .where(eq(schema.users.email, normalizedEmail))
           .limit(1)
-        
+
         return (user as User) || null
       })
     },
@@ -137,10 +132,11 @@ export default function drizzleAdapter(
     async updateUser(id: ID, data: Partial<User>) {
       return withErrorMapping(async () => {
         const updateData: any = {
-          updatedAt: new Date()
+          updatedAt: new Date(),
         }
-        
-        if (data.email !== undefined) updateData.email = data.email ? normalizeEmail(data.email) : null
+
+        if (data.email !== undefined)
+          updateData.email = data.email ? normalizeEmail(data.email) : null
         if (data.emailVerified !== undefined) updateData.emailVerified = data.emailVerified
         if (data.name !== undefined) updateData.name = data.name
         if (data.image !== undefined) updateData.image = data.image
@@ -150,7 +146,7 @@ export default function drizzleAdapter(
           .set(updateData)
           .where(eq(schema.users.id, id))
           .returning()
-        
+
         return user as User
       })
     },
@@ -187,11 +183,11 @@ export default function drizzleAdapter(
           .where(
             and(
               eq(schema.accounts.provider, provider),
-              eq(schema.accounts.providerAccountId, providerAccountId)
-            )
+              eq(schema.accounts.providerAccountId, providerAccountId),
+            ),
           )
           .limit(1)
-        
+
         return (account as Account) || null
       })
     },
@@ -218,7 +214,7 @@ export default function drizzleAdapter(
           .from(schema.sessions)
           .where(eq(schema.sessions.id, id))
           .limit(1)
-        
+
         return (session as Session) || null
       })
     },
@@ -230,11 +226,7 @@ export default function drizzleAdapter(
     },
 
     // Verification Tokens
-    async createVerificationToken(data: {
-      identifier: string
-      token: string
-      expiresAt: Date
-    }) {
+    async createVerificationToken(data: { identifier: string; token: string; expiresAt: Date }) {
       return withErrorMapping(async () => {
         const tokenData = {
           identifier: data.identifier,
@@ -251,18 +243,18 @@ export default function drizzleAdapter(
     async useVerificationToken(identifier: string, token: string) {
       return withErrorMapping(async () => {
         const tokenHash = await this.hashToken(token)
-        
+
         // Find and delete the token atomically
         const [foundToken] = await db
           .delete(schema.verificationTokens)
           .where(
             and(
               eq(schema.verificationTokens.identifier, identifier),
-              eq(schema.verificationTokens.tokenHash, tokenHash)
-            )
+              eq(schema.verificationTokens.tokenHash, tokenHash),
+            ),
           )
           .returning()
-        
+
         return (foundToken as VerificationToken) || null
       })
     },
@@ -290,8 +282,8 @@ export default function drizzleAdapter(
       const data = encoder.encode(token)
       const hashBuffer = await crypto.subtle.digest('SHA-256', data)
       const hashArray = Array.from(new Uint8Array(hashBuffer))
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-    }
+      return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+    },
   }
 
   // Create RBAC and refresh token adapters
@@ -305,24 +297,24 @@ export default function drizzleAdapter(
     // Optional methods
     async cleanup() {
       const now = new Date()
-      
+
       // Clean up expired sessions
       const expiredSessions = await db
         .delete(schema.sessions)
         .where(lt(schema.sessions.expiresAt, now))
-      
+
       // Clean up expired verification tokens
       const expiredTokens = await db
         .delete(schema.verificationTokens)
         .where(lt(schema.verificationTokens.expiresAt, now))
-      
+
       // Clean up expired refresh tokens
       const expiredRefreshTokens = await refreshTokenStore.cleanupExpired(now)
 
       return {
         sessions: expiredSessions.rowsAffected || 0,
         tokens: expiredTokens.rowsAffected || 0,
-        refreshTokens: expiredRefreshTokens
+        refreshTokens: expiredRefreshTokens,
       }
     },
 
@@ -332,18 +324,18 @@ export default function drizzleAdapter(
         await db.select().from(schema.users).limit(1)
         return { status: 'healthy' as const }
       } catch (error) {
-        return { 
-          status: 'unhealthy' as const, 
-          details: { error: error instanceof Error ? error.message : 'Unknown error' }
+        return {
+          status: 'unhealthy' as const,
+          details: { error: error instanceof Error ? error.message : 'Unknown error' },
         }
       }
-    }
+    },
   })
 
   return extended
 }
 
+export { mapError } from './errors'
 // Export schema and types
 export * from './schema'
-export { mapError } from './errors'
 export type { DrizzleAdapterConfig }

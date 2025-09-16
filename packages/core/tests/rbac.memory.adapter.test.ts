@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { memoryAdapter } from '../src/adapters/memory'
 import { issueInviteToken } from '../src/rbac/invites'
 
@@ -17,14 +17,26 @@ describe('memory adapter RBAC', () => {
     const m1 = await (a as any).getMembership(u1.id, org.id)
     expect(m1?.role).toBe('owner')
 
-    const { token, tokenHash, expiresAt } = issueInviteToken('c@d.co', org.id, 'member', 'secret', 5)
-    await (a as any).createInvite({ orgId: org.id, email: 'c@d.co', role: 'member', tokenHash, expiresAt })
+    const { token, tokenHash, expiresAt } = issueInviteToken(
+      'c@d.co',
+      org.id,
+      'member',
+      'secret',
+      5,
+    )
+    await (a as any).createInvite({
+      orgId: org.id,
+      email: 'c@d.co',
+      role: 'member',
+      tokenHash,
+      expiresAt,
+    })
 
     const inv = await (a as any).getInviteByTokenHash(org.id, tokenHash)
     expect(inv?.email).toBe('c@d.co')
 
-    await (a as any).consumeInvite(inv!.id)
-    await (a as any).addMember({ userId: u2.id, orgId: org.id, role: inv!.role })
+    await (a as any).consumeInvite(inv?.id)
+    await (a as any).addMember({ userId: u2.id, orgId: org.id, role: inv?.role })
 
     const m2 = await (a as any).getMembership(u2.id, org.id)
     expect(m2?.role).toBe('member')
@@ -33,4 +45,3 @@ describe('memory adapter RBAC', () => {
     expect(members.length).toBe(2)
   })
 })
-

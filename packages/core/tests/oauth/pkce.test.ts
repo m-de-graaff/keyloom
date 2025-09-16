@@ -17,4 +17,3 @@ describe('oauth/pkce', () => {
     expect(challenge).toBe(recomputed)
   })
 })
-

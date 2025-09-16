@@ -15,4 +15,3 @@
     "after:bump": "pnpm build"
   }
 }
-

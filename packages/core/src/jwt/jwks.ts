@@ -6,15 +6,15 @@ import type { JwtAlg, Keystore, RotationPolicy } from './types'
  */
 export async function createKeystore(alg: JwtAlg): Promise<Keystore> {
   const { kid, publicJwk, privateJwk } = await generateKeyPair(alg)
-  
+
   return {
     active: {
       kid,
       privateJwk,
       publicJwk,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     },
-    previous: []
+    previous: [],
   }
 }
 
@@ -22,10 +22,7 @@ export async function createKeystore(alg: JwtAlg): Promise<Keystore> {
  * Export public JWKS from keystore
  */
 export function exportPublicJwks(keystore: Keystore): { keys: JsonWebKey[] } {
-  const keys = [
-    keystore.active.publicJwk,
-    ...keystore.previous.map(prev => prev.publicJwk)
-  ]
+  const keys = [keystore.active.publicJwk, ...keystore.previous.map((prev) => prev.publicJwk)]
 
   return { keys }
 }
@@ -33,13 +30,10 @@ export function exportPublicJwks(keystore: Keystore): { keys: JsonWebKey[] } {
 /**
  * Check if keystore needs rotation based on policy
  */
-export function needsRotation(
-  keystore: Keystore,
-  policy: RotationPolicy
-): boolean {
+export function needsRotation(keystore: Keystore, policy: RotationPolicy): boolean {
   const activeCreatedAt = new Date(keystore.active.createdAt)
   const rotationThreshold = new Date(Date.now() - policy.rotationDays * 24 * 60 * 60 * 1000)
-  
+
   return activeCreatedAt < rotationThreshold
 }
 
@@ -49,11 +43,11 @@ export function needsRotation(
 export async function rotateKeystore(
   keystore: Keystore,
   alg: JwtAlg,
-  policy: RotationPolicy
+  policy: RotationPolicy,
 ): Promise<Keystore> {
   // Generate new active key
   const { kid, publicJwk, privateJwk } = await generateKeyPair(alg)
-  
+
   const now = new Date().toISOString()
   const expiresAt = new Date(Date.now() + policy.overlapDays * 24 * 60 * 60 * 1000).toISOString()
 
@@ -63,24 +57,22 @@ export async function rotateKeystore(
       kid: keystore.active.kid,
       publicJwk: keystore.active.publicJwk,
       retiredAt: now,
-      expiresAt
+      expiresAt,
     },
-    ...keystore.previous
+    ...keystore.previous,
   ]
 
   // Clean up expired previous keys
-  const validPrevious = newPrevious.filter(prev => 
-    new Date(prev.expiresAt) > new Date()
-  )
+  const validPrevious = newPrevious.filter((prev) => new Date(prev.expiresAt) > new Date())
 
   return {
     active: {
       kid,
       privateJwk,
       publicJwk,
-      createdAt: now
+      createdAt: now,
     },
-    previous: validPrevious
+    previous: validPrevious,
   }
 }
 
@@ -89,13 +81,11 @@ export async function rotateKeystore(
  */
 export function cleanupExpiredKeys(keystore: Keystore): Keystore {
   const now = new Date()
-  const validPrevious = keystore.previous.filter(prev => 
-    new Date(prev.expiresAt) > now
-  )
+  const validPrevious = keystore.previous.filter((prev) => new Date(prev.expiresAt) > now)
 
   return {
     ...keystore,
-    previous: validPrevious
+    previous: validPrevious,
   }
 }
 
@@ -104,21 +94,21 @@ export function cleanupExpiredKeys(keystore: Keystore): Keystore {
  */
 export function findKeyInKeystore(
   keystore: Keystore,
-  kid: string
+  kid: string,
 ): { publicJwk: JsonWebKey; privateJwk?: JsonWebKey } | null {
   // Check active key
   if (keystore.active.kid === kid) {
     return {
       publicJwk: keystore.active.publicJwk,
-      privateJwk: keystore.active.privateJwk
+      privateJwk: keystore.active.privateJwk,
     }
   }
 
   // Check previous keys (only public keys available)
-  const previousKey = keystore.previous.find(prev => prev.kid === kid)
+  const previousKey = keystore.previous.find((prev) => prev.kid === kid)
   if (previousKey) {
     return {
-      publicJwk: previousKey.publicJwk
+      publicJwk: previousKey.publicJwk,
     }
   }
 
@@ -129,10 +119,7 @@ export function findKeyInKeystore(
  * Get all public keys from keystore for verification
  */
 export function getPublicKeysForVerification(keystore: Keystore): JsonWebKey[] {
-  return [
-    keystore.active.publicJwk,
-    ...keystore.previous.map(prev => prev.publicJwk)
-  ]
+  return [keystore.active.publicJwk, ...keystore.previous.map((prev) => prev.publicJwk)]
 }
 
 /**
@@ -161,6 +148,6 @@ export function validateKeystore(keystore: unknown): keystore is Keystore {
 export function createDefaultRotationPolicy(): RotationPolicy {
   return {
     rotationDays: 90, // Rotate every 90 days
-    overlapDays: 7    // Keep previous key valid for 7 days
+    overlapDays: 7, // Keep previous key valid for 7 days
   }
 }

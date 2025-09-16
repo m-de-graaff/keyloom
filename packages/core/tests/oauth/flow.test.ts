@@ -1,13 +1,16 @@
 import { describe, expect, it, vi } from 'vitest'
-import { startOAuth, completeOAuth } from '../../src/oauth/flow'
-import type { OAuthProvider } from '../../src/oauth/types'
 import { memoryAdapter } from '../../src/adapters/memory'
+import { completeOAuth, startOAuth } from '../../src/oauth/flow'
+import type { OAuthProvider } from '../../src/oauth/types'
 
 const provider: OAuthProvider & { clientId: string; clientSecret: string } = {
   id: 'dev',
   authorization: { url: 'https://example.com/authorize' },
   token: { url: 'https://example.com/token', style: 'json' },
-  userinfo: { url: 'https://example.com/userinfo', map: (raw) => ({ id: raw.id, email: raw.email ?? null }) },
+  userinfo: {
+    url: 'https://example.com/userinfo',
+    map: (raw) => ({ id: raw.id, email: raw.email ?? null }),
+  },
   scopes: [],
   clientId: 'id',
   clientSecret: 'secret',
@@ -19,7 +22,12 @@ const secrets = { authSecret: '0123456789abcdef0123456789abcdef' }
 
 describe('oauth/flow', () => {
   it('startOAuth builds authorize URL and state cookie', async () => {
-    const { authorizeUrl, stateCookie } = await startOAuth({ provider, baseUrl, callbackPath, secrets })
+    const { authorizeUrl, stateCookie } = await startOAuth({
+      provider,
+      baseUrl,
+      callbackPath,
+      secrets,
+    })
     const u = new URL(authorizeUrl)
     expect(u.origin + u.pathname).toBe('https://example.com/authorize')
     expect(u.searchParams.get('client_id')).toBe('id')
@@ -37,7 +45,12 @@ describe('oauth/flow', () => {
     }))
 
     const adapter = memoryAdapter()
-    const { authorizeUrl, stateCookie } = await startOAuth({ provider, baseUrl, callbackPath, secrets })
+    const { authorizeUrl, stateCookie } = await startOAuth({
+      provider,
+      baseUrl,
+      callbackPath,
+      secrets,
+    })
     const state = (stateCookie.split('=')[1] ?? '').split(';')[0]
     const code = 'CODE'
 
@@ -56,4 +69,3 @@ describe('oauth/flow', () => {
     expect(redirectTo).toBe('/')
   })
 })
-

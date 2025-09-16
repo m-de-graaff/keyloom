@@ -15,6 +15,41 @@
       "types": "./dist/github.d.ts",
       "import": "./dist/github.js",
       "require": "./dist/github.cjs"
+    },
+    "./google": {
+      "types": "./dist/google.d.ts",
+      "import": "./dist/google.js",
+      "require": "./dist/google.cjs"
+    },
+    "./discord": {
+      "types": "./dist/discord.d.ts",
+      "import": "./dist/discord.js",
+      "require": "./dist/discord.cjs"
+    },
+    "./x": {
+      "types": "./dist/x.d.ts",
+      "import": "./dist/x.js",
+      "require": "./dist/x.cjs"
+    },
+    "./gitlab": {
+      "types": "./dist/gitlab.d.ts",
+      "import": "./dist/gitlab.js",
+      "require": "./dist/gitlab.cjs"
+    },
+    "./microsoft": {
+      "types": "./dist/microsoft.d.ts",
+      "import": "./dist/microsoft.js",
+      "require": "./dist/microsoft.cjs"
+    },
+    "./apple": {
+      "types": "./dist/apple.d.ts",
+      "import": "./dist/apple.js",
+      "require": "./dist/apple.cjs"
+    },
+    "./auth0": {
+      "types": "./dist/auth0.d.ts",
+      "import": "./dist/auth0.js",
+      "require": "./dist/auth0.cjs"
     }
   },
   "files": [

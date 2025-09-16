@@ -38,10 +38,7 @@ export function generateSecret(length = 32): string {
  * Derive JWT signing key from auth secret
  */
 export function deriveJwtSecret(authSecret: string, purpose = 'jwt-signing'): string {
-  return createHash('sha256')
-    .update(authSecret)
-    .update(purpose)
-    .digest('base64url')
+  return createHash('sha256').update(authSecret).update(purpose).digest('base64url')
 }
 
 /**
@@ -49,16 +46,17 @@ export function deriveJwtSecret(authSecret: string, purpose = 'jwt-signing'): st
  */
 export function getSecretsFromEnv(): JwtSecrets {
   const authSecret = process.env.AUTH_SECRET || process.env.KEYLOOM_AUTH_SECRET
-  
+
   if (!authSecret) {
     throw new Error('AUTH_SECRET environment variable is required')
   }
 
-  return {
-    authSecret,
-    jwtSecret: process.env.JWT_SECRET || process.env.KEYLOOM_JWT_SECRET,
-    jwksPath: process.env.JWKS_PATH || process.env.KEYLOOM_JWKS_PATH
-  }
+  const out: JwtSecrets = { authSecret }
+  const jwtSecret = process.env.JWT_SECRET || process.env.KEYLOOM_JWT_SECRET
+  if (jwtSecret !== undefined) out.jwtSecret = jwtSecret
+  const jwksPath = process.env.JWKS_PATH || process.env.KEYLOOM_JWKS_PATH
+  if (jwksPath !== undefined) out.jwksPath = jwksPath
+  return out
 }
 
 /**
@@ -66,12 +64,15 @@ export function getSecretsFromEnv(): JwtSecrets {
  */
 export function createSecrets(secrets: Partial<JwtSecrets>): JwtSecrets {
   const envSecrets = getSecretsFromEnv()
-  
+
   const finalSecrets: JwtSecrets = {
-    authSecret: secrets.authSecret || envSecrets.authSecret,
-    jwtSecret: secrets.jwtSecret || envSecrets.jwtSecret,
-    jwksPath: secrets.jwksPath || envSecrets.jwksPath
+    authSecret: secrets.authSecret ?? envSecrets.authSecret,
   }
+
+  const jwtSecret = secrets.jwtSecret ?? envSecrets.jwtSecret
+  if (jwtSecret !== undefined) finalSecrets.jwtSecret = jwtSecret
+  const jwksPath = secrets.jwksPath ?? envSecrets.jwksPath
+  if (jwksPath !== undefined) finalSecrets.jwksPath = jwksPath
 
   validateSecrets(finalSecrets)
   return finalSecrets
@@ -116,7 +117,7 @@ export class SecretsManager {
   updateSecrets(newSecrets: Partial<JwtSecrets>): void {
     this.secrets = createSecrets({
       ...this.secrets,
-      ...newSecrets
+      ...newSecrets,
     })
   }
 
@@ -124,10 +125,7 @@ export class SecretsManager {
    * Generate HMAC for refresh token hashing
    */
   createTokenHash(token: string): string {
-    return createHash('sha256')
-      .update(token)
-      .update(this.secrets.authSecret)
-      .digest('hex')
+    return createHash('sha256').update(token).update(this.secrets.authSecret).digest('hex')
   }
 
   /**
@@ -142,10 +140,7 @@ export class SecretsManager {
    * Create a derived key for specific purposes
    */
   deriveKey(purpose: string, length = 32): string {
-    const derived = createHash('sha256')
-      .update(this.secrets.authSecret)
-      .update(purpose)
-      .digest()
+    const derived = createHash('sha256').update(this.secrets.authSecret).update(purpose).digest()
 
     return derived.subarray(0, length).toString('base64url')
   }

@@ -11,14 +11,14 @@ export function setAccessTokenCookie(
   reply: FastifyReply,
   accessToken: string,
   maxAgeSec: number,
-  opts: { domain?: string; sameSite?: 'lax' | 'strict' | 'none' }
+  opts: { domain?: string; sameSite?: 'lax' | 'strict' | 'none' },
 ): void {
   const cookieOptions: Record<string, unknown> = {
     secure: true,
     httpOnly: true,
     path: '/',
     maxAge: maxAgeSec,
-    sameSite: opts.sameSite || 'lax'
+    sameSite: opts.sameSite || 'lax',
   }
 
   if (opts.domain) {
@@ -45,14 +45,14 @@ export function setRefreshTokenCookie(
   reply: FastifyReply,
   refreshToken: string,
   maxAgeSec: number,
-  opts: { domain?: string; sameSite?: 'lax' | 'strict' | 'none' }
+  opts: { domain?: string; sameSite?: 'lax' | 'strict' | 'none' },
 ): void {
   const cookieOptions: Record<string, unknown> = {
     secure: true,
     httpOnly: true,
     path: '/',
     maxAge: maxAgeSec,
-    sameSite: opts.sameSite || 'lax'
+    sameSite: opts.sameSite || 'lax',
   }
 
   if (opts.domain) {
@@ -79,7 +79,7 @@ export function setJwtCookies(
   reply: FastifyReply,
   tokens: { accessToken: string; refreshToken: string },
   ttl: { accessTTLSec: number; refreshTTLSec: number },
-  opts: { domain?: string; sameSite?: 'lax' | 'strict' | 'none' }
+  opts: { domain?: string; sameSite?: 'lax' | 'strict' | 'none' },
 ): void {
   setAccessTokenCookie(reply, tokens.accessToken, ttl.accessTTLSec, opts)
   setRefreshTokenCookie(reply, tokens.refreshToken, ttl.refreshTTLSec, opts)
@@ -90,7 +90,7 @@ export function setJwtCookies(
  */
 export function clearJwtCookies(
   reply: FastifyReply,
-  opts: { domain?: string; sameSite?: 'lax' | 'strict' | 'none' }
+  opts: { domain?: string; sameSite?: 'lax' | 'strict' | 'none' },
 ): void {
   const cookieOptions = [
     'Path=/',
@@ -98,8 +98,10 @@ export function clearJwtCookies(
     'Secure',
     `SameSite=${opts.sameSite || 'lax'}`,
     'Max-Age=0',
-    opts.domain ? `Domain=${opts.domain}` : null
-  ].filter(Boolean).join('; ')
+    opts.domain ? `Domain=${opts.domain}` : null,
+  ]
+    .filter(Boolean)
+    .join('; ')
 
   reply.header('Set-Cookie', `${ACCESS_COOKIE}=; ${cookieOptions}`)
   reply.header('Set-Cookie', `${REFRESH_COOKIE}=; ${cookieOptions}`)
@@ -116,20 +118,21 @@ export function parseJwtCookies(cookieHeader?: string): {
     return {}
   }
 
-  const cookies = cookieHeader
-    .split('; ')
-    .reduce((acc, cookie) => {
+  const cookies = cookieHeader.split('; ').reduce(
+    (acc, cookie) => {
       const [name, value] = cookie.split('=')
       if (name && value) {
         acc[name] = value
       }
       return acc
-    }, {} as Record<string, string>)
+    },
+    {} as Record<string, string>,
+  )
 
-  return {
-    accessToken: cookies[ACCESS_COOKIE],
-    refreshToken: cookies[REFRESH_COOKIE]
-  }
+  const out: { accessToken?: string; refreshToken?: string } = {}
+  if (cookies[ACCESS_COOKIE]) out.accessToken = cookies[ACCESS_COOKIE]
+  if (cookies[REFRESH_COOKIE]) out.refreshToken = cookies[REFRESH_COOKIE]
+  return out
 }
 
 /**
@@ -137,7 +140,7 @@ export function parseJwtCookies(cookieHeader?: string): {
  */
 export function extractRefreshToken(
   cookieHeader?: string,
-  body?: { refreshToken?: string }
+  body?: { refreshToken?: string },
 ): string | null {
   // First try to get from cookies
   const { refreshToken: cookieToken } = parseJwtCookies(cookieHeader)
@@ -152,10 +155,7 @@ export function extractRefreshToken(
 /**
  * Extract access token from Authorization header or cookies
  */
-export function extractAccessToken(
-  authHeader?: string,
-  cookieHeader?: string
-): string | null {
+export function extractAccessToken(authHeader?: string, cookieHeader?: string): string | null {
   // First try Authorization header
   if (authHeader?.startsWith('Bearer ')) {
     return authHeader.slice(7)

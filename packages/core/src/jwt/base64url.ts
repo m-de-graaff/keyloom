@@ -5,13 +5,13 @@
 
 export function base64urlEncode(data: string | Uint8Array): string {
   let bytes: Uint8Array
-  
+
   if (typeof data === 'string') {
     bytes = new TextEncoder().encode(data)
   } else {
     bytes = data
   }
-  
+
   return Buffer.from(bytes).toString('base64url')
 }
 

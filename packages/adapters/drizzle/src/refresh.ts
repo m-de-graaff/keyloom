@@ -1,5 +1,5 @@
 import type { RefreshTokenRecord, RefreshTokenStore } from '@keyloom/core/jwt'
-import { eq, and, lt, isNull, isNotNull, sql } from 'drizzle-orm'
+import { and, eq, isNotNull, isNull, lt, sql } from 'drizzle-orm'
 import { withErrorMapping } from './errors'
 import type { DrizzleAdapterConfig } from './index'
 import * as schema from './schema'
@@ -12,7 +12,7 @@ type DrizzleDatabase = any // Keep loose for flexibility
  */
 export function createRefreshTokenStore(
   db: DrizzleDatabase,
-  config: DrizzleAdapterConfig
+  _config: DrizzleAdapterConfig,
 ): RefreshTokenStore {
   return {
     async save(record: RefreshTokenRecord) {
@@ -44,7 +44,7 @@ export function createRefreshTokenStore(
           .from(schema.refreshTokens)
           .where(eq(schema.refreshTokens.tokenHash, tokenHash))
           .limit(1)
-        
+
         if (!token) return null
 
         return {
@@ -114,11 +114,11 @@ export function createRefreshTokenStore(
     async cleanupExpired(before?: Date) {
       return withErrorMapping(async () => {
         const cutoffDate = before || new Date()
-        
+
         const result = await db
           .delete(schema.refreshTokens)
           .where(lt(schema.refreshTokens.expiresAt, cutoffDate))
-        
+
         return result.rowsAffected || 0
       })
     },
@@ -131,11 +131,11 @@ export function createRefreshTokenStore(
           .where(
             and(
               eq(schema.refreshTokens.familyId, familyId),
-              isNotNull(schema.refreshTokens.revokedAt)
-            )
+              isNotNull(schema.refreshTokens.revokedAt),
+            ),
           )
           .limit(1)
-        
+
         return !!token
       })
     },
@@ -146,8 +146,8 @@ export function createRefreshTokenStore(
           .select()
           .from(schema.refreshTokens)
           .where(eq(schema.refreshTokens.familyId, familyId))
-        
-        return tokens.map(token => ({
+
+        return tokens.map((token) => ({
           familyId: token.familyId,
           jti: token.jti,
           userId: token.userId,
@@ -169,7 +169,7 @@ export function createRefreshTokenStore(
           .from(schema.refreshTokens)
           .where(eq(schema.refreshTokens.jti, jti))
           .limit(1)
-        
+
         return !!token?.rotatedAt
       })
     },
@@ -180,13 +180,10 @@ export function createRefreshTokenStore(
           .select()
           .from(schema.refreshTokens)
           .where(
-            and(
-              eq(schema.refreshTokens.userId, userId),
-              isNull(schema.refreshTokens.revokedAt)
-            )
+            and(eq(schema.refreshTokens.userId, userId), isNull(schema.refreshTokens.revokedAt)),
           )
-        
-        return tokens.map(token => ({
+
+        return tokens.map((token) => ({
           familyId: token.familyId,
           jti: token.jti,
           userId: token.userId,
@@ -206,12 +203,9 @@ export function createRefreshTokenStore(
           .update(schema.refreshTokens)
           .set({ revokedAt: new Date() })
           .where(
-            and(
-              eq(schema.refreshTokens.userId, userId),
-              isNull(schema.refreshTokens.revokedAt)
-            )
+            and(eq(schema.refreshTokens.userId, userId), isNull(schema.refreshTokens.revokedAt)),
           )
-        
+
         return result.rowsAffected || 0
       })
     },
@@ -225,12 +219,12 @@ export function createRefreshTokenStore(
             and(
               eq(schema.refreshTokens.userId, userId),
               isNull(schema.refreshTokens.revokedAt),
-              isNull(schema.refreshTokens.rotatedAt)
-            )
+              isNull(schema.refreshTokens.rotatedAt),
+            ),
           )
-        
+
         return Number(result?.count || 0)
       })
-    }
+    },
   }
 }

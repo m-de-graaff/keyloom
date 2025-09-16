@@ -32,11 +32,11 @@ export async function withRole(
   if (!orgId) return opts.onDenied ? opts.onDenied() : new Response('select_org', { status: 400 })
   const role = await getRoleForUser(user.id, orgId, opts.adapter)
   if (!role) return opts.onDenied ? opts.onDenied() : new Response('forbidden', { status: 403 })
-  if (opts.requiredRoles?.length && !opts.requiredRoles.includes(role)) return new Response('forbidden', { status: 403 })
+  if (opts.requiredRoles?.length && !opts.requiredRoles.includes(role))
+    return new Response('forbidden', { status: 403 })
   if (opts.requiredPermission && opts.permMap) {
     const allowed = (opts.permMap[opts.requiredPermission] ?? []).includes(role)
     if (!allowed) return new Response('forbidden', { status: 403 })
   }
   return action()
 }
-

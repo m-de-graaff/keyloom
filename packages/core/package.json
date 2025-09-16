@@ -44,6 +44,10 @@
       "types": "./dist/jwt/index.d.ts",
       "import": "./dist/jwt/index.js",
       "require": "./dist/jwt/index.cjs"
+    },
+    "./adapter-types": {
+      "import": "./src/adapter-types.ts",
+      "require": "./dist/adapter-types.cjs"
     }
   },
   "files": [

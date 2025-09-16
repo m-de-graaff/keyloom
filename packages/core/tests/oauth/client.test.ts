@@ -12,7 +12,7 @@ const baseProvider: OAuthProvider & { clientId: string; clientSecret: string } =
   clientSecret: 'secret',
 }
 
-const ogFetch = global.fetch
+const _ogFetch = global.fetch
 
 beforeEach(() => {
   vi.restoreAllMocks()
@@ -41,8 +41,12 @@ describe('oauth/client', () => {
 
     await exchangeToken(provider, 'CODE', 'http://cb', 'ver')
     const [, init] = mock.mock.calls[0]
-    expect((init as RequestInit).headers).toMatchObject({ 'content-type': 'application/x-www-form-urlencoded' })
-    expect(typeof (init as any).body.append === 'function' || typeof (init as any).body === 'string').toBe(true)
+    expect((init as RequestInit).headers).toMatchObject({
+      'content-type': 'application/x-www-form-urlencoded',
+    })
+    expect(
+      typeof (init as any).body.append === 'function' || typeof (init as any).body === 'string',
+    ).toBe(true)
   })
 
   it('fetchUserInfo sends bearer token', async () => {
@@ -56,4 +60,3 @@ describe('oauth/client', () => {
     expect((init as RequestInit).headers).toMatchObject({ Authorization: 'Bearer tok' })
   })
 })
-

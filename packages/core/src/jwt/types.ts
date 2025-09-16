@@ -30,6 +30,8 @@ export type RefreshTokenRecord = {
   userAgent?: string | null
 }
 
+export type Jwk = JsonWebKey & { kid?: string; alg?: string; use?: string }
+
 export type JwtConfig = {
   alg: JwtAlg
   issuer: string

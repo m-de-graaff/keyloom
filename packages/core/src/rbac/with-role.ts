@@ -17,10 +17,13 @@ export function withRole<Req, Res>(
     if (opts.requiredRoles?.length && !hasAnyRole(role, opts.requiredRoles)) {
       return opts.onDenied ? opts.onDenied() : Promise.reject(new Error('forbidden'))
     }
-    if (opts.requiredPermission && opts.permMap && !canPerm(role, opts.requiredPermission, opts.permMap)) {
+    if (
+      opts.requiredPermission &&
+      opts.permMap &&
+      !canPerm(role, opts.requiredPermission, opts.permMap)
+    ) {
       return opts.onDenied ? opts.onDenied() : Promise.reject(new Error('forbidden'))
     }
     return handler(ctx)
   }
 }
-

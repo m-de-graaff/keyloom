@@ -2,9 +2,9 @@ import { randToken } from '../crypto/random'
 import { tokenHash } from '../crypto/token-hash'
 
 export async function issueInviteToken(
-  email: string,
-  orgId: string,
-  role: string,
+  _email: string,
+  _orgId: string,
+  _role: string,
   secret: string,
   ttlMinutes = 60 * 24 * 7,
 ) {
@@ -13,4 +13,3 @@ export async function issueInviteToken(
   const expiresAt = new Date(Date.now() + ttlMinutes * 60_000)
   return { token, tokenHash: hash, expiresAt }
 }
-

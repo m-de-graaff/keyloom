@@ -1,16 +1,15 @@
 import {
-  signJwtWithKey,
+  createRefreshToken,
+  importPrivateKey,
+  type JwtConfig,
   newAccessClaims,
   parseDurationToSeconds,
-  createRefreshToken,
   RefreshTokenRotator,
-  importPrivateKey,
-  type JwtAlg,
-  type JwtConfig,
-  type RefreshTokenStore
+  type RefreshTokenStore,
+  signJwtWithKey,
 } from '@keyloom/core/jwt'
-import { getKeystoreManager } from './keystore'
 import type { Env } from './env'
+import { getKeystoreManager } from './keystore'
 
 /**
  * JWT service for token operations
@@ -25,12 +24,12 @@ export class JwtService {
     this.config = {
       alg: env.JWT_ALGORITHM,
       issuer: env.JWT_ISSUER,
-      audience: env.JWT_AUDIENCE,
       accessTTL: env.JWT_ACCESS_TTL,
       refreshTTL: env.JWT_REFRESH_TTL,
       clockSkewSec: env.JWT_CLOCK_SKEW_SEC,
-      includeOrgRoleInAccess: env.JWT_INCLUDE_ORG_ROLE
+      includeOrgRoleInAccess: env.JWT_INCLUDE_ORG_ROLE,
     }
+    if (env.JWT_AUDIENCE) this.config = { ...this.config, audience: env.JWT_AUDIENCE }
     this.rotator = new RefreshTokenRotator(refreshTokenStore, env.AUTH_SECRET)
   }
 
@@ -45,7 +44,7 @@ export class JwtService {
       role?: string
       ip?: string
       userAgent?: string
-    } = {}
+    } = {},
   ): Promise<{
     accessToken: string
     refreshToken: string
@@ -54,48 +53,52 @@ export class JwtService {
   }> {
     const keystoreManager = getKeystoreManager()
     const activeKey = keystoreManager.getActiveKey()
-    
+
     // Import the private key for signing
     const privateKey = await importPrivateKey(activeKey.privateJwk, this.config.alg)
-    
+
     // Create access token claims
     const accessTTLSec = parseDurationToSeconds(this.config.accessTTL)
-    const claims = newAccessClaims({
+    const accessClaimsInput: {
+      sub: string
+      sid?: string
+      org?: string
+      role?: string
+      iss: string
+      aud?: string | string[]
+      ttlSec: number
+    } = {
       sub: userId,
-      sid: metadata.sessionId,
-      org: this.config.includeOrgRoleInAccess ? metadata.org : undefined,
-      role: this.config.includeOrgRoleInAccess ? metadata.role : undefined,
       iss: this.config.issuer,
-      aud: this.config.audience,
-      ttlSec: accessTTLSec
-    })
+      ttlSec: accessTTLSec,
+    }
+    if (metadata.sessionId) accessClaimsInput.sid = metadata.sessionId
+    if (this.config.includeOrgRoleInAccess && metadata.org) accessClaimsInput.org = metadata.org
+    if (this.config.includeOrgRoleInAccess && metadata.role) accessClaimsInput.role = metadata.role
+    if (this.config.audience) accessClaimsInput.aud = this.config.audience
+    const claims = newAccessClaims(accessClaimsInput)
 
     // Sign the access token
-    const accessToken = await signJwtWithKey(
-      claims,
-      privateKey,
-      activeKey.kid,
-      this.config.alg
-    )
+    const accessToken = await signJwtWithKey(claims, privateKey, activeKey.kid, this.config.alg)
 
     // Create refresh token
     const refreshTTLMs = parseDurationToSeconds(this.config.refreshTTL) * 1000
+    const meta: { sessionId?: string; ip?: string; userAgent?: string } = {}
+    if (metadata.sessionId) meta.sessionId = metadata.sessionId
+    if (metadata.ip) meta.ip = metadata.ip
+    if (metadata.userAgent) meta.userAgent = metadata.userAgent
     const { token: refreshToken } = await createRefreshToken(
       userId,
       this.env.AUTH_SECRET,
       refreshTTLMs,
-      {
-        sessionId: metadata.sessionId,
-        ip: metadata.ip,
-        userAgent: metadata.userAgent
-      }
+      meta,
     )
 
     return {
       accessToken,
       refreshToken,
       accessTTLSec,
-      refreshTTLSec: Math.floor(refreshTTLMs / 1000)
+      refreshTTLSec: Math.floor(refreshTTLMs / 1000),
     }
   }
 
@@ -108,7 +111,7 @@ export class JwtService {
       ip?: string
       userAgent?: string
       sessionId?: string
-    } = {}
+    } = {},
   ): Promise<{
     accessToken: string
     refreshToken: string
@@ -117,41 +120,39 @@ export class JwtService {
     userId: string
   }> {
     const refreshTTLMs = parseDurationToSeconds(this.config.refreshTTL) * 1000
-    
+
     // Rotate the refresh token
-    const { newToken, userId } = await this.rotator.rotate(
-      refreshToken,
-      refreshTTLMs,
-      metadata
-    )
+    const { newToken, userId } = await this.rotator.rotate(refreshToken, refreshTTLMs, metadata)
 
     // Issue new access token
     const keystoreManager = getKeystoreManager()
     const activeKey = keystoreManager.getActiveKey()
     const privateKey = await importPrivateKey(activeKey.privateJwk, this.config.alg)
-    
-    const accessTTLSec = parseDurationToSeconds(this.config.accessTTL)
-    const claims = newAccessClaims({
-      sub: userId,
-      sid: metadata.sessionId,
-      iss: this.config.issuer,
-      aud: this.config.audience,
-      ttlSec: accessTTLSec
-    })
 
-    const accessToken = await signJwtWithKey(
-      claims,
-      privateKey,
-      activeKey.kid,
-      this.config.alg
-    )
+    const accessTTLSec = parseDurationToSeconds(this.config.accessTTL)
+    const refreshClaimsInput: {
+      sub: string
+      sid?: string
+      iss: string
+      aud?: string | string[]
+      ttlSec: number
+    } = {
+      sub: userId,
+      iss: this.config.issuer,
+      ttlSec: accessTTLSec,
+    }
+    if (metadata.sessionId) refreshClaimsInput.sid = metadata.sessionId
+    if (this.config.audience) refreshClaimsInput.aud = this.config.audience
+    const claims = newAccessClaims(refreshClaimsInput)
+
+    const accessToken = await signJwtWithKey(claims, privateKey, activeKey.kid, this.config.alg)
 
     return {
       accessToken,
       refreshToken: newToken,
       accessTTLSec,
       refreshTTLSec: Math.floor(refreshTTLMs / 1000),
-      userId
+      userId,
     }
   }
 
@@ -182,7 +183,7 @@ export class JwtService {
   getTTLSeconds(): { accessTTLSec: number; refreshTTLSec: number } {
     return {
       accessTTLSec: parseDurationToSeconds(this.config.accessTTL),
-      refreshTTLSec: parseDurationToSeconds(this.config.refreshTTL)
+      refreshTTLSec: parseDurationToSeconds(this.config.refreshTTL),
     }
   }
 }

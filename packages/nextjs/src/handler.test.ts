@@ -21,9 +21,7 @@ const config: any = {
   secrets: { authSecret: 'test-secret' },
   session: { strategy: 'database' as const },
   adapter: { __dummy: true },
-  providers: [
-    { id: 'dev' },
-  ],
+  providers: [{ id: 'dev' }],
 }
 
 describe('nextjs/handler oauth', () => {
@@ -33,7 +31,10 @@ describe('nextjs/handler oauth', () => {
 
   it('GET oauth start -> 302 and sets state cookie', async () => {
     const { GET } = createNextHandler(config)
-    const req = { url: 'https://app.test/api/auth/oauth/dev/start?callbackUrl=/dashboard', headers: new Headers() } as any
+    const req = {
+      url: 'https://app.test/api/auth/oauth/dev/start?callbackUrl=/dashboard',
+      headers: new Headers(),
+    } as any
     const res = await GET(req)
     expect(res.status).toBe(307)
 
@@ -60,4 +61,3 @@ describe('nextjs/handler oauth', () => {
     expect(all.toLowerCase()).toContain('max-age=0')
   })
 })
-

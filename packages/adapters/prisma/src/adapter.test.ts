@@ -1,5 +1,5 @@
-import { describe, beforeAll, afterAll } from 'vitest'
-import { runAdapterContractTests } from '@keyloom/adapters/_contracts'
+import { runAdapterContractTests } from '@keyloom/adapters-contracts'
+import { afterAll, beforeAll, describe } from 'vitest'
 import prismaAdapter from './index'
 
 // Mock Prisma client for testing

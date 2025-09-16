@@ -12,6 +12,8 @@
     "src/cookies.ts",
     "src/cookies-edge.ts",
     "src/routing.ts",
+    "src/jwt-server.ts",
+    "src/jwt-middleware.ts",
     "src/types.ts"
   ]
 }

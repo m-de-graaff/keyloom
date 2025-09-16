@@ -9,10 +9,15 @@ export async function routesCommand(args: string[]) {
   }
   const out = getFlag('--out')
   const outJson = getFlag('--outJson')
-  const cwd = getFlag('--cwd')
-  const res = await generateRoutes({ out, outJson, cwd: cwd ? path.resolve(process.cwd(), cwd) : undefined })
+  const cwdFlag = getFlag('--cwd')
+
+  const opts: { cwd?: string; out?: string; outJson?: string } = {}
+  if (out) opts.out = out
+  if (outJson) opts.outJson = outJson
+  if (cwdFlag) opts.cwd = path.resolve(process.cwd(), cwdFlag)
+
+  const res = await generateRoutes(opts)
   console.log(`✔ Found ${res.count} annotated routes`)
   console.log(`✔ Wrote ${res.outTs}`)
   console.log(`✔ Wrote ${res.outJson}`)
 }
-

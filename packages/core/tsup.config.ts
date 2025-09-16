@@ -9,6 +9,7 @@ export default defineConfig({
     'src/runtime/current-session.ts',
     'src/guard/csrf.ts',
     'src/jwt/index.ts',
+    'src/adapter-types.ts',
   ],
   format: ['cjs', 'esm'],
   dts: false,

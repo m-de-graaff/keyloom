@@ -1,15 +1,14 @@
-import type { PrismaClient } from '@prisma/client'
-import type { RefreshTokenStore, RefreshTokenRecord } from '@keyloom/core/jwt'
+import type { RefreshTokenRecord, RefreshTokenStore } from '@keyloom/core/jwt'
 
 /**
  * Prisma-based refresh token store implementation
  */
-export function createRefreshTokenStore(prisma: PrismaClient): RefreshTokenStore {
+export function createRefreshTokenStore(prisma: any): RefreshTokenStore {
   return {
     async save(record: RefreshTokenRecord): Promise<void> {
       await prisma.refreshToken.create({
         data: {
-          id: record.familyId + '_' + record.jti, // Ensure unique ID
+          id: `${record.familyId}_${record.jti}`, // Ensure unique ID
           familyId: record.familyId,
           jti: record.jti,
           userId: record.userId,
@@ -19,13 +18,13 @@ export function createRefreshTokenStore(prisma: PrismaClient): RefreshTokenStore
           parentJti: record.parentJti,
           ip: record.ip,
           userAgent: record.userAgent,
-        }
+        },
       })
     },
 
     async findByHash(hash: string): Promise<RefreshTokenRecord | null> {
       const token = await prisma.refreshToken.findUnique({
-        where: { tokenHash: hash }
+        where: { tokenHash: hash },
       })
 
       if (!token) return null
@@ -45,37 +44,40 @@ export function createRefreshTokenStore(prisma: PrismaClient): RefreshTokenStore
 
     async markRotated(jti: string): Promise<void> {
       await prisma.refreshToken.updateMany({
-        where: { 
+        where: {
           jti,
-          rotatedAt: null // Only update if not already rotated
+          rotatedAt: null, // Only update if not already rotated
         },
-        data: { rotatedAt: new Date() }
+        data: { rotatedAt: new Date() },
       })
     },
 
     async revokeFamily(familyId: string): Promise<void> {
       await prisma.refreshToken.updateMany({
-        where: { 
+        where: {
           familyId,
-          revokedAt: null // Only revoke tokens that aren't already revoked
+          revokedAt: null, // Only revoke tokens that aren't already revoked
         },
-        data: { revokedAt: new Date() }
+        data: { revokedAt: new Date() },
       })
     },
 
-    async createChild(parentRecord: RefreshTokenRecord, childRecord: RefreshTokenRecord): Promise<void> {
+    async createChild(
+      parentRecord: RefreshTokenRecord,
+      childRecord: RefreshTokenRecord,
+    ): Promise<void> {
       // First mark parent as rotated, then create child
       await prisma.$transaction([
         prisma.refreshToken.updateMany({
-          where: { 
+          where: {
             jti: parentRecord.jti,
-            rotatedAt: null
+            rotatedAt: null,
           },
-          data: { rotatedAt: new Date() }
+          data: { rotatedAt: new Date() },
         }),
         prisma.refreshToken.create({
           data: {
-            id: childRecord.familyId + '_' + childRecord.jti,
+            id: `${childRecord.familyId}_${childRecord.jti}`,
             familyId: childRecord.familyId,
             jti: childRecord.jti,
             userId: childRecord.userId,
@@ -85,16 +87,16 @@ export function createRefreshTokenStore(prisma: PrismaClient): RefreshTokenStore
             parentJti: childRecord.parentJti,
             ip: childRecord.ip,
             userAgent: childRecord.userAgent,
-          }
-        })
+          },
+        }),
       ])
     },
 
     async cleanupExpired(before = new Date()): Promise<number> {
       const result = await prisma.refreshToken.deleteMany({
         where: {
-          expiresAt: { lt: before }
-        }
+          expiresAt: { lt: before },
+        },
       })
       return result.count
     },
@@ -103,8 +105,8 @@ export function createRefreshTokenStore(prisma: PrismaClient): RefreshTokenStore
       const revokedToken = await prisma.refreshToken.findFirst({
         where: {
           familyId,
-          revokedAt: { not: null }
-        }
+          revokedAt: { not: null },
+        },
       })
       return !!revokedToken
     },
@@ -112,10 +114,10 @@ export function createRefreshTokenStore(prisma: PrismaClient): RefreshTokenStore
     async getFamily(familyId: string): Promise<RefreshTokenRecord[]> {
       const tokens = await prisma.refreshToken.findMany({
         where: { familyId },
-        orderBy: { createdAt: 'asc' }
+        orderBy: { createdAt: 'asc' },
       })
 
-      return tokens.map(token => ({
+      return tokens.map((token: any) => ({
         familyId: token.familyId,
         jti: token.jti,
         userId: token.userId,
@@ -126,14 +128,14 @@ export function createRefreshTokenStore(prisma: PrismaClient): RefreshTokenStore
         ip: token.ip,
         userAgent: token.userAgent,
       }))
-    }
+    },
   }
 }
 
 /**
  * Helper to get refresh token statistics
  */
-export async function getRefreshTokenStats(prisma: PrismaClient): Promise<{
+export async function getRefreshTokenStats(prisma: any): Promise<{
   total: number
   expired: number
   revoked: number
@@ -141,18 +143,18 @@ export async function getRefreshTokenStats(prisma: PrismaClient): Promise<{
   active: number
 }> {
   const now = new Date()
-  
+
   const [total, expired, revoked, rotated] = await Promise.all([
     prisma.refreshToken.count(),
     prisma.refreshToken.count({
-      where: { expiresAt: { lt: now } }
+      where: { expiresAt: { lt: now } },
     }),
     prisma.refreshToken.count({
-      where: { revokedAt: { not: null } }
+      where: { revokedAt: { not: null } },
     }),
     prisma.refreshToken.count({
-      where: { rotatedAt: { not: null } }
-    })
+      where: { rotatedAt: { not: null } },
+    }),
   ])
 
   const active = total - expired - revoked
@@ -163,17 +165,14 @@ export async function getRefreshTokenStats(prisma: PrismaClient): Promise<{
 /**
  * Helper to revoke all refresh tokens for a user
  */
-export async function revokeAllUserRefreshTokens(
-  prisma: PrismaClient,
-  userId: string
-): Promise<number> {
+export async function revokeAllUserRefreshTokens(prisma: any, userId: string): Promise<number> {
   const result = await prisma.refreshToken.updateMany({
     where: {
       userId,
       revokedAt: null,
-      expiresAt: { gt: new Date() }
+      expiresAt: { gt: new Date() },
     },
-    data: { revokedAt: new Date() }
+    data: { revokedAt: new Date() },
   })
   return result.count
 }
@@ -181,19 +180,16 @@ export async function revokeAllUserRefreshTokens(
 /**
  * Helper to get active refresh token families for a user
  */
-export async function getUserRefreshTokenFamilies(
-  prisma: PrismaClient,
-  userId: string
-): Promise<string[]> {
+export async function getUserRefreshTokenFamilies(prisma: any, userId: string): Promise<string[]> {
   const families = await prisma.refreshToken.findMany({
     where: {
       userId,
       revokedAt: null,
-      expiresAt: { gt: new Date() }
+      expiresAt: { gt: new Date() },
     },
     select: { familyId: true },
-    distinct: ['familyId']
+    distinct: ['familyId'],
   })
 
-  return families.map(f => f.familyId)
+  return families.map((f: any) => f.familyId)
 }

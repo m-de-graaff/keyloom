@@ -1,14 +1,14 @@
 import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
 import {
-  createKeystore,
-  rotateKeystore,
-  needsRotation,
-  validateKeystore,
   createDefaultRotationPolicy,
+  createKeystore,
+  type JwtAlg,
   type Keystore,
+  needsRotation,
   type RotationPolicy,
-  type JwtAlg
+  rotateKeystore,
+  validateKeystore,
 } from '@keyloom/core/jwt'
 
 /**
@@ -20,11 +20,7 @@ export class KeystoreManager {
   private rotationPolicy: RotationPolicy
   private alg: JwtAlg
 
-  constructor(
-    keystorePath: string | null,
-    alg: JwtAlg = 'EdDSA',
-    rotationPolicy?: RotationPolicy
-  ) {
+  constructor(keystorePath: string | null, alg: JwtAlg = 'EdDSA', rotationPolicy?: RotationPolicy) {
     this.keystorePath = keystorePath
     this.alg = alg
     this.rotationPolicy = rotationPolicy || createDefaultRotationPolicy()
@@ -85,11 +81,11 @@ export class KeystoreManager {
 
     console.log('Rotating keystore keys...')
     this.keystore = await rotateKeystore(this.keystore, this.alg, this.rotationPolicy)
-    
+
     if (this.keystorePath) {
       await this.saveToDisk()
     }
-    
+
     console.log(`Keystore rotated. New active key: ${this.keystore.active.kid}`)
   }
 
@@ -128,11 +124,11 @@ export class KeystoreManager {
   private async createNew(): Promise<void> {
     console.log('Creating new keystore...')
     this.keystore = await createKeystore(this.alg)
-    
+
     if (this.keystorePath) {
       await this.saveToDisk()
     }
-    
+
     console.log(`New keystore created with active key: ${this.keystore.active.kid}`)
   }
 
@@ -171,7 +167,7 @@ export class KeystoreManager {
     // Write keystore with proper formatting
     const data = JSON.stringify(this.keystore, null, 2)
     await fs.writeFile(this.keystorePath, data, 'utf-8')
-    
+
     console.log(`Keystore saved to ${this.keystorePath}`)
   }
 
@@ -187,14 +183,16 @@ export class KeystoreManager {
   } {
     const keystore = this.getKeystore()
     const activeCreatedAt = new Date(keystore.active.createdAt)
-    const activeKeyAge = Math.floor((Date.now() - activeCreatedAt.getTime()) / (1000 * 60 * 60 * 24))
+    const activeKeyAge = Math.floor(
+      (Date.now() - activeCreatedAt.getTime()) / (1000 * 60 * 60 * 24),
+    )
 
     return {
       activeKeyId: keystore.active.kid,
       activeKeyAge,
       previousKeysCount: keystore.previous.length,
       needsRotation: this.needsRotation(),
-      rotationPolicy: this.rotationPolicy
+      rotationPolicy: this.rotationPolicy,
     }
   }
 }
@@ -210,14 +208,10 @@ export function createKeystoreManager(config: {
 }): KeystoreManager {
   const rotationPolicy: RotationPolicy = {
     rotationDays: config.rotationDays || 90,
-    overlapDays: config.overlapDays || 7
+    overlapDays: config.overlapDays || 7,
   }
 
-  return new KeystoreManager(
-    config.jwksPath || null,
-    config.alg || 'EdDSA',
-    rotationPolicy
-  )
+  return new KeystoreManager(config.jwksPath || null, config.alg || 'EdDSA', rotationPolicy)
 }
 
 /**
@@ -237,11 +231,11 @@ export function getKeystoreManager(config?: {
   if (!globalKeystoreManager && config) {
     globalKeystoreManager = createKeystoreManager(config)
   }
-  
+
   if (!globalKeystoreManager) {
     throw new Error('Keystore manager not initialized. Provide config on first call.')
   }
-  
+
   return globalKeystoreManager
 }
 

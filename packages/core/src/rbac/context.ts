@@ -20,4 +20,3 @@ export function selectActiveOrg(opts: {
   if (opts.strategy === 'first') return opts.allowedOrgIds[0] ?? null
   return null
 }
-

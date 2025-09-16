@@ -1,12 +1,5 @@
-import type { ID } from '@keyloom/core'
-import type {
-  RbacAdapter,
-  Organization,
-  Membership,
-  Invite,
-  Entitlements,
-} from '@keyloom/core'
-import { eq, and, desc, isNull } from 'drizzle-orm'
+import type { Entitlements, ID, Invite, Membership, Organization, RbacAdapter } from '@keyloom/core'
+import { and, desc, eq, isNull } from 'drizzle-orm'
 import { withErrorMapping } from './errors'
 import type { DrizzleAdapterConfig } from './index'
 import * as schema from './schema'
@@ -17,10 +10,7 @@ type DrizzleDatabase = any // Keep loose for flexibility
 /**
  * Create RBAC adapter for Drizzle
  */
-export function createRbacAdapter(
-  db: DrizzleDatabase,
-  config: DrizzleAdapterConfig
-): RbacAdapter {
+export function createRbacAdapter(db: DrizzleDatabase, _config: DrizzleAdapterConfig): RbacAdapter {
   return {
     // Organizations
     async createOrganization(data: { name: string; slug?: string }) {
@@ -45,7 +35,7 @@ export function createRbacAdapter(
           .from(schema.organizations)
           .where(eq(schema.organizations.id, id))
           .limit(1)
-        
+
         return (org as Organization) || null
       })
     },
@@ -57,7 +47,7 @@ export function createRbacAdapter(
           .from(schema.organizations)
           .where(eq(schema.organizations.slug, slug))
           .limit(1)
-        
+
         return (org as Organization) || null
       })
     },
@@ -65,9 +55,9 @@ export function createRbacAdapter(
     async updateOrganization(id: ID, data: Partial<Organization>) {
       return withErrorMapping(async () => {
         const updateData: any = {
-          updatedAt: new Date()
+          updatedAt: new Date(),
         }
-        
+
         if (data.name !== undefined) updateData.name = data.name
         if (data.slug !== undefined) updateData.slug = data.slug
 
@@ -76,7 +66,7 @@ export function createRbacAdapter(
           .set(updateData)
           .where(eq(schema.organizations.id, id))
           .returning()
-        
+
         return org as Organization
       })
     },
@@ -97,11 +87,11 @@ export function createRbacAdapter(
             and(
               eq(schema.memberships.orgId, schema.organizations.id),
               eq(schema.memberships.userId, userId),
-              eq(schema.memberships.status, 'active')
-            )
+              eq(schema.memberships.status, 'active'),
+            ),
           )
           .orderBy(schema.organizations.createdAt)
-        
+
         return orgs as Organization[]
       })
     },
@@ -129,14 +119,9 @@ export function createRbacAdapter(
         const [membership] = await db
           .select()
           .from(schema.memberships)
-          .where(
-            and(
-              eq(schema.memberships.userId, userId),
-              eq(schema.memberships.orgId, orgId)
-            )
-          )
+          .where(and(eq(schema.memberships.userId, userId), eq(schema.memberships.orgId, orgId)))
           .limit(1)
-        
+
         return (membership as Membership) || null
       })
     },
@@ -145,18 +130,13 @@ export function createRbacAdapter(
       return withErrorMapping(async () => {
         const [membership] = await db
           .update(schema.memberships)
-          .set({ 
+          .set({
             role,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           })
-          .where(
-            and(
-              eq(schema.memberships.userId, userId),
-              eq(schema.memberships.orgId, orgId)
-            )
-          )
+          .where(and(eq(schema.memberships.userId, userId), eq(schema.memberships.orgId, orgId)))
           .returning()
-        
+
         return membership as Membership
       })
     },
@@ -165,12 +145,7 @@ export function createRbacAdapter(
       return withErrorMapping(async () => {
         await db
           .delete(schema.memberships)
-          .where(
-            and(
-              eq(schema.memberships.userId, userId),
-              eq(schema.memberships.orgId, orgId)
-            )
-          )
+          .where(and(eq(schema.memberships.userId, userId), eq(schema.memberships.orgId, orgId)))
       })
     },
 
@@ -190,7 +165,7 @@ export function createRbacAdapter(
           .from(schema.memberships)
           .innerJoin(schema.users, eq(schema.users.id, schema.memberships.userId))
           .where(eq(schema.memberships.orgId, orgId))
-        
+
         return members as (Membership & { userEmail?: string | null })[]
       })
     },
@@ -225,14 +200,9 @@ export function createRbacAdapter(
         const [invite] = await db
           .select()
           .from(schema.invites)
-          .where(
-            and(
-              eq(schema.invites.orgId, orgId),
-              eq(schema.invites.tokenHash, tokenHash)
-            )
-          )
+          .where(and(eq(schema.invites.orgId, orgId), eq(schema.invites.tokenHash, tokenHash)))
           .limit(1)
-        
+
         return (invite as Invite) || null
       })
     },
@@ -245,12 +215,7 @@ export function createRbacAdapter(
           const [invite] = await tx
             .update(schema.invites)
             .set({ acceptedAt: new Date() })
-            .where(
-              and(
-                eq(schema.invites.orgId, orgId),
-                eq(schema.invites.tokenHash, tokenHash)
-              )
-            )
+            .where(and(eq(schema.invites.orgId, orgId), eq(schema.invites.tokenHash, tokenHash)))
             .returning()
 
           // Create membership
@@ -268,7 +233,7 @@ export function createRbacAdapter(
 
           return {
             invite: invite as Invite,
-            membership: membership as Membership
+            membership: membership as Membership,
           }
         })
       })
@@ -279,14 +244,9 @@ export function createRbacAdapter(
         const invites = await db
           .select()
           .from(schema.invites)
-          .where(
-            and(
-              eq(schema.invites.orgId, orgId),
-              isNull(schema.invites.acceptedAt)
-            )
-          )
+          .where(and(eq(schema.invites.orgId, orgId), isNull(schema.invites.acceptedAt)))
           .orderBy(desc(schema.invites.createdAt))
-        
+
         return invites as Invite[]
       })
     },
@@ -295,12 +255,7 @@ export function createRbacAdapter(
       return withErrorMapping(async () => {
         await db
           .delete(schema.invites)
-          .where(
-            and(
-              eq(schema.invites.orgId, orgId),
-              eq(schema.invites.tokenHash, tokenHash)
-            )
-          )
+          .where(and(eq(schema.invites.orgId, orgId), eq(schema.invites.tokenHash, tokenHash)))
       })
     },
 
@@ -312,7 +267,7 @@ export function createRbacAdapter(
           .from(schema.entitlements)
           .where(eq(schema.entitlements.orgId, orgId))
           .limit(1)
-        
+
         if (!entitlement) return null
 
         return {
@@ -323,7 +278,7 @@ export function createRbacAdapter(
           limits: (entitlement.limits as Record<string, number>) || {},
           validUntil: entitlement.validUntil || null,
           createdAt: entitlement.createdAt,
-          updatedAt: entitlement.updatedAt
+          updatedAt: entitlement.updatedAt,
         } as Entitlements & { orgId: ID; createdAt: Date; updatedAt: Date }
       })
     },
@@ -355,10 +310,10 @@ export function createRbacAdapter(
               limits: entitlementData.limits,
               validUntil: entitlementData.validUntil,
               updatedAt: entitlementData.updatedAt,
-            }
+            },
           })
           .returning()
-        
+
         return {
           orgId,
           plan: result.plan || undefined,
@@ -367,7 +322,7 @@ export function createRbacAdapter(
           limits: (result.limits as Record<string, number>) || {},
           validUntil: result.validUntil || null,
           createdAt: result.createdAt,
-          updatedAt: result.updatedAt
+          updatedAt: result.updatedAt,
         } as Entitlements & { orgId: ID; createdAt: Date; updatedAt: Date }
       })
     },

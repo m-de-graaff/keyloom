@@ -51,7 +51,7 @@ export function parseOpaqueRefreshToken(token: string): {
   }
 
   const [familyId, jti, randomPart] = parts
-  
+
   // Basic validation
   if (!familyId || !jti || !randomPart) {
     return null

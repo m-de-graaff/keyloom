@@ -1,12 +1,11 @@
 import type { Adapter } from '../../adapter'
 import { ERR, KeyloomError } from '../../errors'
+import type { RbacAdapter } from '../../rbac/types'
 import type { Account, AuditEvent, ID, Session, User, VerificationToken } from '../../types'
 import { newId } from '../../util/ids'
 import { now } from '../../util/time'
-import { type MemoryStore, newStore } from './store'
-
-import type { RbacAdapter } from '../../rbac/types'
 import { memoryRbac } from './rbac'
+import { type MemoryStore, newStore } from './store'
 
 export function memoryAdapter(init?: { store?: MemoryStore }): Adapter & {
   __store: MemoryStore
@@ -73,7 +72,10 @@ export function memoryAdapter(init?: { store?: MemoryStore }): Adapter & {
         store.byProvider.set(key, id)
         return a
       },
-      async getAccountByProvider(provider: string, providerAccountId: string): Promise<Account | null> {
+      async getAccountByProvider(
+        provider: string,
+        providerAccountId: string,
+      ): Promise<Account | null> {
         const id = store.byProvider.get(`${provider}:${providerAccountId}`)
         return id ? (store.accounts.get(id) ?? null) : null
       },
@@ -109,7 +111,10 @@ export function memoryAdapter(init?: { store?: MemoryStore }): Adapter & {
         store.tokens.set(`${v.identifier}:${v.token}`, vt)
         return vt
       },
-      async useVerificationToken(identifier: string, token: string): Promise<VerificationToken | null> {
+      async useVerificationToken(
+        identifier: string,
+        token: string,
+      ): Promise<VerificationToken | null> {
         const key = `${identifier}:${token}`
         const vt = store.tokens.get(key) ?? null
         if (!vt) return null
@@ -132,7 +137,9 @@ export function memoryAdapter(init?: { store?: MemoryStore }): Adapter & {
         store.credByUserId.set(userId, id)
         return { id, userId }
       },
-      async getCredentialByUserId(userId: ID): Promise<{ id: ID; userId: ID; hash: string } | null> {
+      async getCredentialByUserId(
+        userId: ID,
+      ): Promise<{ id: ID; userId: ID; hash: string } | null> {
         const id = store.credByUserId.get(userId)
         return id ? (store.credentials.get(id) ?? null) : null
       },

@@ -55,7 +55,8 @@ export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
       try {
         const updateData: any = {}
         if (typeof (data as any).email !== 'undefined') updateData.email = (data as any).email
-        if (typeof (data as any).emailVerified !== 'undefined') updateData.emailVerified = (data as any).emailVerified
+        if (typeof (data as any).emailVerified !== 'undefined')
+          updateData.emailVerified = (data as any).emailVerified
         if (typeof (data as any).name !== 'undefined') updateData.name = (data as any).name
         if (typeof (data as any).image !== 'undefined') updateData.image = (data as any).image
 
@@ -172,9 +173,7 @@ export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
     },
     async getCredentialByUserId(userId: ID) {
       const c = await prisma.credential.findUnique({ where: { userId } })
-      return c
-        ? { id: c.id as ID, userId: c.userId as ID, hash: c.hash }
-        : null
+      return c ? { id: c.id as ID, userId: c.userId as ID, hash: c.hash } : null
     },
     async updateCredential(userId: ID, hash: string) {
       await prisma.credential.update({ where: { userId }, data: { hash } })
@@ -183,4 +182,3 @@ export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
 }
 
 export { prismaAdapter as PrismaAdapter }
-

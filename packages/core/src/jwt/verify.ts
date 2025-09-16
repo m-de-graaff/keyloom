@@ -1,15 +1,15 @@
 import { decodeBase64urlToJson } from './base64url'
+import { validateJwtClaims } from './claims'
 import { JWT_ERRORS, throwJwtError } from './errors'
 import { getWebCryptoAlgorithm, validateJwtHeader } from './header'
-import { validateJwtClaims } from './claims'
-import type { JwtClaims, JwtHeader } from './types'
+import type { Jwk, JwtClaims, JwtHeader } from './types'
 
 /**
  * Verify a JWT token using JWKS (JSON Web Key Set)
  */
 export async function verifyJwt(
   token: string,
-  jwks: JsonWebKey[]
+  jwks: Jwk[],
 ): Promise<{ header: JwtHeader; claims: JwtClaims }> {
   // Split the token into parts
   const parts = token.split('.')
@@ -45,7 +45,7 @@ export async function verifyJwt(
   }
 
   // Find the matching key in JWKS
-  const jwk = jwks.find(key => key.kid === header.kid)
+  const jwk = jwks.find((key) => key.kid === header.kid)
   if (!jwk) {
     throwJwtError(JWT_ERRORS.JWT_UNKNOWN_KID, `No key found for kid: ${header.kid}`)
   }
@@ -54,13 +54,7 @@ export async function verifyJwt(
   let publicKey: CryptoKey
   try {
     const algorithm = getWebCryptoAlgorithm(header.alg)
-    publicKey = await crypto.subtle.importKey(
-      'jwk',
-      jwk,
-      algorithm,
-      false,
-      ['verify']
-    )
+    publicKey = await crypto.subtle.importKey('jwk', jwk, algorithm, false, ['verify'])
   } catch (error) {
     throwJwtError(JWT_ERRORS.KEYSTORE_INVALID_KEY, 'Failed to import public key', error as Error)
   }
@@ -73,12 +67,7 @@ export async function verifyJwt(
   let isValid: boolean
   try {
     const algorithm = getWebCryptoAlgorithm(header.alg)
-    isValid = await crypto.subtle.verify(
-      algorithm,
-      publicKey,
-      signatureBytes,
-      signingInputBytes
-    )
+    isValid = await crypto.subtle.verify(algorithm, publicKey, signatureBytes, signingInputBytes)
   } catch (error) {
     throwJwtError(JWT_ERRORS.JWT_INVALID_SIGNATURE, 'Signature verification failed', error as Error)
   }
@@ -95,20 +84,20 @@ export async function verifyJwt(
  */
 export async function verifyJwtWithTiming(
   token: string,
-  jwks: JsonWebKey[],
-  clockSkewSec = 60
+  jwks: Jwk[],
+  clockSkewSec = 60,
 ): Promise<{ header: JwtHeader; claims: JwtClaims }> {
   const result = await verifyJwt(token, jwks)
-  
+
   // Check expiration
   const now = Math.floor(Date.now() / 1000)
-  if (result.claims.exp < (now - clockSkewSec)) {
+  if (result.claims.exp < now - clockSkewSec) {
     throwJwtError(JWT_ERRORS.JWT_EXPIRED, 'JWT token has expired')
   }
 
   // Check not before (if present)
-  const nbf = (result.claims as any).nbf
-  if (typeof nbf === 'number' && nbf > (now + clockSkewSec)) {
+  const nbf = (result.claims as JwtClaims & { nbf?: number }).nbf
+  if (typeof nbf === 'number' && nbf > now + clockSkewSec) {
     throwJwtError(JWT_ERRORS.JWT_NOT_BEFORE, 'JWT token is not yet valid')
   }
 
@@ -120,40 +109,42 @@ export async function verifyJwtWithTiming(
  */
 export async function verifyJwtFull(
   token: string,
-  jwks: JsonWebKey[],
+  jwks: Jwk[],
   options: {
     clockSkewSec?: number
     expectedIssuer?: string
     expectedAudience?: string | string[]
-  } = {}
+  } = {},
 ): Promise<{ header: JwtHeader; claims: JwtClaims }> {
   const { clockSkewSec = 60, expectedIssuer, expectedAudience } = options
-  
+
   const result = await verifyJwtWithTiming(token, jwks, clockSkewSec)
 
   // Validate issuer
   if (expectedIssuer && result.claims.iss !== expectedIssuer) {
     throwJwtError(
       JWT_ERRORS.JWT_INVALID_ISSUER,
-      `Invalid issuer. Expected: ${expectedIssuer}, got: ${result.claims.iss}`
+      `Invalid issuer. Expected: ${expectedIssuer}, got: ${result.claims.iss}`,
     )
   }
 
   // Validate audience
   if (expectedAudience) {
     const audiences = Array.isArray(expectedAudience) ? expectedAudience : [expectedAudience]
-    const claimAudiences = Array.isArray(result.claims.aud) 
-      ? result.claims.aud 
-      : result.claims.aud ? [result.claims.aud] : []
+    const claimAudiences = Array.isArray(result.claims.aud)
+      ? result.claims.aud
+      : result.claims.aud
+        ? [result.claims.aud]
+        : []
 
-    const hasValidAudience = audiences.some(expected =>
-      claimAudiences.includes(expected)
-    )
+    const hasValidAudience = audiences.some((expected) => claimAudiences.includes(expected))
 
     if (!hasValidAudience) {
       throwJwtError(
         JWT_ERRORS.JWT_INVALID_AUDIENCE,
-        `Invalid audience. Expected one of: ${audiences.join(', ')}, got: ${claimAudiences.join(', ')}`
+        `Invalid audience. Expected one of: ${audiences.join(
+          ', ',
+        )}, got: ${claimAudiences.join(', ')}`,
       )
     }
   }
@@ -172,7 +163,8 @@ export function extractJwtClaims(token: string): JwtClaims {
   }
 
   try {
-    const claims = decodeBase64urlToJson(parts[1])
+    const payloadPart = parts[1] as string
+    const claims = decodeBase64urlToJson(payloadPart)
     if (!validateJwtClaims(claims)) {
       throw new Error('Invalid JWT claims structure')
     }

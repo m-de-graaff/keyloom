@@ -32,4 +32,3 @@ export async function run(argv: string[]) {
     }
   }
 }
-

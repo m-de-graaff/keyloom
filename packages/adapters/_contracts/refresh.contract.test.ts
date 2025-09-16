@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import type { KeyloomAdapter } from '@keyloom/core/adapter-types'
 import type { RefreshTokenRecord } from '@keyloom/core/jwt'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  TestDataManager,
+  expectNotFound,
+  expectRefreshToken,
   futureDate,
   pastDate,
-  expectRefreshToken,
-  expectNotFound,
-  sleep
+  sleep,
+  TestDataManager,
 } from './helpers'
 
 /**
@@ -34,7 +34,7 @@ export function createRefreshContractTests(createAdapter: () => KeyloomAdapter) 
     function createTokenRecord(overrides: Partial<RefreshTokenRecord> = {}): RefreshTokenRecord {
       const familyId = `family_${Math.random().toString(36).substring(2)}`
       const jti = `jti_${Math.random().toString(36).substring(2)}`
-      
+
       return {
         familyId,
         jti,
@@ -45,7 +45,7 @@ export function createRefreshContractTests(createAdapter: () => KeyloomAdapter) 
         parentJti: null,
         ip: '192.168.1.1',
         userAgent: 'Mozilla/5.0...',
-        ...overrides
+        ...overrides,
       }
     }
 
@@ -53,9 +53,7 @@ export function createRefreshContractTests(createAdapter: () => KeyloomAdapter) 
       it('should save a refresh token record', async () => {
         const record = createTokenRecord()
 
-        await expect(
-          adapter.save(record)
-        ).resolves.not.toThrow()
+        await expect(adapter.save(record)).resolves.not.toThrow()
       })
 
       it('should find token by hash', async () => {
@@ -80,9 +78,7 @@ export function createRefreshContractTests(createAdapter: () => KeyloomAdapter) 
 
         await adapter.save(record1)
 
-        await expect(
-          adapter.save(record2)
-        ).rejects.toThrow()
+        await expect(adapter.save(record2)).rejects.toThrow()
       })
     })
 
@@ -99,9 +95,7 @@ export function createRefreshContractTests(createAdapter: () => KeyloomAdapter) 
       })
 
       it('should handle rotation of non-existent token gracefully', async () => {
-        await expect(
-          adapter.markRotated('non-existent-jti')
-        ).resolves.not.toThrow()
+        await expect(adapter.markRotated('non-existent-jti')).resolves.not.toThrow()
       })
 
       it('should create child token and mark parent as rotated', async () => {
@@ -110,7 +104,7 @@ export function createRefreshContractTests(createAdapter: () => KeyloomAdapter) 
 
         const childRecord = createTokenRecord({
           familyId: parentRecord.familyId,
-          parentJti: parentRecord.jti
+          parentJti: parentRecord.jti,
         })
 
         await adapter.createChild(parentRecord, childRecord)
@@ -173,9 +167,9 @@ export function createRefreshContractTests(createAdapter: () => KeyloomAdapter) 
         const family = await adapter.getFamily(familyId)
 
         expect(family).toHaveLength(2)
-        expect(family.map(t => t.jti)).toContain(token1.jti)
-        expect(family.map(t => t.jti)).toContain(token2.jti)
-        expect(family.map(t => t.jti)).not.toContain(token3.jti)
+        expect(family.map((t) => t.jti)).toContain(token1.jti)
+        expect(family.map((t) => t.jti)).toContain(token2.jti)
+        expect(family.map((t) => t.jti)).not.toContain(token3.jti)
       })
 
       it('should return empty array for non-existent family', async () => {
@@ -187,10 +181,10 @@ export function createRefreshContractTests(createAdapter: () => KeyloomAdapter) 
     describe('Token Cleanup', () => {
       it('should clean up expired tokens', async () => {
         const expiredToken = createTokenRecord({
-          expiresAt: pastDate()
+          expiresAt: pastDate(),
         })
         const validToken = createTokenRecord({
-          expiresAt: futureDate()
+          expiresAt: futureDate(),
         })
 
         await adapter.save(expiredToken)
@@ -212,10 +206,10 @@ export function createRefreshContractTests(createAdapter: () => KeyloomAdapter) 
       it('should clean up tokens before specific date', async () => {
         const cutoffDate = new Date()
         const oldToken = createTokenRecord({
-          expiresAt: pastDate()
+          expiresAt: pastDate(),
         })
         const newToken = createTokenRecord({
-          expiresAt: futureDate()
+          expiresAt: futureDate(),
         })
 
         await adapter.save(oldToken)
@@ -239,7 +233,7 @@ export function createRefreshContractTests(createAdapter: () => KeyloomAdapter) 
         const originalToken = createTokenRecord({ familyId })
         const rotatedToken = createTokenRecord({
           familyId,
-          parentJti: originalToken.jti
+          parentJti: originalToken.jti,
         })
 
         // Save original token
@@ -268,14 +262,12 @@ export function createRefreshContractTests(createAdapter: () => KeyloomAdapter) 
         const tokens = Array.from({ length: 5 }, (_, i) =>
           createTokenRecord({
             familyId,
-            jti: `concurrent-jti-${i}`
-          })
+            jti: `concurrent-jti-${i}`,
+          }),
         )
 
         // Save all tokens concurrently
-        await Promise.all(
-          tokens.map(token => adapter.save(token))
-        )
+        await Promise.all(tokens.map((token) => adapter.save(token)))
 
         // Verify all tokens were saved
         const family = await adapter.getFamily(familyId)
@@ -292,7 +284,7 @@ export function createRefreshContractTests(createAdapter: () => KeyloomAdapter) 
         await Promise.all([
           adapter.revokeFamily(familyId),
           adapter.isFamilyRevoked(familyId),
-          adapter.getFamily(familyId)
+          adapter.getFamily(familyId),
         ])
 
         // Verify final state
@@ -312,7 +304,7 @@ export function createRefreshContractTests(createAdapter: () => KeyloomAdapter) 
           expiresAt: futureDate(),
           parentJti: null,
           ip: null,
-          userAgent: null
+          userAgent: null,
         }
 
         await adapter.save(minimalRecord)
@@ -330,7 +322,7 @@ export function createRefreshContractTests(createAdapter: () => KeyloomAdapter) 
           const token = createTokenRecord({
             familyId,
             jti: `chain-token-${i}`,
-            parentJti
+            parentJti,
           })
 
           await adapter.save(token)

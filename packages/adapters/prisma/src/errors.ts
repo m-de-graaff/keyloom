@@ -1,9 +1,5 @@
 import { ERR, KeyloomError } from '@keyloom/core'
-import {
-  AdapterError,
-  ADAPTER_ERRORS,
-  BaseErrorMapper
-} from '@keyloom/core/adapter-types'
+import { ADAPTER_ERRORS, AdapterError, BaseErrorMapper } from '@keyloom/core/adapter-types'
 
 type PrismaKnownError = {
   code?: string
@@ -45,7 +41,7 @@ export class PrismaErrorMapper extends BaseErrorMapper {
         return new AdapterError(
           ADAPTER_ERRORS.CONSTRAINT_VIOLATION,
           'Foreign key constraint violation',
-          error
+          error,
         )
 
       case 'P2006':
@@ -61,7 +57,7 @@ export class PrismaErrorMapper extends BaseErrorMapper {
         return new AdapterError(
           ADAPTER_ERRORS.INVALID_DATA,
           message || 'Invalid data provided',
-          error
+          error,
         )
 
       default:

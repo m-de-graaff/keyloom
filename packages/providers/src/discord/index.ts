@@ -1,7 +1,9 @@
 import type { OAuthProvider } from '@keyloom/core'
 
-export default function discord(opts: { clientId: string; clientSecret: string }):
-  OAuthProvider & { clientId: string; clientSecret: string } {
+export default function discord(opts: {
+  clientId: string
+  clientSecret: string
+}): OAuthProvider & { clientId: string; clientSecret: string } {
   return {
     id: 'discord',
     authorization: {
@@ -15,9 +17,7 @@ export default function discord(opts: { clientId: string; clientSecret: string }
         id: raw.id,
         email: raw.email ?? null,
         name: raw.global_name ?? raw.username ?? null,
-        image: raw.avatar
-          ? `https://cdn.discordapp.com/avatars/${raw.id}/${raw.avatar}.png`
-          : null,
+        image: raw.avatar ? `https://cdn.discordapp.com/avatars/${raw.id}/${raw.avatar}.png` : null,
       }),
     },
     scopes: ['identify', 'email'],
@@ -25,4 +25,3 @@ export default function discord(opts: { clientId: string; clientSecret: string }
     clientSecret: opts.clientSecret,
   }
 }
-

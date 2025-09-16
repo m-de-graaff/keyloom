@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { can, hasAnyRole, hasRole, type PermissionMap } from '../src/rbac/policy'
 
 describe('rbac/policy', () => {
@@ -20,4 +20,3 @@ describe('rbac/policy', () => {
     expect(can('member', 'project:write', map)).toBe(true)
   })
 })
-

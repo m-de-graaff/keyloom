@@ -20,4 +20,3 @@ export type KeyloomRoutesManifest = {
   generatedAt: string
   entries: KeyloomRouteEntry[]
 }
-

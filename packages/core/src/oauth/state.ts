@@ -13,8 +13,11 @@ export async function sealState(secret: Uint8Array, payload: OAuthStatePayload) 
   return aesGcmSeal(secret, text)
 }
 
-export async function openState(secret: Uint8Array, nonce: string, ct: string): Promise<OAuthStatePayload> {
+export async function openState(
+  secret: Uint8Array,
+  nonce: string,
+  ct: string,
+): Promise<OAuthStatePayload> {
   const out = await aesGcmOpen(secret, nonce, ct)
   return JSON.parse(new TextDecoder().decode(out))
 }
-

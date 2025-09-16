@@ -1,16 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import type { KeyloomAdapter } from '@keyloom/core/adapter-types'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  TestDataManager,
+  expectAccount,
+  expectNotFound,
+  expectSession,
+  expectUser,
+  futureDate,
   randomEmail,
   randomUser,
-  futureDate,
-  pastDate,
-  expectUser,
-  expectSession,
-  expectAccount,
-  expectUniqueViolation,
-  expectNotFound
+  TestDataManager,
 } from './helpers'
 
 /**
@@ -78,7 +76,7 @@ export function createAdapterContractTests(createAdapter: () => KeyloomAdapter) 
       it('should handle case-insensitive email lookup', async () => {
         const email = randomEmail()
         const user = await testData.createUser({ email })
-        
+
         const retrieved = await adapter.getUserByEmail(email.toUpperCase())
         expect(retrieved).toEqual(user)
       })
@@ -87,7 +85,7 @@ export function createAdapterContractTests(createAdapter: () => KeyloomAdapter) 
         const user = await testData.createUser()
         const updateData = {
           name: 'Updated Name',
-          emailVerified: new Date()
+          emailVerified: new Date(),
         }
 
         const updated = await adapter.updateUser(user.id, updateData)
@@ -101,9 +99,7 @@ export function createAdapterContractTests(createAdapter: () => KeyloomAdapter) 
         const email = randomEmail()
         await testData.createUser({ email })
 
-        await expect(
-          testData.createUser({ email })
-        ).rejects.toThrow()
+        await expect(testData.createUser({ email })).rejects.toThrow()
       })
     })
 
@@ -118,7 +114,7 @@ export function createAdapterContractTests(createAdapter: () => KeyloomAdapter) 
           refreshToken: 'refresh-token',
           tokenType: 'bearer',
           scope: 'read:user',
-          expiresAt: Math.floor(Date.now() / 1000) + 3600
+          expiresAt: Math.floor(Date.now() / 1000) + 3600,
         }
 
         const account = await adapter.linkAccount(accountData)
@@ -134,7 +130,7 @@ export function createAdapterContractTests(createAdapter: () => KeyloomAdapter) 
         const accountData = {
           userId: user.id,
           provider: 'github',
-          providerAccountId: '12345'
+          providerAccountId: '12345',
         }
 
         const account = await adapter.linkAccount(accountData)
@@ -150,15 +146,15 @@ export function createAdapterContractTests(createAdapter: () => KeyloomAdapter) 
         await adapter.linkAccount({
           userId: user1.id,
           provider: 'github',
-          providerAccountId: '12345'
+          providerAccountId: '12345',
         })
 
         await expect(
           adapter.linkAccount({
             userId: user2.id,
             provider: 'github',
-            providerAccountId: '12345'
-          })
+            providerAccountId: '12345',
+          }),
         ).rejects.toThrow()
       })
     })
@@ -170,7 +166,7 @@ export function createAdapterContractTests(createAdapter: () => KeyloomAdapter) 
 
         const session = await adapter.createSession({
           userId: user.id,
-          expiresAt
+          expiresAt,
         })
 
         expectSession(session)
@@ -197,9 +193,7 @@ export function createAdapterContractTests(createAdapter: () => KeyloomAdapter) 
       })
 
       it('should handle deletion of non-existent session gracefully', async () => {
-        await expect(
-          adapter.deleteSession('non-existent-id')
-        ).resolves.not.toThrow()
+        await expect(adapter.deleteSession('non-existent-id')).resolves.not.toThrow()
       })
     })
 
@@ -208,7 +202,7 @@ export function createAdapterContractTests(createAdapter: () => KeyloomAdapter) 
         const tokenData = {
           identifier: randomEmail(),
           token: 'plain-token',
-          expiresAt: futureDate()
+          expiresAt: futureDate(),
         }
 
         const token = await adapter.createVerificationToken(tokenData)
@@ -222,29 +216,23 @@ export function createAdapterContractTests(createAdapter: () => KeyloomAdapter) 
         const tokenData = {
           identifier: randomEmail(),
           token: 'plain-token',
-          expiresAt: futureDate()
+          expiresAt: futureDate(),
         }
 
         const token = await adapter.createVerificationToken(tokenData)
-        const consumed = await adapter.useVerificationToken(
-          token.identifier,
-          tokenData.token
-        )
+        const consumed = await adapter.useVerificationToken(token.identifier, tokenData.token)
 
         expect(consumed).toEqual(token)
 
         // Token should be consumed and not usable again
-        const secondUse = await adapter.useVerificationToken(
-          token.identifier,
-          tokenData.token
-        )
+        const secondUse = await adapter.useVerificationToken(token.identifier, tokenData.token)
         expectNotFound(secondUse)
       })
 
       it('should return null for non-existent token', async () => {
         const result = await adapter.useVerificationToken(
           'non-existent@example.com',
-          'non-existent-token'
+          'non-existent-token',
         )
         expectNotFound(result)
       })
@@ -253,14 +241,12 @@ export function createAdapterContractTests(createAdapter: () => KeyloomAdapter) 
         const tokenData = {
           identifier: randomEmail(),
           token: 'plain-token',
-          expiresAt: futureDate()
+          expiresAt: futureDate(),
         }
 
         await adapter.createVerificationToken(tokenData)
 
-        await expect(
-          adapter.createVerificationToken(tokenData)
-        ).rejects.toThrow()
+        await expect(adapter.createVerificationToken(tokenData)).rejects.toThrow()
       })
     })
 
@@ -273,24 +259,20 @@ export function createAdapterContractTests(createAdapter: () => KeyloomAdapter) 
           ip: '192.168.1.1',
           ua: 'Mozilla/5.0...',
           at: new Date(),
-          meta: { method: 'password' }
+          meta: { method: 'password' },
         }
 
-        await expect(
-          adapter.appendAudit(auditEvent)
-        ).resolves.not.toThrow()
+        await expect(adapter.appendAudit(auditEvent)).resolves.not.toThrow()
       })
 
       it('should handle audit events without user', async () => {
         const auditEvent = {
           type: 'system.startup',
           at: new Date(),
-          meta: { version: '1.0.0' }
+          meta: { version: '1.0.0' },
         }
 
-        await expect(
-          adapter.appendAudit(auditEvent)
-        ).resolves.not.toThrow()
+        await expect(adapter.appendAudit(auditEvent)).resolves.not.toThrow()
       })
     })
 

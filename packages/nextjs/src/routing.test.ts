@@ -37,8 +37,13 @@ describe('matchApiPath', () => {
   })
 
   it('matches oauth start and callback routes', () => {
-    expect(matchApiPath('/api/auth/oauth/github/start')).toEqual({ kind: 'oauth_start', provider: 'github' })
-    expect(matchApiPath('/api/auth/oauth/google/callback')).toEqual({ kind: 'oauth_callback', provider: 'google' })
+    expect(matchApiPath('/api/auth/oauth/github/start')).toEqual({
+      kind: 'oauth_start',
+      provider: 'github',
+    })
+    expect(matchApiPath('/api/auth/oauth/google/callback')).toEqual({
+      kind: 'oauth_callback',
+      provider: 'google',
+    })
   })
 })
-

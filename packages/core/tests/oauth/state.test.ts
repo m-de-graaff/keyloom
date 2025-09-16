@@ -18,4 +18,3 @@ describe('oauth/state', () => {
     await expect(openState(key, sealed.nonce, sealed.ct.replace(/.$/, 'A'))).rejects.toThrow()
   })
 })
-

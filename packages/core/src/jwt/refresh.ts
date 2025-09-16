@@ -7,13 +7,13 @@ import type { RefreshTokenData, RefreshTokenRecord } from './types'
  */
 export function issueRefreshToken(
   userId: string,
-  secret: string,
+  _secret: string,
   familyId = newFamilyId(),
-  parentJti?: string
+  parentJti?: string,
 ): RefreshTokenData {
   const jti = newJti()
   const token = createOpaqueRefreshToken(familyId, jti)
-  
+
   return {
     token,
     record: {
@@ -25,8 +25,8 @@ export function issueRefreshToken(
       parentJti: parentJti || null,
       sessionId: null,
       ip: null,
-      userAgent: null
-    }
+      userAgent: null,
+    },
   }
 }
 
@@ -50,15 +50,15 @@ export async function createRefreshToken(
     sessionId?: string
     ip?: string
     userAgent?: string
-  } = {}
+  } = {},
 ): Promise<RefreshTokenData> {
   const { familyId, parentJti, sessionId, ip, userAgent } = options
-  
+
   const { token, record } = issueRefreshToken(userId, secret, familyId, parentJti)
-  
+
   // Hash the token for storage
   const hash = await hashRefreshToken(token, secret)
-  
+
   // Set expiration and metadata
   const completeRecord: RefreshTokenRecord = {
     ...record,
@@ -66,12 +66,12 @@ export async function createRefreshToken(
     expiresAt: new Date(Date.now() + ttlMs),
     sessionId: sessionId || null,
     ip: ip || null,
-    userAgent: userAgent || null
+    userAgent: userAgent || null,
   }
 
   return {
     token,
-    record: completeRecord
+    record: completeRecord,
   }
 }
 
@@ -145,7 +145,7 @@ export interface RefreshTokenStore {
 export class RefreshTokenRotator {
   constructor(
     private store: RefreshTokenStore,
-    private secret: string
+    private secret: string,
   ) {}
 
   /**
@@ -158,7 +158,7 @@ export class RefreshTokenRotator {
       ip?: string
       userAgent?: string
       sessionId?: string
-    } = {}
+    } = {},
   ): Promise<{
     newToken: string
     record: RefreshTokenRecord
@@ -166,7 +166,7 @@ export class RefreshTokenRotator {
   }> {
     // Hash the presented token
     const hash = await hashRefreshToken(presentedToken, this.secret)
-    
+
     // Find the token record
     const record = await this.store.findByHash(hash)
     if (!record) {
@@ -186,9 +186,7 @@ export class RefreshTokenRotator {
     // Check for reuse detection
     // If this token was already rotated, it's a reuse attempt
     const family = await this.store.getFamily(record.familyId)
-    const wasRotated = family.some(token => 
-      token.jti === record.jti && token.parentJti !== null
-    )
+    const wasRotated = family.some((token) => token.jti === record.jti && token.parentJti !== null)
 
     if (wasRotated) {
       // Reuse detected - revoke entire family
@@ -200,17 +198,26 @@ export class RefreshTokenRotator {
     await this.store.markRotated(record.jti)
 
     // Create new token in the same family
+    const opts: {
+      familyId?: string
+      parentJti?: string
+      sessionId?: string
+      ip?: string
+      userAgent?: string
+    } = {
+      familyId: record.familyId,
+      parentJti: record.jti,
+    }
+    const sessionId = metadata.sessionId ?? record.sessionId ?? undefined
+    if (sessionId !== undefined) opts.sessionId = sessionId
+    if (metadata.ip !== undefined) opts.ip = metadata.ip
+    if (metadata.userAgent !== undefined) opts.userAgent = metadata.userAgent
+
     const { token: newToken, record: newRecord } = await createRefreshToken(
       record.userId,
       this.secret,
       ttlMs,
-      {
-        familyId: record.familyId,
-        parentJti: record.jti,
-        sessionId: metadata.sessionId || record.sessionId,
-        ip: metadata.ip,
-        userAgent: metadata.userAgent
-      }
+      opts,
     )
 
     // Store the new token
@@ -219,7 +226,7 @@ export class RefreshTokenRotator {
     return {
       newToken,
       record: newRecord,
-      userId: record.userId
+      userId: record.userId,
     }
   }
 

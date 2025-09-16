@@ -9,4 +9,3 @@ export async function createPkce() {
   const challenge = enc(new Uint8Array(digest))
   return { verifier, challenge, method: 'S256' as const }
 }
-

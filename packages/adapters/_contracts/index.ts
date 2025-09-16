@@ -1,14 +1,14 @@
 /**
  * Adapter contract tests
- * 
+ *
  * This package provides a comprehensive test suite that all Keyloom adapters
  * must pass to ensure consistent behavior across different database implementations.
- * 
+ *
  * Usage:
  * ```typescript
  * import { runAdapterContractTests } from '@keyloom/adapters/_contracts'
  * import { createMyAdapter } from './my-adapter'
- * 
+ *
  * runAdapterContractTests(() => createMyAdapter(testConfig))
  * ```
  */
@@ -74,21 +74,25 @@ export function validateAdapterCapabilities(adapter: KeyloomAdapter): {
   }
 
   if (!['citext', 'collation', 'app-normalize'].includes(capabilities.caseInsensitiveEmail)) {
-    errors.push('capabilities.caseInsensitiveEmail must be "citext", "collation", or "app-normalize"')
+    errors.push(
+      'capabilities.caseInsensitiveEmail must be "citext", "collation", or "app-normalize"',
+    )
   }
 
   if (typeof capabilities.upsert !== 'boolean') {
     errors.push('capabilities.upsert must be a boolean')
   }
 
-  if (capabilities.maxIdentifierLength !== undefined && 
-      (typeof capabilities.maxIdentifierLength !== 'number' || capabilities.maxIdentifierLength <= 0)) {
+  if (
+    capabilities.maxIdentifierLength !== undefined &&
+    (typeof capabilities.maxIdentifierLength !== 'number' || capabilities.maxIdentifierLength <= 0)
+  ) {
     errors.push('capabilities.maxIdentifierLength must be a positive number if specified')
   }
 
   return {
     valid: errors.length === 0,
-    errors
+    errors,
   }
 }
 
@@ -102,35 +106,60 @@ export function validateAdapterMethods(adapter: KeyloomAdapter): {
 } {
   const required = [
     // Core adapter methods
-    'createUser', 'getUser', 'getUserByEmail', 'updateUser',
-    'linkAccount', 'getAccountByProvider',
-    'createSession', 'getSession', 'deleteSession',
-    'createVerificationToken', 'useVerificationToken',
+    'createUser',
+    'getUser',
+    'getUserByEmail',
+    'updateUser',
+    'linkAccount',
+    'getAccountByProvider',
+    'createSession',
+    'getSession',
+    'deleteSession',
+    'createVerificationToken',
+    'useVerificationToken',
     'appendAudit',
-    
+
     // RBAC methods
-    'createOrganization', 'getOrganization', 'getOrganizationBySlug', 'updateOrganization',
-    'getUserOrganizations', 'addMember', 'getMembership', 'updateMemberRole',
-    'removeMember', 'getOrganizationMembers', 'createInvite', 'getInviteByToken',
-    'acceptInvite', 'getOrganizationInvites', 'revokeInvite',
-    'setEntitlement', 'getEntitlement',
-    
+    'createOrganization',
+    'getOrganization',
+    'getOrganizationBySlug',
+    'updateOrganization',
+    'getUserOrganizations',
+    'addMember',
+    'getMembership',
+    'updateMemberRole',
+    'removeMember',
+    'getOrganizationMembers',
+    'createInvite',
+    'getInviteByToken',
+    'acceptInvite',
+    'getOrganizationInvites',
+    'revokeInvite',
+    'setEntitlement',
+    'getEntitlement',
+
     // Refresh token methods
-    'save', 'findByHash', 'markRotated', 'revokeFamily', 'createChild',
-    'cleanupExpired', 'isFamilyRevoked', 'getFamily'
+    'save',
+    'findByHash',
+    'markRotated',
+    'revokeFamily',
+    'createChild',
+    'cleanupExpired',
+    'isFamilyRevoked',
+    'getFamily',
   ]
 
-  const optional = [
-    'cleanup', 'healthCheck', 'close'
-  ]
+  const optional = ['cleanup', 'healthCheck', 'close']
 
-  const missing = required.filter(method => typeof (adapter as any)[method] !== 'function')
-  const missingOptional = optional.filter(method => typeof (adapter as any)[method] !== 'function')
+  const missing = required.filter((method) => typeof (adapter as any)[method] !== 'function')
+  const missingOptional = optional.filter(
+    (method) => typeof (adapter as any)[method] !== 'function',
+  )
 
   return {
     valid: missing.length === 0,
     missing,
-    optional: missingOptional
+    optional: missingOptional,
   }
 }
 
@@ -148,7 +177,7 @@ export function validateAdapter(adapter: KeyloomAdapter): {
   return {
     valid: capabilities.valid && methods.valid,
     capabilities,
-    methods
+    methods,
   }
 }
 
@@ -157,56 +186,62 @@ export function validateAdapter(adapter: KeyloomAdapter): {
  */
 export function generateAdapterReport(adapter: KeyloomAdapter): string {
   const validation = validateAdapter(adapter)
-  
+
   let report = '# Adapter Validation Report\n\n'
-  
+
   report += `**Overall Status:** ${validation.valid ? '✅ VALID' : '❌ INVALID'}\n\n`
-  
+
   report += '## Capabilities\n\n'
   report += `- Transactions: ${adapter.capabilities.transactions ? '✅' : '❌'}\n`
-  report += `- JSON Support: ${adapter.capabilities.json === true ? '✅ Full' : adapter.capabilities.json === 'limited' ? '⚠️ Limited' : '❌ None'}\n`
+  report += `- JSON Support: ${
+    adapter.capabilities.json === true
+      ? '✅ Full'
+      : adapter.capabilities.json === 'limited'
+        ? '⚠️ Limited'
+        : '❌ None'
+  }\n`
   report += `- TTL Index: ${adapter.capabilities.ttlIndex ? '✅' : '❌'}\n`
   report += `- Case Insensitive Email: ${adapter.capabilities.caseInsensitiveEmail}\n`
   report += `- Upsert Support: ${adapter.capabilities.upsert ? '✅' : '❌'}\n`
-  
+
   if (adapter.capabilities.maxIdentifierLength) {
     report += `- Max Identifier Length: ${adapter.capabilities.maxIdentifierLength}\n`
   }
-  
+
   if (validation.capabilities.errors.length > 0) {
     report += '\n**Capability Errors:**\n'
-    validation.capabilities.errors.forEach(error => {
+    validation.capabilities.errors.forEach((error) => {
       report += `- ❌ ${error}\n`
     })
   }
-  
+
   report += '\n## Methods\n\n'
-  
+
   if (validation.methods.missing.length > 0) {
     report += '**Missing Required Methods:**\n'
-    validation.methods.missing.forEach(method => {
+    validation.methods.missing.forEach((method) => {
       report += `- ❌ ${method}\n`
     })
     report += '\n'
   }
-  
+
   if (validation.methods.optional.length > 0) {
     report += '**Missing Optional Methods:**\n'
-    validation.methods.optional.forEach(method => {
+    validation.methods.optional.forEach((method) => {
       report += `- ⚠️ ${method}\n`
     })
     report += '\n'
   }
-  
+
   if (validation.methods.missing.length === 0) {
     report += '✅ All required methods implemented\n\n'
   }
-  
+
   // Optional features
   report += '## Optional Features\n\n'
   report += `- Health Check: ${adapter.healthCheck ? '✅' : '❌'}\n`
   report += `- Cleanup: ${adapter.cleanup ? '✅' : '❌'}\n`
   report += `- Connection Close: ${adapter.close ? '✅' : '❌'}\n`
-  
+
   return report
 }

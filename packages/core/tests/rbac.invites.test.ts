@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import { issueInviteToken } from '../src/rbac/invites'
+import { describe, expect, it } from 'vitest'
 import { tokenHash } from '../src/crypto/token-hash'
+import { issueInviteToken } from '../src/rbac/invites'
 
 describe('rbac/invites', () => {
   it('issues token with matching hash and ttl', async () => {
@@ -12,4 +12,3 @@ describe('rbac/invites', () => {
     expect(diffMs).toBeLessThan(11 * 60_000)
   })
 })
-
