@@ -74,3 +74,4 @@ examples/*/out/
 examples/*/.next/
 examples/*/.turbo/
 
+release.ps1

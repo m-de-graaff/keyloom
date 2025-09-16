@@ -1,6 +1,6 @@
 {
-  "name": "@keyloom/adapters/prisma",
-  "version": "0.0.0",
+  "name": "@keyloom/adapters-prisma",
+  "version": "1.4.2",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

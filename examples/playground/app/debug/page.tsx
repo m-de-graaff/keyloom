@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 
 type SessionData = { session?: any; user?: any; [k: string]: unknown } | { error: string } | null
 
@@ -9,7 +9,7 @@ export default function DebugPage() {
   const [loading, setLoading] = useState(true)
   const [lastFetch, setLastFetch] = useState<Date | null>(null)
 
-  const fetchSession = async () => {
+  const fetchSession = useCallback(async () => {
     setLoading(true)
     try {
       const response = await fetch('/api/auth/session', { cache: 'no-store' })
@@ -21,7 +21,7 @@ export default function DebugPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchSession()
