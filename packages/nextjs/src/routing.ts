@@ -4,12 +4,14 @@ export type RouteMatch =
   | { kind: 'register' }
   | { kind: 'login' }
   | { kind: 'logout' }
+  | { kind: 'oauth_start'; provider: string }
+  | { kind: 'oauth_callback'; provider: string }
 
 export function matchApiPath(pathname: string): RouteMatch | null {
-  // Expect .../api/auth/[...keyloom]
   const parts = pathname.split('/').filter(Boolean)
-  // Find the last segment (e.g., /api/auth/session)
   const last = parts[parts.length - 1]
+
+  // Keep existing simple matching by last segment
   switch (last) {
     case 'session':
       return { kind: 'session' }
@@ -21,7 +23,15 @@ export function matchApiPath(pathname: string): RouteMatch | null {
       return { kind: 'login' }
     case 'logout':
       return { kind: 'logout' }
-    default:
-      return null
   }
+
+  // OAuth routes: .../oauth/:provider/start or .../oauth/:provider/callback
+  const i = parts.findIndex((p) => p === 'oauth')
+  if (i >= 0 && (last === 'start' || last === 'callback') && parts[i + 1]) {
+    const provider = parts[i + 1]
+    if (last === 'start') return { kind: 'oauth_start', provider }
+    if (last === 'callback') return { kind: 'oauth_callback', provider }
+  }
+
+  return null
 }

@@ -35,4 +35,10 @@ describe('matchApiPath', () => {
     expect(matchApiPath('/session')).toEqual({ kind: 'session' })
     expect(matchApiPath('session')).toEqual({ kind: 'session' })
   })
+
+  it('matches oauth start and callback routes', () => {
+    expect(matchApiPath('/api/auth/oauth/github/start')).toEqual({ kind: 'oauth_start', provider: 'github' })
+    expect(matchApiPath('/api/auth/oauth/google/callback')).toEqual({ kind: 'oauth_callback', provider: 'google' })
+  })
 })
+

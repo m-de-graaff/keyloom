@@ -19,5 +19,10 @@ export * from './session/cookie'
 export * from './session/model'
 export * from './tokens/verification'
 export * from './types'
+
+// OAuth API
+export type { OAuthProvider, Tokens } from './oauth/types'
+export { startOAuth, completeOAuth } from './oauth/flow'
+
 // utilities & facades
 export * as util from './util/time'

@@ -1,4 +1,4 @@
-import { argon2idHasher } from '@keyloom/core'
+import { argon2idHasher, completeOAuth, startOAuth } from '@keyloom/core'
 import { issueCsrfToken, validateDoubleSubmit } from '@keyloom/core/guard/csrf'
 import { getCurrentSession } from '@keyloom/core/runtime/current-session'
 import { login as doLogin } from '@keyloom/core/runtime/login'
@@ -16,6 +16,13 @@ function getAdapter(config: NextKeyloomConfig) {
   if (!_adapter) _adapter = config.adapter
   return _adapter
 }
+
+  function resolveProvider(config: NextKeyloomConfig, id: string) {
+    const p = (config as any).providers?.find((x: any) => x.id === id)
+    if (!p) throw new Error(`provider_not_found:${id}`)
+    return p
+  }
+
 
 export function createNextHandler(config: NextKeyloomConfig) {
   const GET = async (req: NextRequest) => {
@@ -38,6 +45,58 @@ export function createNextHandler(config: NextKeyloomConfig) {
         'Set-Cookie',
         `__keyloom_csrf=${token}; Path=/; SameSite=Lax; HttpOnly; Secure`,
       )
+      return res
+    }
+
+
+    // --- OAUTH START ---
+    if (match.kind === 'oauth_start') {
+      const provider = resolveProvider(config, match.provider)
+      const callbackPath = `/api/auth/oauth/${provider.id}/callback`
+      const callbackUrl = url.searchParams.get('callbackUrl') ?? undefined
+
+      const { authorizeUrl, stateCookie } = await startOAuth({
+        provider,
+        baseUrl: (config as any).baseUrl,
+        callbackPath,
+        callbackUrl,
+        secrets: { authSecret: (config as any).secrets!.authSecret },
+      })
+
+      const res = NextResponse.redirect(authorizeUrl)
+      res.headers.append('Set-Cookie', stateCookie)
+      return res
+    }
+
+    if (match.kind === 'oauth_callback') {
+      const provider = resolveProvider(config, match.provider)
+      const code = url.searchParams.get('code')
+      const stateParam = url.searchParams.get('state')
+      if (!code || !stateParam) return NextResponse.json({ error: 'invalid_callback' }, { status: 400 })
+
+      const stateCookie = parseCookieValue(req.headers.get('cookie'), '__keyloom_oauth')
+      const callbackPath = `/api/auth/oauth/${provider.id}/callback`
+
+      // If user already signed-in, link provider to that user
+      const existingSid = parseCookieValue(req.headers.get('cookie'))
+      const current = existingSid ? await getCurrentSession(existingSid, adapter) : null
+
+      const { session, redirectTo } = await completeOAuth({
+        provider,
+        adapter,
+        baseUrl: (config as any).baseUrl,
+        callbackPath,
+        stateCookie,
+        stateParam,
+        code,
+        secrets: { authSecret: (config as any).secrets!.authSecret },
+        linkToUserId: current?.user?.id,
+      })
+
+      const absoluteRedirect = new URL(redirectTo, (config as any).baseUrl).toString()
+      const res = NextResponse.redirect(absoluteRedirect)
+      res.headers.append('Set-Cookie', setSessionCookieHeader(session.id, { sameSite: (config as any).cookie?.sameSite ?? 'lax' }))
+      res.headers.append('Set-Cookie', `__keyloom_oauth=; Path=/; Max-Age=0; SameSite=Lax; HttpOnly; Secure`)
       return res
     }
 

@@ -57,6 +57,9 @@ export default function SignIn() {
         </button>
         <button type="submit">Login</button>
       </div>
+      <div className="pt-4">
+        <a className="underline" href="/api/auth/oauth/dev/start?callbackUrl=/dashboard">Continue with Dev Provider</a>
+      </div>
       <pre>{msg}</pre>
     </form>
   )
