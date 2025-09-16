@@ -17,7 +17,6 @@
     "release": "changeset version && pnpm i -w && turbo run build && changeset publish",
     "clean": "git clean -xdf -e node_modules -e .pnpm-store",
     "bump-deps": "npx npm-check-updates --deep -u -x react-day-picker && pnpm install",
-
     "releaseit:core": "pnpm -w -C packages/core exec release-it",
     "releaseit:nextjs": "pnpm -w -C packages/nextjs exec release-it",
     "releaseit:providers": "pnpm -w -C packages/providers exec release-it",
@@ -28,6 +27,7 @@
     "@biomejs/biome": "^2.2.4",
     "@changesets/cli": "^2.29.7",
     "@types/node": "^24.5.0",
+    "release-it": "^19.0.4",
     "turbo": "^2.5.6",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
