@@ -1,6 +1,6 @@
 {
   "name": "@keyloom/cli",
-  "version": "1.6.0",
+  "version": "2.0.0",
   "description": "Keyloom command-line tools: init, migrate, routes, doctor",
   "type": "module",
   "bin": {
