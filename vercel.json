@@ -1,5 +1,0 @@
-{
-  "installCommand": "corepack enable && corepack prepare pnpm@10.16.1 --activate && pnpm install -w --filter docs",
-  "buildCommand": "pnpm -C docs build"
-}
-
