@@ -21,7 +21,8 @@
     "releaseit:nextjs": "pnpm -C packages/nextjs exec release-it",
     "releaseit:providers": "pnpm -C packages/providers exec release-it",
     "releaseit:adapters": "pnpm -C packages/adapters exec release-it",
-    "releaseit:all": "pnpm run releaseit:core && pnpm run releaseit:nextjs && pnpm run releaseit:providers && pnpm run releaseit:adapters"
+    "releaseit:cli": "pnpm -C packages/cli exec release-it",
+    "releaseit:all": "pnpm run releaseit:core && pnpm run releaseit:nextjs && pnpm run releaseit:providers && pnpm run releaseit:adapters && pnpm run releaseit:cli"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",

@@ -1,6 +1,7 @@
 {
   "name": "@keyloom/cli",
   "version": "0.0.0",
+  "description": "Keyloom command-line tools: init, migrate, routes, doctor",
   "type": "module",
   "bin": {
     "keyloom": "./dist/keyloom.cjs"
@@ -8,8 +9,16 @@
   "main": "./dist/keyloom.cjs",
   "module": "./dist/keyloom.js",
   "files": [
-    "dist"
+    "dist",
+    "templates/**/*",
+    "README.md"
   ],
+  "publishConfig": { "access": "public" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/keyloom/keyloom.git"
+  },
+  "license": "MIT",
   "sideEffects": false,
   "scripts": {
     "build": "tsup",
@@ -18,10 +27,10 @@
     "test": "vitest run",
     "lint": "biome check ."
   },
+  "dependencies": {
+    "typescript": "^5.9.2"
+  },
   "devDependencies": {
     "tsup": "^8.5.0"
-  },
-  "peerDependencies": {
-    "typescript": ">=5.4"
   }
 }

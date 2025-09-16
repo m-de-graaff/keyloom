@@ -1,0 +1,19 @@
+{
+  "$schema": "https://unpkg.com/release-it@19/schema/release-it.json",
+  "git": {
+    "commitMessage": "chore(@keyloom/cli): release v${version}",
+    "tagName": "@keyloom/cli-v${version}",
+    "tagMatch": "@keyloom/cli-v*",
+    "requireCleanWorkingDir": true,
+    "requireBranch": "main"
+  },
+  "npm": {
+    "publish": true,
+    "access": "public"
+  },
+  "hooks": {
+    "before:init": "pnpm test",
+    "after:bump": "pnpm build"
+  }
+}
+
