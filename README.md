@@ -2,239 +2,293 @@
   <img src="keyloom_banner.png" alt="Keyloom" width="850" height="250" />
 </div>
 
-# Keyloom
+<div align="center">
 
-**Modern, type-safe authentication for Next.js applications**
+**Modern, type-safe authentication for JavaScript applications**
 
-Keyloom is a comprehensive authentication library designed specifically for Next.js, providing seamless integration with both App Router and Pages Router. Built with TypeScript-first design, edge-runtime compatibility, and developer experience in mind.
+[![CI](https://github.com/keyloom/keyloom/actions/workflows/ci.yml/badge.svg)](https://github.com/keyloom/keyloom/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-18.17.0+-green.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
 
-## ✨ Features
+</div>
 
-- 🚀 **Next.js Optimized** - Built specifically for Next.js 13+ with App Router and Pages Router support
-- 🔒 **Type-Safe** - Full TypeScript support with comprehensive type definitions
-- ⚡ **Edge Compatible** - Works seamlessly with Vercel Edge Runtime and middleware
-- 🛡️ **Security First** - CSRF protection, secure session management, and argon2id password hashing
-- 🎯 **Developer Experience** - Clean APIs, excellent IntelliSense, and minimal configuration
-- 🔌 **Adapter System** - Pluggable database adapters (Prisma, and more coming soon)
-- 🎨 **Flexible** - Support for credentials, OAuth providers, and custom authentication flows
-- 📱 **RSC Ready** - Server Components compatible with proper session handling
+---
 
-## 📦 Package Structure
+## 🚀 What is Keyloom?
 
-```
-packages/
-├── core/                    # Core authentication logic and types
-├── nextjs/                  # Next.js integration package
-│   ├── src/
-│   │   ├── index.ts        # Main exports
-│   │   ├── handler.ts      # createNextHandler for API routes
-│   │   ├── middleware.ts   # createAuthMiddleware for edge
-│   │   ├── server-helpers.ts # getSession, getUser, guard (RSC-safe)
-│   │   ├── edge.ts         # Edge-safe utilities
-│   │   ├── cookies.ts      # Cookie management helpers
-│   │   ├── routing.ts      # Internal API routing
-│   │   └── types.ts        # Next.js specific types
-│   └── package.json        # Clean exports with subpath exports
-├── adapters/
-│   └── prisma/             # Prisma database adapter
-├── cli/                    # CLI tools for setup and management
-└── providers/              # OAuth and social login providers
-```
+Keyloom is a comprehensive authentication library designed for modern JavaScript and TypeScript applications. It provides a secure, flexible, and developer-friendly solution for handling user authentication, session management, and authorization.
+
+### ✨ Key Features
+
+- **🔐 Multiple Auth Providers** - GitHub, Google, and more OAuth providers
+- **🗄️ Database Agnostic** - Prisma, memory, and custom adapters
+- **⚡ Framework Support** - First-class Next.js integration with edge runtime support
+- **🛡️ Security First** - CSRF protection, secure session management, and rate limiting
+- **📱 Modern Stack** - TypeScript-first with full type safety
+- **🎯 Developer Experience** - Simple configuration, comprehensive examples
+- **🔄 Session Management** - Flexible session strategies with rolling sessions
+- **🚦 Middleware Support** - Route protection and authentication guards
+
+## 🏗️ Architecture
+
+Keyloom is built as a modular monorepo with the following packages:
+
+- **`@keyloom/core`** - Core authentication logic and utilities
+- **`@keyloom/nextjs`** - Next.js integration and middleware
+- **`@keyloom/server`** - Standalone server implementation
+- **`@keyloom/cli`** - Command-line tools and utilities
+- **`@keyloom/adapters/*`** - Database adapters (Prisma, etc.)
+- **`@keyloom/providers/*`** - OAuth providers (GitHub, Google, etc.)
 
 ## 🚀 Quick Start
 
 ### Installation
 
 ```bash
-npm install @keyloom/nextjs @keyloom/core @keyloom/adapters-prisma
-# or
-pnpm add @keyloom/nextjs @keyloom/core @keyloom/adapters-prisma
-# or
-yarn add @keyloom/nextjs @keyloom/core @keyloom/adapters-prisma
+# Using npm
+npm install @keyloom/core @keyloom/nextjs
+
+# Using pnpm
+pnpm add @keyloom/core @keyloom/nextjs
+
+# Using yarn
+yarn add @keyloom/core @keyloom/nextjs
 ```
 
-### Basic Setup (10-minute setup)
+### Basic Configuration
 
-1. **Create your configuration file**
+Create a `keyloom.config.ts` file in your project root:
 
 ```typescript
-// keyloom.config.ts
-import { defineKeyloom } from "@keyloom/core";
-import prismaAdapter from "@keyloom/adapters/prisma";
+import { memoryAdapter } from "@keyloom/core";
+import github from "@keyloom/providers/github";
 
-export default defineKeyloom({
-  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+export default {
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   session: {
     strategy: "database",
     ttlMinutes: 60,
     rolling: true,
   },
-  adapter: prismaAdapter(), // uses DATABASE_URL env
+  adapter: memoryAdapter(),
+  providers: [
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+  ],
   rbac: { enabled: false },
   cookie: { sameSite: "lax" },
   secrets: { authSecret: process.env.AUTH_SECRET! },
-});
+};
 ```
 
-2. **Set up API routes**
+### Next.js Integration
+
+#### API Routes
+
+Create `app/api/auth/[[...keyloom]]/route.ts`:
 
 ```typescript
-// app/api/auth/[...keyloom]/route.ts
 import { createNextHandler } from "@keyloom/nextjs";
-import config from "../../../keyloom.config";
+import config from "../../../../keyloom.config";
 
 export const { GET, POST } = createNextHandler(config);
 ```
 
-3. **Add middleware for authentication**
+#### Middleware (Optional)
+
+Create `middleware.ts` for route protection:
 
 ```typescript
-// middleware.ts
-import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import { createAuthMiddleware } from "@keyloom/nextjs";
 import config from "./keyloom.config";
 
 export default createAuthMiddleware(config, {
-  publicRoutes: ["/", "/sign-in", "/api/auth/csrf"],
+  publicRoutes: ["/login", "/register", "/"],
+  verifyAtEdge: true,
 });
 
 export const config = {
+  runtime: "edge",
   matcher: ["/((?!_next|.*\\.(?:ico|png|jpg|svg)).*)"],
 };
 ```
 
-4. **Environment variables**
+### Client-Side Usage
+
+```typescript
+// Login
+const response = await fetch("/api/auth/csrf");
+const { csrfToken } = await response.json();
+
+await fetch("/api/auth/login", {
+  method: "POST",
+  headers: {
+    "x-keyloom-csrf": csrfToken,
+    "content-type": "application/json",
+  },
+  body: JSON.stringify({ email, password }),
+});
+
+// Get current session
+const sessionResponse = await fetch("/api/auth/session");
+const { session, user } = await sessionResponse.json();
+
+// Logout
+await fetch("/api/auth/logout", { method: "POST" });
+```
+
+## 📦 Database Adapters
+
+### Prisma Adapter
+
+```typescript
+import prismaAdapter from "@keyloom/adapters/prisma";
+
+export default {
+  adapter: prismaAdapter({
+    url: process.env.DATABASE_URL,
+  }),
+  // ... other config
+};
+```
+
+### Memory Adapter (Development)
+
+```typescript
+import { memoryAdapter } from "@keyloom/core";
+
+export default {
+  adapter: memoryAdapter(),
+  // ... other config
+};
+```
+
+## 🔌 OAuth Providers
+
+### GitHub Provider
+
+```typescript
+import github from "@keyloom/providers/github";
+
+export default {
+  providers: [
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+  ],
+  // ... other config
+};
+```
+
+## 🛠️ Development
+
+### Prerequisites
+
+- Node.js >= 18.17.0
+- pnpm >= 10.16.1
+
+### Setup
 
 ```bash
-# .env.local
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/keyloom_app
-AUTH_SECRET=your-super-secret-key-change-in-production
+# Clone the repository
+git clone https://github.com/keyloom/keyloom.git
+cd keyloom
+
+# Install dependencies
+pnpm install -w
+
+# Start development
+pnpm dev
 ```
 
-## 🔧 Usage Examples
+This will start the development servers for all example applications and watch for changes across all packages.
 
-### Server Components (App Router)
+### Available Scripts
 
-```typescript
-// app/dashboard/page.tsx
-import { getSession } from "@keyloom/nextjs";
-import { redirect } from "next/navigation";
+```bash
+# Development
+pnpm dev              # Start all example apps in development mode
+pnpm build            # Build all packages
+pnpm typecheck        # Type check all packages
+pnpm test             # Run all tests
 
-export default async function Dashboard() {
-  const { session, user } = await getSession();
+# Code Quality
+pnpm lint             # Lint all packages
+pnpm format           # Format all code
+pnpm format-and-lint:fix  # Fix formatting and linting issues
 
-  if (!session) {
-    redirect("/sign-in");
-  }
-
-  return (
-    <div>
-      <h1>Welcome back, {user?.email}!</h1>
-      <p>Session ID: {session.id}</p>
-    </div>
-  );
-}
+# Release
+pnpm changeset        # Create a changeset
+pnpm release          # Version and publish packages
 ```
 
-### Client Components
+### Project Structure
 
-```typescript
-"use client";
-
-import { useState } from "react";
-
-function getCsrf() {
-  const part = document.cookie
-    .split("; ")
-    .find((x) => x.startsWith("__keyloom_csrf="));
-  return part?.split("=")[1] ?? "";
-}
-
-export default function SignIn() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-
-  async function ensureCsrf() {
-    await fetch("/api/auth/csrf", { cache: "no-store" });
-  }
-
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    await ensureCsrf();
-
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-keyloom-csrf": getCsrf(),
-      },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const result = await response.json();
-    setMessage(JSON.stringify(result));
-
-    if (response.ok) {
-      window.location.href = "/dashboard";
-    }
-  }
-
-  return (
-    <form onSubmit={handleLogin} className="space-y-4">
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-        required
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Password"
-        required
-      />
-      <button type="submit">Sign In</button>
-      {message && <pre>{message}</pre>}
-    </form>
-  );
-}
+```
+keyloom/
+├── packages/
+│   ├── core/           # Core authentication logic
+│   ├── nextjs/         # Next.js integration
+│   ├── server/         # Standalone server
+│   ├── cli/            # Command-line tools
+│   ├── adapters/       # Database adapters
+│   └── providers/      # OAuth providers
+├── examples/
+│   ├── playground/     # Development playground
+│   └── next-app-router/ # Next.js App Router example
+└── docs/               # Documentation
 ```
 
-### Middleware Configuration
+## 🧪 Examples
 
-```typescript
-// middleware.ts - Advanced configuration
-import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
-import config from "./keyloom.config";
+The repository includes several example applications:
 
-export default createAuthMiddleware(config, {
-  publicRoutes: [
-    "/",
-    "/sign-in",
-    "/sign-up",
-    "/api/auth/csrf",
-    /^\/blog\/.*/, // Regex patterns supported
-  ],
-  // Optional: verify session at edge (lower performance)
-  verifyAtEdge: false,
-  // Custom logic after auth check
-  afterAuth: ({ authed, req, next, redirect }) => {
-    const { pathname } = req.nextUrl;
+- **Playground** (`examples/playground`) - Development playground with memory adapter
+- **Next.js App Router** (`examples/next-app-router`) - Production-ready example with Prisma
 
-    // Redirect authenticated users away from auth pages
-    if (authed && ["/sign-in", "/sign-up"].includes(pathname)) {
-      return redirect("/dashboard");
-    }
+Run examples:
 
-    // Redirect unauthenticated users to sign-in
-    if (!authed && pathname.startsWith("/dashboard")) {
-      return redirect("/sign-in");
-    }
+```bash
+# Start all examples
+pnpm dev
 
-    return next();
-  },
-});
+# Playground runs on http://localhost:3000
+# Next.js example runs on http://localhost:3001
 ```
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development Workflow
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests and linting: `pnpm test && pnpm lint`
+5. Create a changeset: `pnpm changeset`
+6. Submit a pull request
+
+## 📄 License
+
+Keyloom is [MIT licensed](LICENSE).
+
+## 🔒 Security
+
+For security issues, please email security@keyloom.dev instead of using the issue tracker.
+
+## 📚 Documentation
+
+- [API Reference](docs/api.md) _(Coming Soon)_
+- [Configuration Guide](docs/configuration.md) _(Coming Soon)_
+- [Migration Guide](docs/migration.md) _(Coming Soon)_
+
+---
+
+<div align="center">
+  <p>Built with ❤️ by the Keyloom team</p>
+</div>
