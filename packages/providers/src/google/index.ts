@@ -12,7 +12,7 @@ export default function google(opts: { clientId: string; clientSecret: string })
     token: { url: 'https://oauth2.googleapis.com/token', style: 'json' },
     userinfo: {
       url: 'https://openidconnect.googleapis.com/v1/userinfo',
-      map: (raw) => ({
+      map: (raw: any) => ({
         id: raw.sub,
         email: raw.email ?? null,
         name: raw.name ?? null,
