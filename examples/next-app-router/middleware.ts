@@ -1,5 +1,5 @@
-import { createAuthMiddleware } from '@keyloom/nextjs'
-import keyloomConfig from './keyloom.config'
+import { createAuthMiddleware } from '@keyloom/nextjs/middleware'
+import keyloomConfig from './keyloom.middleware'
 
 export default createAuthMiddleware(keyloomConfig, {
   publicRoutes: ['/', '/sign-in', '/debug', '/api/auth'],

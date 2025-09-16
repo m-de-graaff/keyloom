@@ -64,11 +64,11 @@ export type AuditEvent = {
 }
 
 export type KeyloomConfig = {
-  adapter: unknown; // Adapter factory or instance
+  adapter: unknown // Adapter factory or instance
   cookie?: {
-    sameSite?: 'lax' | 'strict' | 'none';
-    domain?: string;
-    maxAgeSec?: number;
-  };
+    sameSite?: 'lax' | 'strict' | 'none'
+    domain?: string
+    maxAgeSec?: number
+  }
   // Add other config options as needed
 }

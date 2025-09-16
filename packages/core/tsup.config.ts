@@ -7,7 +7,7 @@ export default defineConfig({
     'src/runtime/login.ts',
     'src/runtime/logout.ts',
     'src/runtime/current-session.ts',
-    'src/guard/csrf.ts'
+    'src/guard/csrf.ts',
   ],
   format: ['cjs', 'esm'],
   dts: false,

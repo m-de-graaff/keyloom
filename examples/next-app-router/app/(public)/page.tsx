@@ -3,9 +3,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto py-16 px-4">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-8">
-            Welcome to Keyloom
-          </h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-8">Welcome to Keyloom</h1>
           <p className="text-xl text-gray-600 mb-8">
             A modern authentication library for JavaScript applications
           </p>
@@ -27,11 +25,15 @@ export default function Home() {
 
           <div className="mt-12 text-sm text-gray-500">
             <p>
-              Visit <a href="/debug" className="text-indigo-600 hover:text-indigo-800">/debug</a> to inspect session.
+              Visit{' '}
+              <a href="/debug" className="text-indigo-600 hover:text-indigo-800">
+                /debug
+              </a>{' '}
+              to inspect session.
             </p>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

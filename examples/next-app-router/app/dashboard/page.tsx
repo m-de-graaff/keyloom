@@ -1,15 +1,16 @@
-import { getSession } from '@keyloom/nextjs';
-import { redirect } from 'next/navigation';
+import { getSession } from '@keyloom/nextjs'
+import { redirect } from 'next/navigation'
+import keyloomConfig from '../../keyloom.config'
 
 export default async function Dashboard() {
-  const { session, user } = await getSession();
-  if (!session) redirect('/sign-in');
+  const { session, user } = await getSession(keyloomConfig)
+  if (!session) redirect('/sign-in')
 
   async function logout() {
-    'use server';
-    const response = await fetch('/api/auth/logout', { method: 'POST' });
+    'use server'
+    const response = await fetch('/api/auth/logout', { method: 'POST' })
     if (response.ok) {
-      redirect('/sign-in');
+      redirect('/sign-in')
     }
   }
 
@@ -43,15 +44,19 @@ export default async function Dashboard() {
             <div className="bg-gray-50 p-4 rounded-md">
               <h3 className="font-medium text-gray-700 mb-2">Session Information:</h3>
               <pre className="text-sm text-gray-600 whitespace-pre-wrap">
-                {JSON.stringify({
-                  sessionId: session?.id,
-                  expiresAt: session?.expiresAt
-                }, null, 2)}
+                {JSON.stringify(
+                  {
+                    sessionId: session?.id,
+                    expiresAt: session?.expiresAt,
+                  },
+                  null,
+                  2,
+                )}
               </pre>
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

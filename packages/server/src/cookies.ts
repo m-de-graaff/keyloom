@@ -11,17 +11,17 @@ export function setSessionCookie(
     httpOnly: true,
     path: '/',
     maxAge: 60 * 60,
-  };
+  }
 
   if (opts.domain !== undefined) {
-    cookieOptions.domain = opts.domain;
+    cookieOptions.domain = opts.domain
   }
 
   if (opts.sameSite !== undefined) {
-    cookieOptions.sameSite = opts.sameSite;
+    cookieOptions.sameSite = opts.sameSite
   }
 
-  reply.header('Set-Cookie', serializeSessionCookie(sessionId, cookieOptions));
+  reply.header('Set-Cookie', serializeSessionCookie(sessionId, cookieOptions))
 }
 export function clearSessionCookie(
   reply: FastifyReply,
@@ -32,15 +32,15 @@ export function clearSessionCookie(
     httpOnly: true,
     path: '/',
     maxAge: 0,
-  };
+  }
 
   if (opts.domain !== undefined) {
-    cookieOptions.domain = opts.domain;
+    cookieOptions.domain = opts.domain
   }
 
   if (opts.sameSite !== undefined) {
-    cookieOptions.sameSite = opts.sameSite;
+    cookieOptions.sameSite = opts.sameSite
   }
 
-  reply.header('Set-Cookie', serializeSessionCookie('', cookieOptions));
+  reply.header('Set-Cookie', serializeSessionCookie('', cookieOptions))
 }

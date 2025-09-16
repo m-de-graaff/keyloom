@@ -31,7 +31,7 @@ export function newStore(): MemoryStore {
     accounts: new Map(),
     sessions: new Map(),
     tokens: new Map(),
-  audit: [],
+    audit: [],
     credentials: new Map(),
     credByUserId: new Map(),
     byEmail: new Map(),

@@ -1,5 +1,5 @@
-import { createAuthMiddleware } from '@keyloom/nextjs'
-import keyloomConfig from './keyloom.config'
+import { createAuthMiddleware } from '@keyloom/nextjs/middleware'
+import keyloomConfig from './keyloom.middleware'
 
 export default createAuthMiddleware(keyloomConfig, {
   publicRoutes: ['/', '/debug', '/api/auth'],
@@ -7,5 +7,5 @@ export default createAuthMiddleware(keyloomConfig, {
 })
 
 export const config = {
-  matcher: ['/((?!_next|.*\\.(?:ico|png|jpg|svg)).*)']
+  matcher: ['/((?!_next|.*\\.(?:ico|png|jpg|svg)).*)'],
 }

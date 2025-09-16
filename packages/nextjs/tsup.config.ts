@@ -1,13 +1,9 @@
 import { defineConfig } from 'tsup'
 
 export default defineConfig({
-  entry: [
-    'src/index.ts',
-    'src/middleware.ts',
-    'src/edge.ts'
-  ],
+  entry: ['src/index.ts', 'src/middleware.ts', 'src/edge.ts'],
   format: ['cjs', 'esm'],
-  dts: true,
+  dts: false,
   sourcemap: true,
   clean: true,
   treeshake: true,

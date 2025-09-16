@@ -1,58 +1,58 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
+import { useState } from 'react'
 
 function getCsrf() {
-  const part = document.cookie.split('; ').find(x => x.startsWith('__keyloom_csrf='));
-  return part?.split('=')[1] ?? '';
+  const part = document.cookie.split('; ').find((x) => x.startsWith('__keyloom_csrf='))
+  return part?.split('=')[1] ?? ''
 }
 
 export default function SignIn() {
-  const [email, setEmail] = useState('dev@example.com');
-  const [password, setPassword] = useState('password');
-  const [msg, setMsg] = useState('');
+  const [email, setEmail] = useState('dev@example.com')
+  const [password, setPassword] = useState('password')
+  const [msg, setMsg] = useState('')
 
-  async function ensureCsrf() { 
-    await fetch('/api/auth/csrf', { cache: 'no-store' }); 
+  async function ensureCsrf() {
+    await fetch('/api/auth/csrf', { cache: 'no-store' })
   }
 
   async function onRegister(e: React.FormEvent) {
-    e.preventDefault(); 
-    await ensureCsrf();
+    e.preventDefault()
+    await ensureCsrf()
     const r = await fetch('/api/auth/register', {
       method: 'POST',
-      headers: { 
-        'content-type': 'application/json', 
-        'x-keyloom-csrf': getCsrf() 
+      headers: {
+        'content-type': 'application/json',
+        'x-keyloom-csrf': getCsrf(),
       },
-      body: JSON.stringify({ email, password })
-    });
-    const result = await r.json();
-    setMsg(JSON.stringify(result));
+      body: JSON.stringify({ email, password }),
+    })
+    const result = await r.json()
+    setMsg(JSON.stringify(result))
     if (r.ok) {
-      setMsg('Registration successful! You can now login.');
+      setMsg('Registration successful! You can now login.')
     }
   }
 
   async function onLogin(e: React.FormEvent) {
-    e.preventDefault(); 
-    await ensureCsrf();
+    e.preventDefault()
+    await ensureCsrf()
     const r = await fetch('/api/auth/login', {
       method: 'POST',
-      headers: { 
-        'content-type': 'application/json', 
-        'x-keyloom-csrf': getCsrf() 
+      headers: {
+        'content-type': 'application/json',
+        'x-keyloom-csrf': getCsrf(),
       },
-      body: JSON.stringify({ email, password })
-    });
-    const result = await r.json();
+      body: JSON.stringify({ email, password }),
+    })
+    const result = await r.json()
     if (r.ok) {
-      setMsg('Login successful! Redirecting...');
+      setMsg('Login successful! Redirecting...')
       setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 1000);
+        window.location.href = '/dashboard'
+      }, 1000)
     } else {
-      setMsg(JSON.stringify(result));
+      setMsg(JSON.stringify(result))
     }
   }
 
@@ -120,5 +120,5 @@ export default function SignIn() {
         </form>
       </div>
     </div>
-  );
+  )
 }

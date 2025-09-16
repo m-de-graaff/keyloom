@@ -3,21 +3,19 @@
   "version": "0.0.0",
   "type": "module",
   "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "module": "./dist/index.js",
+
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
+      "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
     "./middleware": {
-      "types": "./dist/middleware.d.ts",
-      "import": "./dist/middleware.mjs"
+      "import": "./dist/middleware.js",
+      "require": "./dist/middleware.cjs"
     },
     "./edge": {
-      "types": "./dist/edge.d.ts",
-      "import": "./dist/edge.mjs"
+      "import": "./dist/edge.js"
     }
   },
   "files": [
@@ -41,4 +39,3 @@
     "@keyloom/core": "workspace:*"
   }
 }
-
