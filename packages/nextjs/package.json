@@ -3,44 +3,21 @@
   "version": "0.0.0",
   "type": "module",
   "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": {
-        "development": "./src/index.ts",
-        "default": "./dist/index.js"
-      },
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
-    },
-    "./edge": {
-      "types": "./dist/edge.d.ts",
-      "import": {
-        "development": "./src/edge.ts",
-        "default": "./dist/edge.js"
-      }
     },
     "./middleware": {
       "types": "./dist/middleware.d.ts",
-      "import": {
-        "development": "./src/middleware.ts",
-        "default": "./dist/middleware.js"
-      }
+      "import": "./dist/middleware.mjs"
     },
-    "./handler": {
-      "types": "./dist/handler.d.ts",
-      "import": {
-        "development": "./src/handler.ts",
-        "default": "./dist/handler.js"
-      }
-    },
-    "./rsc": {
-      "types": "./dist/rsc.d.ts",
-      "import": {
-        "development": "./src/rsc.ts",
-        "default": "./dist/rsc.js"
-      }
+    "./edge": {
+      "types": "./dist/edge.d.ts",
+      "import": "./dist/edge.mjs"
     }
   },
   "files": [
@@ -58,7 +35,10 @@
     "tsup": "^8.5.0"
   },
   "peerDependencies": {
-    "typescript": ">=5.4"
+    "next": ">=13",
+    "react": ">=18",
+    "typescript": ">=5.4",
+    "@keyloom/core": "workspace:*"
   }
 }
 

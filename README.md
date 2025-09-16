@@ -6,10 +6,10 @@
 
 **Modern, type-safe authentication for JavaScript applications**
 
-[![CI](https://github.com/keyloom/keyloom/actions/workflows/ci.yml/badge.svg)](https://github.com/keyloom/keyloom/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18.17.0+-green.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
+[![NPM](https://img.shields.io/npm/v/@keyloom/core)](https://www.npmjs.com/package/@keyloom/core)
 
 </div>
 

@@ -62,7 +62,7 @@ export function createNextHandler(config: NextKeyloomConfig) {
 
     if (match.kind === 'login') {
       const { email, password } = await req.json();
-      const { session } = await doLogin({ email, password }, { adapter, hasher: argon2idHasher });
+      const { session } = await doLogin({ email, password, ttlMinutes: config.session?.ttlMinutes }, { adapter, hasher: argon2idHasher });
       const res = NextResponse.json({ sessionId: session.id });
       res.headers.append('Set-Cookie',
         setSessionCookieHeader(session.id, { sameSite: config.cookie?.sameSite ?? 'lax' })
