@@ -3,6 +3,7 @@ import { createPkce } from './pkce'
 import { sealState, openState } from './state'
 import { newSession } from '../session/model'
 import type { Adapter } from '../adapter'
+import type { OAuthStatePayload } from './state'
 
 export async function startOAuth(opts: {
   provider: OAuthProvider & { clientId: string; clientSecret: string }
@@ -13,7 +14,8 @@ export async function startOAuth(opts: {
 }) {
   const { provider, baseUrl, callbackPath, callbackUrl, secrets } = opts
   const { verifier, challenge } = await createPkce()
-  const statePayload = { p: provider.id, v: verifier, r: callbackUrl, t: Date.now() }
+  const statePayload: OAuthStatePayload = { p: provider.id, v: verifier, t: Date.now() }
+  if (callbackUrl) statePayload.r = callbackUrl
   const sealed = await sealState(new TextEncoder().encode(secrets.authSecret), statePayload)
 
   const authUrl = new URL(provider.authorization.url)
@@ -49,7 +51,9 @@ export async function completeOAuth(opts: {
   const { provider, adapter, baseUrl, callbackPath, stateCookie, stateParam, code, secrets, linkToUserId } = opts
   if (!stateCookie || !stateParam || stateCookie !== stateParam) throw new Error('state_mismatch')
 
-  const [nonce, ct] = (stateParam as string).split('.')
+  const parts = (stateParam as string).split('.')
+  if (parts.length !== 2) throw new Error('state_bad_format')
+  const [nonce, ct] = parts as [string, string]
   const st = await openState(new TextEncoder().encode(secrets.authSecret), nonce, ct)
   if (st.p !== provider.id) throw new Error('state_wrong_provider')
   if (Date.now() - st.t > 10 * 60_000) throw new Error('state_expired')

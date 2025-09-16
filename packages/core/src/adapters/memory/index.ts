@@ -1,6 +1,6 @@
 import type { Adapter } from '../../adapter'
 import { ERR, KeyloomError } from '../../errors'
-import type { Account, ID, Session, User, VerificationToken } from '../../types'
+import type { Account, AuditEvent, ID, Session, User, VerificationToken } from '../../types'
 import { newId } from '../../util/ids'
 import { now } from '../../util/time'
 import { type MemoryStore, newStore } from './store'
@@ -22,16 +22,16 @@ export function memoryAdapter(init?: { store?: MemoryStore }): Adapter & {
       __store: store,
 
       // Users
-      async createUser(data) {
+      async createUser(data: Partial<User>): Promise<User> {
         if (data.email && store.byEmail.has(data.email)) throw new KeyloomError(ERR.EMAIL_EXISTS)
-        const id = data.id ?? newId()
+        const id = (data.id as ID | undefined) ?? newId()
         const nowDt = now()
         const u: User = {
           id,
-          email: data.email ?? null,
-          emailVerified: data.emailVerified ?? null,
-          name: data.name ?? null,
-          image: data.image ?? null,
+          email: (data.email ?? null) as string | null,
+          emailVerified: (data.emailVerified ?? null) as Date | null,
+          name: (data.name ?? null) as string | null,
+          image: (data.image ?? null) as string | null,
           createdAt: nowDt,
           updatedAt: nowDt,
         }
@@ -40,16 +40,16 @@ export function memoryAdapter(init?: { store?: MemoryStore }): Adapter & {
         return u
       },
 
-      async getUser(id) {
+      async getUser(id: ID): Promise<User | null> {
         return store.users.get(id) ?? null
       },
 
-      async getUserByEmail(email) {
+      async getUserByEmail(email: string): Promise<User | null> {
         const id = store.byEmail.get(email)
         return id ? (store.users.get(id) ?? null) : null
       },
 
-      async updateUser(id, data) {
+      async updateUser(id: ID, data: Partial<User>): Promise<User> {
         const u = store.users.get(id)
         if (!u) throw new KeyloomError(ERR.USER_NOT_FOUND)
         const updated: User = { ...u, ...data, updatedAt: now() }
@@ -64,22 +64,22 @@ export function memoryAdapter(init?: { store?: MemoryStore }): Adapter & {
       },
 
       // Accounts
-      async linkAccount(acc) {
+      async linkAccount(acc: Account): Promise<Account> {
         const key = `${acc.provider}:${acc.providerAccountId}`
         if (store.byProvider.has(key)) throw new KeyloomError(ERR.ACCOUNT_LINKED)
-        const id = acc.id ?? newId()
+        const id = (acc.id as ID | undefined) ?? newId()
         const a: Account = { ...acc, id }
         store.accounts.set(id, a)
         store.byProvider.set(key, id)
         return a
       },
-      async getAccountByProvider(provider, providerAccountId) {
+      async getAccountByProvider(provider: string, providerAccountId: string): Promise<Account | null> {
         const id = store.byProvider.get(`${provider}:${providerAccountId}`)
         return id ? (store.accounts.get(id) ?? null) : null
       },
 
       // Sessions
-      async createSession(s) {
+      async createSession(s: Omit<Session, 'id' | 'createdAt' | 'updatedAt'>): Promise<Session> {
         const id = newId()
         const nowDt = now()
         const sess: Session = {
@@ -92,22 +92,24 @@ export function memoryAdapter(init?: { store?: MemoryStore }): Adapter & {
         store.sessions.set(id, sess)
         return sess
       },
-      async getSession(id) {
+      async getSession(id: ID): Promise<Session | null> {
         return store.sessions.get(id) ?? null
       },
-      async deleteSession(id) {
+      async deleteSession(id: ID): Promise<void> {
         store.sessions.delete(id)
       },
 
       // Tokens
-      async createVerificationToken(v) {
+      async createVerificationToken(
+        v: Omit<VerificationToken, 'id' | 'createdAt' | 'consumedAt'>,
+      ): Promise<VerificationToken> {
         const id = newId()
         const vt: VerificationToken = { ...v, id }
         // Phase 1: store token as plain (tests), Phase 2 will hash
         store.tokens.set(`${v.identifier}:${v.token}`, vt)
         return vt
       },
-      async useVerificationToken(identifier, token) {
+      async useVerificationToken(identifier: string, token: string): Promise<VerificationToken | null> {
         const key = `${identifier}:${token}`
         const vt = store.tokens.get(key) ?? null
         if (!vt) return null
@@ -116,12 +118,12 @@ export function memoryAdapter(init?: { store?: MemoryStore }): Adapter & {
       },
 
       // Audit
-      async appendAudit(event) {
+      async appendAudit(event: AuditEvent): Promise<void> {
         store.audit.push({ ...event, id: newId(), at: now() })
       },
 
       // Credentials
-      async createCredential(userId, hash) {
+      async createCredential(userId: ID, hash: string): Promise<{ id: ID; userId: ID }> {
         if (store.credByUserId.has(userId))
           throw new KeyloomError('CREDENTIAL_EXISTS', 'Credentials already exist')
         const id = newId()
@@ -130,11 +132,11 @@ export function memoryAdapter(init?: { store?: MemoryStore }): Adapter & {
         store.credByUserId.set(userId, id)
         return { id, userId }
       },
-      async getCredentialByUserId(userId) {
+      async getCredentialByUserId(userId: ID): Promise<{ id: ID; userId: ID; hash: string } | null> {
         const id = store.credByUserId.get(userId)
         return id ? (store.credentials.get(id) ?? null) : null
       },
-      async updateCredential(userId, hash) {
+      async updateCredential(userId: ID, hash: string): Promise<void> {
         const id = store.credByUserId.get(userId)
         if (!id) throw new KeyloomError('CREDENTIAL_NOT_FOUND', 'No credentials for user')
         const prev = store.credentials.get(id)
