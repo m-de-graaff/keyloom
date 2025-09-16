@@ -1,6 +1,6 @@
 {
   "name": "@keyloom/providers",
-  "version": "1.6.1",
+  "version": "2.0.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
