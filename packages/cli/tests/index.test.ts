@@ -49,11 +49,9 @@ describe('cli run', () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation((msg?: unknown) => {
       logs.push(String(msg))
     })
-    const exitSpy = vi
-      .spyOn(process, 'exit')
-      .mockImplementation(((code?: number) => {
-        throw new Error(`exit:${code ?? 0}`)
-      }) as never)
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+      throw new Error(`exit:${code ?? 0}`)
+    }) as never)
 
     const run = await loadRun()
     try {
@@ -72,11 +70,9 @@ describe('cli run', () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation((msg?: unknown) => {
       logs.push(String(msg))
     })
-    const exitSpy = vi
-      .spyOn(process, 'exit')
-      .mockImplementation(((code?: number) => {
-        throw new Error(`exit:${code ?? 0}`)
-      }) as never)
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+      throw new Error(`exit:${code ?? 0}`)
+    }) as never)
 
     const run = await loadRun()
     try {

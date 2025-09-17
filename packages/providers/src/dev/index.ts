@@ -24,4 +24,3 @@ export function devProvider(options: DevProviderOptions = {}) {
 }
 
 export default devProvider
-

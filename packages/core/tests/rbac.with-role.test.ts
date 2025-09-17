@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-
-import { withRole } from '../src/rbac/with-role'
 import type { PermissionMap } from '../src/rbac/policy'
+import { withRole } from '../src/rbac/with-role'
 
 describe('withRole guard', () => {
   it('invokes handler when role matches requirements', async () => {
@@ -60,4 +59,3 @@ describe('withRole guard', () => {
     await expect(wrapped({ req: {} })).resolves.toBe('forbidden')
   })
 })
-

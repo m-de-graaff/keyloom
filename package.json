@@ -16,7 +16,7 @@
     "format": "biome format --write .",
     "format-and-lint:fix": "biome check . --write --unsafe",
     "changeset": "changeset",
-    "release": "changeset version && pnpm i -w && turbo run build && changeset publish",
+    "release": "changeset version && pnpm install --recursive && turbo run build && changeset publish",
     "clean": "git clean -xdf -e node_modules -e .pnpm-store",
     "bump-deps": "npx npm-check-updates --deep -u -x react-day-picker && pnpm install",
     "releaseit:core": "pnpm -C packages/core exec release-it",

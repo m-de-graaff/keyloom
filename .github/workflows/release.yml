@@ -15,7 +15,7 @@ jobs:
           node-version: 22
           cache: pnpm
           registry-url: https://registry.npmjs.org/
-      - run: pnpm i -w
+      - run: pnpm install --recursive --frozen-lockfile
       - name: Create release PR and publish
         uses: changesets/action@v1
         with:
@@ -23,4 +23,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-

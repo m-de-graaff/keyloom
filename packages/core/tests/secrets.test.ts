@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
-  SecretsManager,
   createSecrets,
   deriveJwtSecret,
   generateSecret,
@@ -10,13 +9,14 @@ import {
   getSecretsManager,
   initializeSecrets,
   resetSecretsManager,
+  SecretsManager,
   validateSecrets,
 } from '../src/secrets'
 
 afterEach(() => {
-  delete process.env.AUTH_SECRET
-  delete process.env.JWT_SECRET
-  delete process.env.JWKS_PATH
+  Reflect.deleteProperty(process.env, 'AUTH_SECRET')
+  Reflect.deleteProperty(process.env, 'JWT_SECRET')
+  Reflect.deleteProperty(process.env, 'JWKS_PATH')
   resetSecretsManager()
   vi.restoreAllMocks()
 })
@@ -51,7 +51,7 @@ describe('secrets utilities', () => {
     const merged = createSecrets({ authSecret: 'override-secret-value-789012' })
     expect(getEffectiveJwtSecret(merged)).toBe('jwt-secret-value-987654')
 
-    delete process.env.JWT_SECRET
+    Reflect.deleteProperty(process.env, 'JWT_SECRET')
     const derived = createSecrets({ authSecret: 'override-secret-value-789012' })
     expect(getEffectiveJwtSecret(derived)).toBe(deriveJwtSecret('override-secret-value-789012'))
   })
@@ -99,6 +99,8 @@ describe('secrets utilities', () => {
 
   it('getJwksPath falls back to default', () => {
     expect(getJwksPath({ authSecret: 'secret-value-123456' }, 'default.json')).toBe('default.json')
-    expect(getJwksPath({ authSecret: 'secret-value-123456', jwksPath: 'custom.json' })).toBe('custom.json')
+    expect(getJwksPath({ authSecret: 'secret-value-123456', jwksPath: 'custom.json' })).toBe(
+      'custom.json',
+    )
   })
 })

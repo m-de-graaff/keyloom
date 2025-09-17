@@ -1,4 +1,4 @@
-import { COOKIE_NAME, serializeSessionCookie } from '@keyloom/core'
+import { serializeSessionCookie } from '@keyloom/core'
 import { parseCookieValue as parseEdgeCookieValue } from './cookies-edge'
 
 export const parseCookieValue = parseEdgeCookieValue
@@ -24,4 +24,3 @@ export function setSessionCookieHeader(
 
   return serializeSessionCookie(sessionId, cookieOptions)
 }
-

@@ -148,4 +148,3 @@ export function validateAudience(claims: JwtClaims, expectedAudience?: string | 
     )
   }
 }
-

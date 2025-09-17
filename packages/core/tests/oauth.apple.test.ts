@@ -10,11 +10,10 @@ function toPem(key: ArrayBuffer): string {
 
 describe('apple oauth helpers', () => {
   it('builds a signed client secret using ES256', async () => {
-    const keyPair = (await crypto.subtle.generateKey(
-      { name: 'ECDSA', namedCurve: 'P-256' },
-      true,
-      ['sign', 'verify'],
-    )) as CryptoKeyPair
+    const keyPair = (await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [
+      'sign',
+      'verify',
+    ])) as CryptoKeyPair
 
     const pkcs8 = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey)
     const pem = toPem(pkcs8)
@@ -50,11 +49,10 @@ describe('apple oauth helpers', () => {
   })
 
   it('handles environments without Buffer by using browser fallbacks', async () => {
-    const keyPair = (await crypto.subtle.generateKey(
-      { name: 'ECDSA', namedCurve: 'P-256' },
-      true,
-      ['sign', 'verify'],
-    )) as CryptoKeyPair
+    const keyPair = (await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [
+      'sign',
+      'verify',
+    ])) as CryptoKeyPair
     const pkcs8 = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey)
     const pem = toPem(pkcs8)
 

@@ -1,13 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import {
-  RefreshTokenRotator,
   cleanupExpiredKeys,
   createDefaultRotationPolicy,
   createKeystore,
-  createRefreshToken,
   createOpaqueRefreshToken,
   createPublicJwks,
+  createRefreshToken,
   createSigner,
   extractJwtClaims,
   extractPublicJwk,
@@ -15,27 +14,27 @@ import {
   generateKeyPairWithKeys,
   getPublicKeysForVerification,
   hashRefreshToken,
-  isValidOpaqueTokenFormat,
-
   isPrivateJwk,
   isRefreshTokenExpired,
+  isValidOpaqueTokenFormat,
+  JWT_ERRORS,
+  JwtError,
   needsRotation,
+  parseOpaqueRefreshToken,
+  RefreshTokenRotator,
   rotateKeys,
+  signJwtWithKey,
   validateJwk,
   validateKeystore,
   validateRefreshTokenFormat,
-  parseOpaqueRefreshToken,
-  signJwtWithKey,
   verify,
   verifyFull,
   verifyJwt,
   verifyJwtWithTiming,
-  JWT_ERRORS,
-  JwtError,
 } from '../src/jwt'
 import type { RefreshTokenRecord } from '../src/jwt/types'
 
-class MemoryRefreshStore implements import('../src/jwt/refresh').RefreshTokenStore {
+class MemoryRefreshStore implements RefreshTokenStore {
   private byHash = new Map<string, RefreshTokenRecord>()
   private families = new Map<string, RefreshTokenRecord[]>()
   private revoked = new Set<string>()
@@ -100,7 +99,8 @@ class MemoryRefreshStore implements import('../src/jwt/refresh').RefreshTokenSto
 
 describe('jwt crypto workflow', () => {
   it('generates key pairs and exports JWKs safely', async () => {
-    const { kid, publicKey, privateKey, publicJwk, privateJwk } = await generateKeyPairWithKeys('EdDSA')
+    const { kid, publicKey, privateKey, publicJwk, privateJwk } =
+      await generateKeyPairWithKeys('EdDSA')
 
     expect(publicKey.type).toBe('public')
     expect(privateKey.type).toBe('private')
@@ -218,7 +218,11 @@ describe('jwt crypto workflow', () => {
     await store.save(record)
 
     const rotator = new RefreshTokenRotator(store, secret)
-    const rotation = await rotator.rotate(token, 120_000, { sessionId: 'sess-1', ip: '10.0.0.1', userAgent: 'vitest-agent' })
+    const rotation = await rotator.rotate(token, 120_000, {
+      sessionId: 'sess-1',
+      ip: '10.0.0.1',
+      userAgent: 'vitest-agent',
+    })
 
     expect(rotation.record.parentJti).toBe(record.jti)
     expect(rotation.record.sessionId).toBe('sess-1')
@@ -251,8 +255,6 @@ describe('jwt crypto workflow', () => {
   })
 })
 
-
-
 describe('opaque token helpers', () => {
   it('parses opaque refresh tokens and validates format', () => {
     const familyId = crypto.randomUUID()
@@ -282,40 +284,69 @@ describe('jwt verification edge cases', () => {
 
   it('rejects tokens with invalid header', async () => {
     const header = Buffer.from(JSON.stringify({ alg: 'EdDSA' })).toString('base64url')
-    const payload = Buffer.from(JSON.stringify({ iss: 'i', sub: 's', iat: 1, exp: 2 })).toString('base64url')
+    const payload = Buffer.from(JSON.stringify({ iss: 'i', sub: 's', iat: 1, exp: 2 })).toString(
+      'base64url',
+    )
     const token = `${header}.${payload}.sig`
     await expect(verifyJwt(token, [])).rejects.toMatchObject({ code: JWT_ERRORS.JWT_MALFORMED })
   })
 
   it('rejects tokens with invalid claims structure', async () => {
-    const header = Buffer.from(JSON.stringify({ alg: 'EdDSA', kid: 'k', typ: 'JWT' })).toString('base64url')
+    const header = Buffer.from(JSON.stringify({ alg: 'EdDSA', kid: 'k', typ: 'JWT' })).toString(
+      'base64url',
+    )
     const payload = Buffer.from(JSON.stringify({ iss: 1 })).toString('base64url')
     const token = `${header}.${payload}.sig`
-    await expect(verifyJwt(token, [{ kid: 'k', alg: 'EdDSA', use: 'sig', kty: 'OKP', crv: 'Ed25519', x: 'AA' }])).rejects.toMatchObject({ code: JWT_ERRORS.JWT_MALFORMED })
+    await expect(
+      verifyJwt(token, [
+        { kid: 'k', alg: 'EdDSA', use: 'sig', kty: 'OKP', crv: 'Ed25519', x: 'AA' },
+      ]),
+    ).rejects.toMatchObject({ code: JWT_ERRORS.JWT_MALFORMED })
   })
 
   it('rejects when key id is unknown', async () => {
     const { kid, privateKey, publicJwk } = await generateKeyPairWithKeys('EdDSA')
-    const token = await signJwtWithKey({ iss: 'i', sub: 's', iat: 1, exp: 10 }, privateKey, kid, 'EdDSA')
-    await expect(verifyJwt(token, [{ ...publicJwk, kid: 'other' }])).rejects.toMatchObject({ code: JWT_ERRORS.JWT_UNKNOWN_KID })
+    const token = await signJwtWithKey(
+      { iss: 'i', sub: 's', iat: 1, exp: 10 },
+      privateKey,
+      kid,
+      'EdDSA',
+    )
+    await expect(verifyJwt(token, [{ ...publicJwk, kid: 'other' }])).rejects.toMatchObject({
+      code: JWT_ERRORS.JWT_UNKNOWN_KID,
+    })
   })
 
   it('rejects when public key import fails', async () => {
     const { kid, privateKey, publicJwk } = await generateKeyPairWithKeys('EdDSA')
-    const token = await signJwtWithKey({ iss: 'i', sub: 's', iat: 1, exp: 10 }, privateKey, kid, 'EdDSA')
+    const token = await signJwtWithKey(
+      { iss: 'i', sub: 's', iat: 1, exp: 10 },
+      privateKey,
+      kid,
+      'EdDSA',
+    )
     const importer = vi.spyOn(crypto.subtle, 'importKey').mockImplementationOnce(() => {
       return Promise.reject(new Error('bad key')) as any
     })
-    await expect(verifyJwt(token, [publicJwk])).rejects.toMatchObject({ code: JWT_ERRORS.KEYSTORE_INVALID_KEY })
+    await expect(verifyJwt(token, [publicJwk])).rejects.toMatchObject({
+      code: JWT_ERRORS.KEYSTORE_INVALID_KEY,
+    })
     importer.mockRestore()
   })
 
   it('rejects when signature is invalid', async () => {
     const { kid, privateKey, publicJwk } = await generateKeyPairWithKeys('EdDSA')
-    const token = await signJwtWithKey({ iss: 'i', sub: 's', iat: 1, exp: 10 }, privateKey, kid, 'EdDSA')
+    const token = await signJwtWithKey(
+      { iss: 'i', sub: 's', iat: 1, exp: 10 },
+      privateKey,
+      kid,
+      'EdDSA',
+    )
     const other = await generateKeyPairWithKeys('EdDSA')
     const mismatched = { ...other.publicJwk, kid }
-    await expect(verifyJwt(token, [mismatched])).rejects.toMatchObject({ code: JWT_ERRORS.JWT_INVALID_SIGNATURE })
+    await expect(verifyJwt(token, [mismatched])).rejects.toMatchObject({
+      code: JWT_ERRORS.JWT_INVALID_SIGNATURE,
+    })
   })
 
   it('rejects for not-before claims outside skew', async () => {
@@ -345,9 +376,9 @@ describe('jwt verification edge cases', () => {
       kid,
       'EdDSA',
     )
-    await expect(
-      verifyFull(token, [publicJwk], { expectedIssuer: 'other' }),
-    ).rejects.toMatchObject({ code: JWT_ERRORS.JWT_INVALID_ISSUER })
+    await expect(verifyFull(token, [publicJwk], { expectedIssuer: 'other' })).rejects.toMatchObject(
+      { code: JWT_ERRORS.JWT_INVALID_ISSUER },
+    )
     await expect(
       verifyFull(token, [publicJwk], { expectedAudience: 'mobile' }),
     ).rejects.toMatchObject({ code: JWT_ERRORS.JWT_INVALID_AUDIENCE })
@@ -355,24 +386,22 @@ describe('jwt verification edge cases', () => {
 
   it('extractJwtClaims throws for malformed tokens and payloads', () => {
     expect(() => extractJwtClaims('bad.token')).toThrow('Invalid JWT format')
-    const header = Buffer.from(JSON.stringify({ alg: 'EdDSA', kid: 'k', typ: 'JWT' })).toString('base64url')
+    const header = Buffer.from(JSON.stringify({ alg: 'EdDSA', kid: 'k', typ: 'JWT' })).toString(
+      'base64url',
+    )
     const payload = Buffer.from(JSON.stringify({ iss: 1 })).toString('base64url')
-    expect(() => extractJwtClaims(`${header}.${payload}.sig`)).toThrow('Invalid JWT claims structure')
+    expect(() => extractJwtClaims(`${header}.${payload}.sig`)).toThrow(
+      'Invalid JWT claims structure',
+    )
   })
 })
 
-
-
-
-
-
 describe('jwt signer helpers', () => {
   it('exposes metadata and allows exporting keys', async () => {
-    const keyPair = (await crypto.subtle.generateKey(
-      { name: 'ECDSA', namedCurve: 'P-256' },
-      true,
-      ['sign', 'verify'],
-    )) as CryptoKeyPair
+    const keyPair = (await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [
+      'sign',
+      'verify',
+    ])) as CryptoKeyPair
     const kid = crypto.randomUUID()
     const signer = createSigner(keyPair.privateKey, keyPair.publicKey, kid, 'ES256')
     const token = await signer.sign({ iss: 'issuer', sub: 'subject', iat: 1, exp: 10 })
@@ -390,11 +419,10 @@ describe('jwt signer helpers', () => {
   })
 
   it('signJwtWithKey produces tokens for provided algorithm', async () => {
-    const keyPair = (await crypto.subtle.generateKey(
-      { name: 'ECDSA', namedCurve: 'P-256' },
-      true,
-      ['sign', 'verify'],
-    )) as CryptoKeyPair
+    const keyPair = (await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [
+      'sign',
+      'verify',
+    ])) as CryptoKeyPair
     const kid = crypto.randomUUID()
     const claims = { iss: 'issuer', sub: 'user', iat: 1, exp: 2 }
     const token = await signJwtWithKey(claims, keyPair.privateKey, kid, 'ES256')
@@ -403,8 +431,12 @@ describe('jwt signer helpers', () => {
 
   it('validates jwk structure by algorithm', () => {
     expect(validateJwk({} as any, 'EdDSA')).toBe(false)
-    expect(validateJwk({ kid: '1', kty: 'OKP', crv: 'Ed25519', x: 'AA' } as any, 'EdDSA')).toBe(true)
-    expect(validateJwk({ kid: '1', kty: 'EC', crv: 'P-256', x: 'x', y: 'y' } as any, 'ES256')).toBe(true)
+    expect(validateJwk({ kid: '1', kty: 'OKP', crv: 'Ed25519', x: 'AA' } as any, 'EdDSA')).toBe(
+      true,
+    )
+    expect(validateJwk({ kid: '1', kty: 'EC', crv: 'P-256', x: 'x', y: 'y' } as any, 'ES256')).toBe(
+      true,
+    )
     expect(validateJwk({ kid: '1', kty: 'EC', crv: 'P-256', x: 'x' } as any, 'ES256')).toBe(false)
   })
 })

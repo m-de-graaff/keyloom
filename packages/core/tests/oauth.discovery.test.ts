@@ -28,9 +28,7 @@ describe('oauth discovery helpers', () => {
   })
 
   it('throws when discovery fails', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce({ ok: false, status: 500 })
+    const fetchMock = vi.fn().mockResolvedValueOnce({ ok: false, status: 500 })
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch)
 
     await expect(discover('https://broken.example')).rejects.toThrow('oidc_discovery_failed:500')
@@ -79,9 +77,9 @@ describe('id token parsing', () => {
 
   it('uses fallback decoding when Buffer is unavailable', () => {
     const header = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url')
-    const payload = Buffer.from(JSON.stringify({ sub: '456', email: 'fallback@example.com' })).toString(
-      'base64url',
-    )
+    const payload = Buffer.from(
+      JSON.stringify({ sub: '456', email: 'fallback@example.com' }),
+    ).toString('base64url')
     const token = `${header}.${payload}.signature`
     vi.stubGlobal('Buffer', undefined)
     expect(parseIdToken(token)).toMatchObject({ sub: '456', email: 'fallback@example.com' })

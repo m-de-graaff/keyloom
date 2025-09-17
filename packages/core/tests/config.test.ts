@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
-  DEFAULT_CONFIG,
   createJwtConfigFromKeyloom,
   createKeyloomConfig,
+  DEFAULT_CONFIG,
   getConfigFromEnv,
   isDatabaseStrategy,
   isJwtStrategy,
@@ -25,26 +25,26 @@ function baseConfig(): KeyloomConfig {
 }
 
 afterEach(() => {
-  delete process.env.AUTH_SECRET
-  delete process.env.COOKIE_DOMAIN
-  delete process.env.COOKIE_SAMESITE
-  delete process.env.SESSION_STRATEGY
-  delete process.env.JWT_ACCESS_TTL
-  delete process.env.JWT_REFRESH_TTL
-  delete process.env.JWT_CLOCK_SKEW_SEC
-  delete process.env.JWT_INCLUDE_ORG_ROLE
-  delete process.env.JWT_ALGORITHM
-  delete process.env.JWT_ISSUER
-  delete process.env.JWT_AUDIENCE
-  delete process.env.KEY_ROTATION_DAYS
-  delete process.env.KEY_OVERLAP_DAYS
-  delete process.env.KEYLOOM_BASE_URL
-  delete process.env.JWKS_PATH
-  delete process.env.JWT_SECRET
+  Reflect.deleteProperty(process.env, 'AUTH_SECRET')
+  Reflect.deleteProperty(process.env, 'COOKIE_DOMAIN')
+  Reflect.deleteProperty(process.env, 'COOKIE_SAMESITE')
+  Reflect.deleteProperty(process.env, 'SESSION_STRATEGY')
+  Reflect.deleteProperty(process.env, 'JWT_ACCESS_TTL')
+  Reflect.deleteProperty(process.env, 'JWT_REFRESH_TTL')
+  Reflect.deleteProperty(process.env, 'JWT_CLOCK_SKEW_SEC')
+  Reflect.deleteProperty(process.env, 'JWT_INCLUDE_ORG_ROLE')
+  Reflect.deleteProperty(process.env, 'JWT_ALGORITHM')
+  Reflect.deleteProperty(process.env, 'JWT_ISSUER')
+  Reflect.deleteProperty(process.env, 'JWT_AUDIENCE')
+  Reflect.deleteProperty(process.env, 'KEY_ROTATION_DAYS')
+  Reflect.deleteProperty(process.env, 'KEY_OVERLAP_DAYS')
+  Reflect.deleteProperty(process.env, 'KEYLOOM_BASE_URL')
+  Reflect.deleteProperty(process.env, 'JWKS_PATH')
+  Reflect.deleteProperty(process.env, 'JWT_SECRET')
 })
 
 describe('config helpers', () => {
-  it("validateKeyloomConfig requires an adapter", () => {
+  it('validateKeyloomConfig requires an adapter', () => {
     expect(() => validateKeyloomConfig({} as KeyloomConfig)).toThrow('adapter is required')
   })
   it('mergeWithDefaults fills missing sections', () => {
@@ -82,7 +82,9 @@ describe('config helpers', () => {
 
     cfg.session = { strategy: 'jwt', ttlMinutes: 60 }
     cfg.jwt = { issuer: 'issuer' }
-    delete cfg.secrets?.authSecret
+    if (cfg.secrets) {
+      Reflect.deleteProperty(cfg.secrets, 'authSecret')
+    }
     expect(() => validateKeyloomConfig(cfg)).toThrow('authSecret')
 
     cfg.secrets = { authSecret: 'secret' }
@@ -98,7 +100,11 @@ describe('config helpers', () => {
   })
 
   it('validateKeyloomConfig requires jwt configuration pieces when jwt strategy is chosen', () => {
-    const noJwt = { adapter: baseAdapter, session: { strategy: 'jwt' }, secrets: { authSecret: 'secret-secret-123456' } } as KeyloomConfig
+    const noJwt = {
+      adapter: baseAdapter,
+      session: { strategy: 'jwt' },
+      secrets: { authSecret: 'secret-secret-123456' },
+    } as KeyloomConfig
     expect(() => validateKeyloomConfig(noJwt)).toThrow('jwt configuration is required')
 
     const missingIssuer = baseConfig()
@@ -109,7 +115,9 @@ describe('config helpers', () => {
     const missingSecret = baseConfig()
     missingSecret.session = { strategy: 'jwt' }
     missingSecret.jwt = { issuer: 'issuer' }
-    delete missingSecret.secrets?.authSecret
+    if (missingSecret.secrets) {
+      Reflect.deleteProperty(missingSecret.secrets, 'authSecret')
+    }
     expect(() => validateKeyloomConfig(missingSecret)).toThrow('secrets.authSecret')
   })
 
@@ -145,7 +153,9 @@ describe('config helpers', () => {
     expect(() => createJwtConfigFromKeyloom(cfg)).toThrow('incomplete')
 
     const missingIssuer = baseConfig()
-    delete missingIssuer.jwt?.issuer
+    if (missingIssuer.jwt) {
+      Reflect.deleteProperty(missingIssuer.jwt, 'issuer')
+    }
     expect(() => createJwtConfigFromKeyloom(missingIssuer)).toThrow('incomplete')
   })
 

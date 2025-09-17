@@ -18,7 +18,7 @@ import {
   validateIssuer,
   validateJwtClaims,
 } from '../src/jwt/claims'
-import { JWT_ERRORS, JwtError, isJwtError, throwJwtError } from '../src/jwt/errors'
+import { isJwtError, JWT_ERRORS, JwtError, throwJwtError } from '../src/jwt/errors'
 import {
   createJwtHeader,
   getKeyGenParams,
@@ -104,9 +104,9 @@ describe('jwt base utilities', () => {
     expect(isNotYetValid(notYetClaims)).toBe(true)
 
     vi.setSystemTime(new Date('2024-01-01T00:00:00Z'))
-    expect(() =>
-      validateClaimsTiming({ ...baseClaims, exp: 1704067200 - 10 }, 0),
-    ).toThrow('JWT token has expired')
+    expect(() => validateClaimsTiming({ ...baseClaims, exp: 1704067200 - 10 }, 0)).toThrow(
+      'JWT token has expired',
+    )
 
     vi.setSystemTime(new Date('2024-01-01T00:30:00Z'))
     expect(() => validateClaimsTiming(notYetClaims, 0)).toThrow('JWT token is not yet valid')
@@ -152,9 +152,7 @@ describe('jwt base utilities', () => {
     expect(isJwtError(err)).toBe(true)
     expect(err.code).toBe('jwt_malformed')
 
-    expect(() => throwJwtError(JWT_ERRORS.JWT_INVALID_SIGNATURE, 'nope')).toThrowError(
-      JwtError,
-    )
+    expect(() => throwJwtError(JWT_ERRORS.JWT_INVALID_SIGNATURE, 'nope')).toThrowError(JwtError)
   })
 
   it('decodes raw base64url into bytes', () => {

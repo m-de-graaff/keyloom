@@ -102,9 +102,9 @@ describe('oauth/client', () => {
     // @ts-expect-error
     global.fetch = mock
 
-    const idTokenPayload = Buffer.from(JSON.stringify({ sub: '123', email: 'u@test.dev' })).toString(
-      'base64url',
-    )
+    const idTokenPayload = Buffer.from(
+      JSON.stringify({ sub: '123', email: 'u@test.dev' }),
+    ).toString('base64url')
     const token = `aaa.${idTokenPayload}.bbb`
     const profile = await fetchUserInfo(provider, { access_token: 'tok', id_token: token })
     expect(profile).toEqual({ id: '123', email: 'u@test.dev' })

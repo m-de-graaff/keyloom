@@ -29,10 +29,13 @@ describe('runtime login', () => {
     }
     const hasher = { verify: vi.fn().mockResolvedValue(true) }
 
-    const result = await login({ email: baseUser.email!, password: 'secret' }, {
-      adapter: adapter as any,
-      hasher,
-    })
+    const result = await login(
+      { email: baseUser.email!, password: 'secret' },
+      {
+        adapter: adapter as any,
+        hasher,
+      },
+    )
 
     expect(result.session).toEqual(baseSession)
     expect(adapter.getUserByEmail).toHaveBeenCalledWith(baseUser.email)
@@ -82,11 +85,14 @@ describe('runtime register', () => {
     const hasher = { hash: vi.fn().mockResolvedValue('hashed') }
     const audit = vi.fn().mockResolvedValue(undefined)
 
-    const result = await register({ email: baseUser.email!, password: 'secret' }, {
-      adapter: adapter as any,
-      hasher,
-      audit,
-    })
+    const result = await register(
+      { email: baseUser.email!, password: 'secret' },
+      {
+        adapter: adapter as any,
+        hasher,
+        audit,
+      },
+    )
 
     expect(result).toEqual({ user: baseUser, requiresVerification: false })
     expect(adapter.createUser).toHaveBeenCalledWith({
@@ -133,7 +139,10 @@ describe('runtime session helpers', () => {
     }
 
     expect(await getCurrentSession(null, adapter as any)).toEqual({ session: null, user: null })
-    expect(await getCurrentSession('missing', adapter as any)).toEqual({ session: null, user: null })
+    expect(await getCurrentSession('missing', adapter as any)).toEqual({
+      session: null,
+      user: null,
+    })
   })
 
   it('delegates logout to adapter', async () => {

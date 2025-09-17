@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { runDoctorChecks } from '../src/lib/doctor/checks'
 
 afterEach(() => {
-  delete process.env.AUTH_SECRET
+  process.env.AUTH_SECRET = undefined
 })
 
 describe('doctor checks', () => {

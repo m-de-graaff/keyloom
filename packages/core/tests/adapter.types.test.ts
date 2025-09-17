@@ -4,11 +4,11 @@ import {
   AdapterError,
   AdapterRegistry,
   BaseErrorMapper,
+  createTimestamp,
+  generateId,
   getTableName,
   normalizeEmail,
   prepareEmailForQuery,
-  createTimestamp,
-  generateId,
 } from '../src/adapter-types'
 
 describe('adapter type utilities', () => {

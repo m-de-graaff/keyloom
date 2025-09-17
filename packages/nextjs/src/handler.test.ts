@@ -26,7 +26,9 @@ vi.mock('@keyloom/core', async (importOriginal) => {
     completeOAuth: mocks.completeOAuth,
   }
 })
-vi.mock('@keyloom/core/runtime/current-session', () => ({ getCurrentSession: mocks.getCurrentSession }))
+vi.mock('@keyloom/core/runtime/current-session', () => ({
+  getCurrentSession: mocks.getCurrentSession,
+}))
 vi.mock('@keyloom/core/runtime/register', () => ({ register: mocks.doRegister }))
 vi.mock('@keyloom/core/runtime/login', () => ({ login: mocks.doLogin }))
 vi.mock('@keyloom/core/runtime/logout', () => ({ logout: mocks.doLogout }))
@@ -139,7 +141,7 @@ describe('nextjs handler', () => {
     expect(await registerRes.json()).toEqual({ userId: 'user_1', requiresVerification: false })
     expect(mocks.doRegister).toHaveBeenCalledWith(
       { email: 'user@example.com', password: 'pw', requireEmailVerify: false },
-      { adapter: config.adapter, hasher: expect.any(Object) }
+      { adapter: config.adapter, hasher: expect.any(Object) },
     )
 
     const loginReq = {
@@ -149,7 +151,11 @@ describe('nextjs handler', () => {
     } as any
     const loginRes = await POST(loginReq)
     expect(await loginRes.json()).toEqual({ sessionId: 'sess_login' })
-    expect(mocks.doLogin.mock.calls[0][0]).toMatchObject({
+    const loginCall = mocks.doLogin.mock.calls.at(0)
+    if (!loginCall) {
+      throw new Error('login handler was not invoked')
+    }
+    expect(loginCall[0]).toMatchObject({
       email: 'user@example.com',
       password: 'pw',
       ttlMinutes: 45,

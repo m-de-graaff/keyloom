@@ -21,14 +21,34 @@ import x from '../src/x'
 describe('provider factories', () => {
   it('returns expected provider ids and endpoints', async () => {
     const providers = [
-      { id: 'apple', factory: () => apple({ clientId: 'id', teamId: 'team', keyId: 'key', privateKey: '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----' }) },
-      { id: 'auth0', factory: () => auth0({ clientId: 'id', clientSecret: 'secret', domain: 'tenant.auth0.com' }) },
+      {
+        id: 'apple',
+        factory: () =>
+          apple({
+            clientId: 'id',
+            teamId: 'team',
+            keyId: 'key',
+            privateKey: '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----',
+          }),
+      },
+      {
+        id: 'auth0',
+        factory: () =>
+          auth0({ clientId: 'id', clientSecret: 'secret', domain: 'tenant.auth0.com' }),
+      },
       { id: 'dev', factory: () => dev() },
       { id: 'discord', factory: () => discord({ clientId: 'id', clientSecret: 'secret' }) },
       { id: 'github', factory: () => github({ clientId: 'id', clientSecret: 'secret' }) },
-      { id: 'gitlab', factory: () => gitlab({ clientId: 'id', clientSecret: 'secret', baseUrl: 'https://gitlab.com' }) },
+      {
+        id: 'gitlab',
+        factory: () =>
+          gitlab({ clientId: 'id', clientSecret: 'secret', baseUrl: 'https://gitlab.com' }),
+      },
       { id: 'google', factory: () => google({ clientId: 'id', clientSecret: 'secret' }) },
-      { id: 'microsoft', factory: () => microsoft({ clientId: 'id', clientSecret: 'secret', tenantId: 'tenant' }) },
+      {
+        id: 'microsoft',
+        factory: () => microsoft({ clientId: 'id', clientSecret: 'secret', tenantId: 'tenant' }),
+      },
       { id: 'x', factory: () => x({ clientId: 'id', clientSecret: 'secret' }) },
     ]
 
@@ -37,7 +57,11 @@ describe('provider factories', () => {
       expect(provider.id).toBe(id)
       expect(provider.authorization?.url).toMatch(/^https?:\/\//)
 
-      if (provider.userinfo && typeof provider.userinfo === 'object' && 'map' in provider.userinfo) {
+      if (
+        provider.userinfo &&
+        typeof provider.userinfo === 'object' &&
+        'map' in provider.userinfo
+      ) {
         const mapped = provider.userinfo.map({
           id: '123',
           email: 'user@example.com',
@@ -64,7 +88,11 @@ describe('provider factories', () => {
         })
       }
 
-      if (provider.token && typeof provider.token === 'object' && 'customizeBody' in provider.token) {
+      if (
+        provider.token &&
+        typeof provider.token === 'object' &&
+        'customizeBody' in provider.token
+      ) {
         await provider.token.customizeBody(new URLSearchParams())
       }
     }

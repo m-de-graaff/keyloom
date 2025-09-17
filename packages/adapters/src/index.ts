@@ -1,2 +1,2 @@
 export type { AnyPrismaClient } from './prisma/index'
-export { prismaAdapter, PrismaAdapter } from './prisma/index'
+export { PrismaAdapter, prismaAdapter } from './prisma/index'

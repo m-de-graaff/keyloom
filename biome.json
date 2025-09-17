@@ -14,7 +14,8 @@
       "suspicious": {
         "noExplicitAny": "off",
         "noVar": "error",
-        "useIterableCallbackReturn": "off"
+        "useIterableCallbackReturn": "off",
+        "useBiomeIgnoreFolder": "off"
       },
       "correctness": { "noUnusedVariables": "off" },
       "style": { "useConst": "off", "noNonNullAssertion": "off" },
@@ -36,23 +37,19 @@
       "!**/.next",
       "!**/dist",
       "!**/build",
-      "!**/build",
+      "!**/coverage",
       "!coverage",
-      "!.git",
-      "!**/build",
-      "!*.min.js",
-      "!**/build",
-      "!*.d.ts",
-      "!public",
-      "!.cache",
-      "!.temp",
-      "!out",
-      "!.vercel",
-      "!.env*",
+      "!**/.turbo",
+      "!**/out",
+      "!**/public",
+      "!**/.cache",
+      "!**/.temp",
+      "!**/.vercel",
+      "!**/*.d.ts",
+      "!**/*.min.js",
       "!package-lock.json",
       "!yarn.lock",
-      "!pnpm-lock.yaml",
-      "!**/.turbo"
+      "!pnpm-lock.yaml"
     ]
   }
 }
