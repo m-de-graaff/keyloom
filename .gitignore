@@ -50,7 +50,6 @@ Thumbs.db
 Thumbs.db
 
 # pnpm and turbo
-pnpm-lock.yaml
 turbo/
 .turbo/
 

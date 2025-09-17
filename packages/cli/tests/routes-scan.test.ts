@@ -25,20 +25,20 @@ describe("generateRoutes", () => {
     fs.mkdirSync(appDir, { recursive: true })
     fs.writeFileSync(
       path.join(appDir, "page.tsx"),
-      xport const keyloom = {
+      `export const keyloom = {
         visibility: 'private',
         roles: ['admin'],
         org: 'required',
         redirectTo: '/login',
         verify: 'session'
-      } as const
+      } as const`
     )
 
     const pagesDir = path.join(cwd, "pages", "api")
     fs.mkdirSync(pagesDir, { recursive: true })
     fs.writeFileSync(
       path.join(pagesDir, "[user].tsx"),
-      xport const keyloom = { visibility: 'public' }
+      `export const keyloom = { visibility: 'public' }`
     )
 
     const { count, outJson, outTs } = await generateRoutes({ cwd })
@@ -53,16 +53,16 @@ describe("generateRoutes", () => {
     const dashboard = manifest.entries.find((entry: any) => entry.pattern === "/dashboard")
     expect(dashboard).toMatchObject({
       rule: {
-        visibility: "private",
-        roles: ["admin"],
-        org: "required",
-        redirectTo: "/login",
-        verify: "session",
+        visibility: 'private',
+        roles: ['admin'],
+        org: 'required',
+        redirectTo: '/login',
+        verify: 'session',
       },
     })
 
     const apiRoute = manifest.entries.find((entry: any) => entry.pattern === "/api/[user]")
-    expect(apiRoute).toMatchObject({ rule: { visibility: "public" } })
+    expect(apiRoute).toMatchObject({ rule: { visibility: 'public' } })
   })
 
   it("handles projects with no discoverable routes", async () => {
