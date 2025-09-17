@@ -85,7 +85,7 @@ npx prisma db push
 
 ```typescript
 import { createKeyloom } from "@keyloom/core";
-import prismaAdapter from "@keyloom/adapters-prisma";
+import { prismaAdapter } from "@keyloom/adapters-prisma";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -188,3 +188,5 @@ import type { PrismaAdapter } from "@keyloom/adapters-prisma";
 ## License
 
 MIT
+
+

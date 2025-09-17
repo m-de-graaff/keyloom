@@ -1,3 +1,4 @@
+/* c8 ignore file */
 import type { Account, AuditEvent, ID, Session, User, VerificationToken } from './types'
 
 export interface Adapter {

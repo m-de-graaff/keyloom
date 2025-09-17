@@ -23,9 +23,9 @@
   "devDependencies": {
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^1.0.0"
+    "vitest": "workspace:^3.2.4"
   },
   "peerDependencies": {
-    "vitest": "^1.0.0"
+    "vitest": "^3.2.4"
   }
 }

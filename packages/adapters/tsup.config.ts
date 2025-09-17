@@ -6,7 +6,7 @@ export default defineConfig({
     prisma: 'src/prisma/index.ts',
   },
   format: ['cjs', 'esm'],
-  dts: true,
+  dts: false,
   clean: true,
   target: 'node18',
   external: ['@keyloom/core', '@prisma/client'],

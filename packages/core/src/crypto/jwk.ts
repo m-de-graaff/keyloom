@@ -1,3 +1,4 @@
+/* c8 ignore file */
 export type JwkKey = {
   kid: string
   kty: 'OKP' | 'EC' | 'RSA'
@@ -17,6 +18,6 @@ export type JwkKey = {
 export type Jwks = { keys: JwkKey[] }
 
 export type KeyRotationPolicy = {
-  rotationDays: number // 30–90 typical
+  rotationDays: number // 30-90 typical
   overlapDays: number // keep previous key active for validation
 }

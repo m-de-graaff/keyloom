@@ -5,6 +5,5 @@
     "rootDir": "src",
     "types": ["node"]
   },
-  "include": ["src"],
-  "references": [{ "path": "../core" }, { "path": "../adapters/prisma" }]
+  "include": ["src/**/*"]
 }

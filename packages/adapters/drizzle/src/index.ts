@@ -326,7 +326,9 @@ export default function drizzleAdapter(
       } catch (error) {
         return {
           status: 'unhealthy' as const,
-          details: { error: error instanceof Error ? error.message : 'Unknown error' },
+          details: {
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
         }
       }
     },

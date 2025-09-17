@@ -1,6 +1,8 @@
 import type { ResponseCookies } from 'next/dist/compiled/@edge-runtime/cookies'
 import { cookies } from 'next/headers'
 
+type CookieGetter = { get(name: string): { value: string } | undefined }
+
 // JWT Cookie names
 export const ACCESS_COOKIE = '__keyloom_access'
 export const REFRESH_COOKIE = '__keyloom_refresh'
@@ -102,8 +104,8 @@ export function clearJwtCookies(
  */
 export function getAccessTokenFromCookies(): string | null {
   try {
-    const cookieStore = cookies()
-    return cookieStore.get(ACCESS_COOKIE)?.value || null
+    const cookieStore = cookies() as unknown as CookieGetter
+    return cookieStore.get(ACCESS_COOKIE)?.value ?? null
   } catch {
     return null
   }
@@ -114,8 +116,8 @@ export function getAccessTokenFromCookies(): string | null {
  */
 export function getRefreshTokenFromCookies(): string | null {
   try {
-    const cookieStore = cookies()
-    return cookieStore.get(REFRESH_COOKIE)?.value || null
+    const cookieStore = cookies() as unknown as CookieGetter
+    return cookieStore.get(REFRESH_COOKIE)?.value ?? null
   } catch {
     return null
   }
@@ -160,10 +162,12 @@ export function parseJwtCookiesFromHeader(cookieHeader: string): {
     {} as Record<string, string>,
   )
 
-  return {
-    accessToken: cookies[ACCESS_COOKIE],
-    refreshToken: cookies[REFRESH_COOKIE],
-  }
+  const out: { accessToken?: string; refreshToken?: string } = {}
+  const acc = cookies[ACCESS_COOKIE]
+  if (typeof acc === 'string') out.accessToken = acc
+  const ref = cookies[REFRESH_COOKIE]
+  if (typeof ref === 'string') out.refreshToken = ref
+  return out
 }
 
 /**

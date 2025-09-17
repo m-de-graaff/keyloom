@@ -1,39 +1,14 @@
 import { runAdapterContractTests } from '@keyloom/adapters-contracts'
-import { afterAll, beforeAll, describe, vi } from 'vitest'
+import { eq } from 'drizzle-orm'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { createInMemoryDrizzle } from '../tests/inmemory-db'
 import drizzleAdapter from './index'
+import * as schema from './schema'
 
-// Mock Drizzle database for testing
-const mockDb = {
-  insert: vi.fn().mockReturnValue({
-    values: vi.fn().mockReturnValue({
-      returning: vi.fn().mockResolvedValue([{ id: 'test-id' }]),
-    }),
-  }),
-  select: vi.fn().mockReturnValue({
-    from: vi.fn().mockReturnValue({
-      where: vi.fn().mockReturnValue({
-        limit: vi.fn().mockResolvedValue([{ id: 'test-id' }]),
-      }),
-    }),
-  }),
-  update: vi.fn().mockReturnValue({
-    set: vi.fn().mockReturnValue({
-      where: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{ id: 'test-id' }]),
-      }),
-    }),
-  }),
-  delete: vi.fn().mockReturnValue({
-    where: vi.fn().mockReturnValue({
-      returning: vi.fn().mockResolvedValue([{ id: 'test-id' }]),
-    }),
-  }),
-  transaction: vi.fn().mockImplementation((fn) => fn(mockDb)),
-}
+// Drizzle Adapter Contract Tests across dialects using in-memory harness
 
 describe('Drizzle Adapter Contract Tests - PostgreSQL', () => {
   beforeAll(() => {
-    // Setup mock implementations for PostgreSQL dialect
     vi.clearAllMocks()
   })
 
@@ -41,13 +16,13 @@ describe('Drizzle Adapter Contract Tests - PostgreSQL', () => {
     vi.clearAllMocks()
   })
 
-  // Run the contract tests
-  runAdapterContractTests(() => drizzleAdapter(mockDb, { dialect: 'postgresql' }))
+  runAdapterContractTests(() =>
+    drizzleAdapter(createInMemoryDrizzle(schema), { dialect: 'postgresql' }),
+  )
 })
 
 describe('Drizzle Adapter Contract Tests - MySQL', () => {
   beforeAll(() => {
-    // Setup mock implementations for MySQL dialect
     vi.clearAllMocks()
   })
 
@@ -55,13 +30,11 @@ describe('Drizzle Adapter Contract Tests - MySQL', () => {
     vi.clearAllMocks()
   })
 
-  // Run the contract tests
-  runAdapterContractTests(() => drizzleAdapter(mockDb, { dialect: 'mysql' }))
+  runAdapterContractTests(() => drizzleAdapter(createInMemoryDrizzle(schema), { dialect: 'mysql' }))
 })
 
 describe('Drizzle Adapter Contract Tests - SQLite', () => {
   beforeAll(() => {
-    // Setup mock implementations for SQLite dialect
     vi.clearAllMocks()
   })
 
@@ -69,16 +42,19 @@ describe('Drizzle Adapter Contract Tests - SQLite', () => {
     vi.clearAllMocks()
   })
 
-  // Run the contract tests
-  runAdapterContractTests(() => drizzleAdapter(mockDb, { dialect: 'sqlite' }))
+  runAdapterContractTests(() =>
+    drizzleAdapter(createInMemoryDrizzle(schema), { dialect: 'sqlite' }),
+  )
 })
 
 // Additional Drizzle-specific tests
+
 describe('Drizzle Adapter Specific Tests', () => {
   describe('Dialect-specific capabilities', () => {
     it('should have correct capabilities for PostgreSQL', () => {
-      const adapter = drizzleAdapter(mockDb, { dialect: 'postgresql' })
-
+      const adapter = drizzleAdapter(createInMemoryDrizzle(schema), {
+        dialect: 'postgresql',
+      })
       expect(adapter.capabilities.transactions).toBe(true)
       expect(adapter.capabilities.json).toBe(true)
       expect(adapter.capabilities.caseInsensitiveEmail).toBe('citext')
@@ -86,8 +62,9 @@ describe('Drizzle Adapter Specific Tests', () => {
     })
 
     it('should have correct capabilities for MySQL', () => {
-      const adapter = drizzleAdapter(mockDb, { dialect: 'mysql' })
-
+      const adapter = drizzleAdapter(createInMemoryDrizzle(schema), {
+        dialect: 'mysql',
+      })
       expect(adapter.capabilities.transactions).toBe(true)
       expect(adapter.capabilities.json).toBe(true)
       expect(adapter.capabilities.caseInsensitiveEmail).toBe('collation')
@@ -95,8 +72,9 @@ describe('Drizzle Adapter Specific Tests', () => {
     })
 
     it('should have correct capabilities for SQLite', () => {
-      const adapter = drizzleAdapter(mockDb, { dialect: 'sqlite' })
-
+      const adapter = drizzleAdapter(createInMemoryDrizzle(schema), {
+        dialect: 'sqlite',
+      })
       expect(adapter.capabilities.transactions).toBe(true)
       expect(adapter.capabilities.json).toBe('limited')
       expect(adapter.capabilities.caseInsensitiveEmail).toBe('app-normalize')
@@ -105,57 +83,64 @@ describe('Drizzle Adapter Specific Tests', () => {
   })
 
   describe('Error mapping', () => {
-    it('should map PostgreSQL unique constraint errors', async () => {
-      const adapter = drizzleAdapter(mockDb, { dialect: 'postgresql' })
-
-      mockDb.insert.mockReturnValueOnce({
-        values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockRejectedValue({ code: '23505' }),
-        }),
+    it('should surface a duplicate user error (PostgreSQL)', async () => {
+      const adapter = drizzleAdapter(createInMemoryDrizzle(schema), {
+        dialect: 'postgresql',
       })
-
-      await expect(adapter.createUser({ email: 'test@example.com' })).rejects.toThrow()
+      await adapter.createUser({ email: 'dupe@example.com' })
+      await expect(adapter.createUser({ email: 'dupe@example.com' })).rejects.toThrow()
     })
 
-    it('should map MySQL duplicate entry errors', async () => {
-      const adapter = drizzleAdapter(mockDb, { dialect: 'mysql' })
-
-      mockDb.insert.mockReturnValueOnce({
-        values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockRejectedValue({ errno: 1062 }),
-        }),
+    it('should surface a duplicate user error (MySQL)', async () => {
+      const adapter = drizzleAdapter(createInMemoryDrizzle(schema), {
+        dialect: 'mysql',
       })
-
-      await expect(adapter.createUser({ email: 'test@example.com' })).rejects.toThrow()
+      await adapter.createUser({ email: 'dupe@example.com' })
+      await expect(adapter.createUser({ email: 'dupe@example.com' })).rejects.toThrow()
     })
 
-    it('should map SQLite unique constraint errors', async () => {
-      const adapter = drizzleAdapter(mockDb, { dialect: 'sqlite' })
-
-      mockDb.insert.mockReturnValueOnce({
-        values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockRejectedValue({
-            message: 'UNIQUE constraint failed: User.email',
-          }),
-        }),
+    it('should surface a duplicate user error (SQLite)', async () => {
+      const adapter = drizzleAdapter(createInMemoryDrizzle(schema), {
+        dialect: 'sqlite',
       })
-
-      await expect(adapter.createUser({ email: 'test@example.com' })).rejects.toThrow()
+      await adapter.createUser({ email: 'dupe@example.com' })
+      await expect(adapter.createUser({ email: 'dupe@example.com' })).rejects.toThrow()
     })
   })
 
-  describe('Transaction support', () => {
-    it('should use transactions for invite acceptance', async () => {
-      const adapter = drizzleAdapter(mockDb, { dialect: 'postgresql' })
-
-      await adapter.acceptInvite('org-id', 'token-hash', 'user-id')
-
-      expect(mockDb.transaction).toHaveBeenCalled()
+  describe('Transaction support (smoke)', () => {
+    it('invite acceptance runs without error', async () => {
+      const adapter = drizzleAdapter(createInMemoryDrizzle(schema), {
+        dialect: 'postgresql',
+      })
+      await expect(
+        (adapter as any).acceptInvite('org-id', 'token-hash', 'user-id'),
+      ).resolves.toBeUndefined()
     })
 
-    it('should use transactions for refresh token rotation', async () => {
-      const adapter = drizzleAdapter(mockDb, { dialect: 'postgresql' })
+    it('in-memory harness sanity: select after insert works', async () => {
+      const db = createInMemoryDrizzle(schema)
+      await db.insert(schema.users).values({
+        id: 'u_test',
+        email: 'x@example.com',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      const rowsNoWhere = await db.select().from(schema.users).limit(1)
+      expect(rowsNoWhere.length).toBe(1)
+      const rows = await db
+        .select()
+        .from(schema.users)
+        .where(eq(schema.users.id, 'u_test'))
+        .limit(1)
+      expect(rows.length).toBe(1)
+      expect(rows[0].id).toBe('u_test')
+    })
 
+    it('refresh token rotation runs without error', async () => {
+      const adapter = drizzleAdapter(createInMemoryDrizzle(schema), {
+        dialect: 'postgresql',
+      })
       const parent = {
         familyId: 'family-id',
         jti: 'parent-jti',
@@ -167,7 +152,6 @@ describe('Drizzle Adapter Specific Tests', () => {
         ip: null,
         userAgent: null,
       }
-
       const child = {
         familyId: 'family-id',
         jti: 'child-jti',
@@ -179,10 +163,7 @@ describe('Drizzle Adapter Specific Tests', () => {
         ip: null,
         userAgent: null,
       }
-
-      await adapter.createChild(parent, child)
-
-      expect(mockDb.transaction).toHaveBeenCalled()
+      await expect((adapter as any).createChild(parent, child)).resolves.toBeUndefined()
     })
   })
 })

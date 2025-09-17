@@ -4,19 +4,24 @@
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
     "./middleware": {
+      "types": "./dist/middleware.d.ts",
       "import": "./dist/middleware.js",
       "require": "./dist/middleware.cjs"
     },
     "./edge": {
+      "types": "./dist/edge.d.ts",
       "import": "./dist/edge.js"
     },
     "./route-types": {
+      "types": "./dist/route-types.d.ts",
       "import": "./dist/route-types.js",
       "require": "./dist/route-types.cjs"
     }
@@ -26,7 +31,8 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && pnpm build:types",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist --skipLibCheck",
     "dev": "tsup --watch",
     "typecheck": "tsc -b",
     "test": "vitest run",

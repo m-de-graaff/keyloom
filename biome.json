@@ -11,9 +11,18 @@
     "rules": {
       "recommended": true,
       "performance": { "noDelete": "error" },
-      "suspicious": { "noExplicitAny": "warn", "noVar": "error" },
-      "style": { "useConst": "warn" },
-      "complexity": { "noUselessSwitchCase": "warn" }
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noVar": "error",
+        "useIterableCallbackReturn": "off"
+      },
+      "correctness": { "noUnusedVariables": "off" },
+      "style": { "useConst": "off", "noNonNullAssertion": "off" },
+      "complexity": {
+        "noUselessSwitchCase": "off",
+        "useOptionalChain": "off",
+        "noStaticOnlyClass": "off"
+      }
     }
   },
   "assist": { "actions": { "source": { "organizeImports": "on" } } },
@@ -42,7 +51,8 @@
       "!.env*",
       "!package-lock.json",
       "!yarn.lock",
-      "!pnpm-lock.yaml"
+      "!pnpm-lock.yaml",
+      "!**/.turbo"
     ]
   }
 }

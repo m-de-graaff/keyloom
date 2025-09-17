@@ -1,0 +1,16 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/nextjs" },
+    { "path": "packages/providers" },
+    { "path": "packages/adapters" },
+    { "path": "packages/adapters/prisma" },
+    { "path": "packages/adapters/drizzle" },
+    { "path": "packages/adapters/postgres" },
+    { "path": "packages/adapters/mysql2" },
+    { "path": "packages/adapters/mongo" },
+    { "path": "packages/cli" },
+    { "path": "packages/server" }
+  ]
+}

@@ -20,7 +20,7 @@ function mapPrismaError(e: unknown) {
   return e
 }
 
-export default function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
+export function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
   // credentials extension:
   createCredential(userId: ID, hash: string): Promise<{ id: ID; userId: ID }>
   getCredentialByUserId(userId: ID): Promise<{ id: ID; userId: ID; hash: string } | null>

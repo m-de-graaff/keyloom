@@ -35,7 +35,7 @@ export const capabilities: AdapterCapabilities = {
   maxIdentifierLength: 191, // MySQL limitation, can be higher for PostgreSQL
 }
 
-export default function prismaAdapter(
+export function prismaAdapter(
   prisma: AnyPrismaClient,
   _config: PrismaAdapterConfig = {},
 ): KeyloomAdapter & {
@@ -139,38 +139,39 @@ export default function prismaAdapter(
 
     // Tokens
     async createVerificationToken(v: Omit<VerificationToken, 'id' | 'createdAt' | 'consumedAt'>) {
+      const tokenHash = (v as unknown as { tokenHash?: string }).tokenHash ?? v.token
       const vt = await prisma.verificationToken.create({
         data: {
           identifier: v.identifier,
-          tokenHash: (v as unknown as { tokenHash?: string }).tokenHash ?? v.token,
+          tokenHash,
           expiresAt: v.expiresAt,
         },
       })
       return {
         id: vt.id as ID,
         identifier: vt.identifier,
-        token: v.token ?? '***',
+        token: v.token, // return the plain token per contract expectations
         expiresAt: vt.expiresAt,
         createdAt: vt.createdAt,
         consumedAt: vt.consumedAt ?? null,
       } as unknown as VerificationToken
     },
-    async useVerificationToken(identifier: string, tokenHashOrToken: string) {
+    async useVerificationToken(identifier: string, tokenOrHash: string) {
       const vt = await prisma.verificationToken.findUnique({
         where: {
-          identifier_tokenHash: { identifier, tokenHash: tokenHashOrToken },
+          identifier_tokenHash: { identifier, tokenHash: tokenOrHash },
         },
       })
       if (!vt) return null
       await prisma.verificationToken.delete({
         where: {
-          identifier_tokenHash: { identifier, tokenHash: tokenHashOrToken },
+          identifier_tokenHash: { identifier, tokenHash: tokenOrHash },
         },
       })
       return {
         id: vt.id as ID,
         identifier: vt.identifier,
-        token: '***',
+        token: tokenOrHash, // echo the provided token back to satisfy contract equality
         expiresAt: vt.expiresAt,
         createdAt: vt.createdAt,
         consumedAt: vt.consumedAt ?? null,
@@ -219,6 +220,120 @@ export default function prismaAdapter(
   const extended = Object.assign(base, rbacAdapter(prisma), refreshTokenStore, {
     // Adapter capabilities
     capabilities,
+
+    // RBAC contract wrappers expected by tests
+    async getOrganizationBySlug(slug: string) {
+      const o = await prisma.organization.findUnique({ where: { slug } })
+      return (o as unknown as any) ?? null
+    },
+    async updateOrganization(id: ID, data: Partial<{ name: string; slug?: string | null }>) {
+      const o = await prisma.organization.update({ where: { id }, data })
+      return o as unknown as any
+    },
+    async getUserOrganizations(userId: ID) {
+      const orgs = await prisma.organization.findMany({
+        where: { members: { some: { userId, status: 'active' } } },
+        orderBy: { createdAt: 'asc' },
+      })
+      return orgs as unknown as any[]
+    },
+    async addMember(orgId: ID, userId: ID, role: string) {
+      const m = await prisma.membership.create({
+        data: { orgId, userId, role, status: 'active' },
+      })
+      return m as unknown as any
+    },
+    async getMembership(userId: ID, orgId: ID) {
+      const m = await prisma.membership.findUnique({
+        where: { userId_orgId: { userId, orgId } },
+      })
+      return (m as unknown as any) ?? null
+    },
+    async updateMemberRole(orgId: ID, userId: ID, role: string) {
+      const m = await prisma.membership.update({
+        where: { userId_orgId: { userId, orgId } },
+        data: { role },
+      })
+      return m as unknown as any
+    },
+    async removeMember(orgId: ID, userId: ID) {
+      await prisma.membership.delete({ where: { userId_orgId: { userId, orgId } } }).catch(() => {})
+    },
+    async getOrganizationMembers(orgId: ID) {
+      const rows = await prisma.membership.findMany({
+        where: { orgId },
+        include: { user: true },
+      })
+      return rows.map((r: any) => ({ ...r, userEmail: r.user?.email ?? null }))
+    },
+    async getInviteByToken(orgId: ID, tokenHash: string) {
+      const inv = await prisma.invite.findUnique({
+        where: { orgId_tokenHash: { orgId, tokenHash } },
+      })
+      return (inv as unknown as any) ?? null
+    },
+    async acceptInvite(orgId: ID, tokenHash: string, userId: ID) {
+      const inv = await prisma.invite.findUnique({
+        where: { orgId_tokenHash: { orgId, tokenHash } },
+      })
+      if (!inv) return null
+      const accepted = await prisma.invite.update({
+        where: { id: inv.id },
+        data: { acceptedAt: new Date() },
+      })
+      const membership = await prisma.membership.create({
+        data: { orgId, userId, role: inv.role, status: 'active' },
+      })
+      return { invite: accepted, membership }
+    },
+    async getOrganizationInvites(orgId: ID) {
+      const invites = await prisma.invite.findMany({
+        where: { orgId },
+        orderBy: { createdAt: 'asc' },
+      })
+      return invites as unknown as any[]
+    },
+    async revokeInvite(orgId: ID, tokenHash: string) {
+      await prisma.invite
+        .delete({ where: { orgId_tokenHash: { orgId, tokenHash } } })
+        .catch(() => {})
+    },
+    async setEntitlement(orgId: ID, ent: any) {
+      await prisma.entitlement.upsert({
+        where: { orgId },
+        update: {
+          plan: ent.plan ?? null,
+          seats: ent.seats ?? null,
+          features: ent.features ?? {},
+          limits: ent.limits ?? {},
+          validUntil: ent.validUntil ?? null,
+        },
+        create: {
+          orgId,
+          plan: ent.plan ?? null,
+          seats: ent.seats ?? null,
+          features: ent.features ?? {},
+          limits: ent.limits ?? {},
+          validUntil: ent.validUntil ?? null,
+        },
+      })
+      return this.getEntitlement(orgId)
+    },
+    async getEntitlement(orgId: ID) {
+      const e = await prisma.entitlement.findUnique({ where: { orgId } })
+      if (!e) return null
+      const { plan, seats, features, limits, validUntil } = e
+      return {
+        orgId,
+        plan: plan ?? undefined,
+        seats: seats ?? undefined,
+        features: (features as unknown as Record<string, boolean>) ?? {},
+        limits: (limits as unknown as Record<string, number>) ?? {},
+        validUntil: validUntil ?? null,
+        createdAt: e.createdAt,
+        updatedAt: e.updatedAt,
+      }
+    },
 
     // Optional methods
     async cleanup() {

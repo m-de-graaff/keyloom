@@ -20,3 +20,6 @@ export type KeyloomRoutesManifest = {
   generatedAt: string
   entries: KeyloomRouteEntry[]
 }
+
+// Runtime no-op to keep bundlers from pruning this module as an empty chunk.
+export const __routeTypesModule = true

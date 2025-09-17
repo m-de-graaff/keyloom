@@ -1,11 +1,7 @@
 import { COOKIE_NAME, serializeSessionCookie } from '@keyloom/core'
+import { parseCookieValue as parseEdgeCookieValue } from './cookies-edge'
 
-// generic parse for both edge/web/node
-export function parseCookieValue(cookieHeader: string | null, name = COOKIE_NAME) {
-  const raw = cookieHeader ?? ''
-  const found = raw.split(/; */).find((p) => p.startsWith(`${name}=`))
-  return found ? decodeURIComponent(found.split('=')[1] ?? '') : null
-}
+export const parseCookieValue = parseEdgeCookieValue
 
 export function setSessionCookieHeader(
   sessionId: string,
@@ -28,3 +24,4 @@ export function setSessionCookieHeader(
 
   return serializeSessionCookie(sessionId, cookieOptions)
 }
+

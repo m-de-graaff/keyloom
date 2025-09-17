@@ -1,0 +1,31 @@
+name: release-canary
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches-ignore: [main]
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org/
+      - run: pnpm i -w
+      - name: Version snapshot (canary)
+        run: pnpm changeset version --snapshot canary
+      - run: pnpm i -w
+      - run: pnpm build
+      - name: Publish canary snapshot
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          printf "//registry.npmjs.org/:_authToken=${NPM_TOKEN}\n" >> ~/.npmrc
+          pnpm -r publish --tag canary --no-git-checks || true
+

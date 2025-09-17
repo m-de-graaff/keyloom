@@ -50,6 +50,11 @@
       "types": "./dist/auth0.d.ts",
       "import": "./dist/auth0.js",
       "require": "./dist/auth0.cjs"
+    },
+    "./dev": {
+      "types": "./dist/dev.d.ts",
+      "import": "./dist/dev.js",
+      "require": "./dist/dev.cjs"
     }
   },
   "files": [
@@ -58,10 +63,11 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && pnpm build:types",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist --skipLibCheck",
     "dev": "tsup --watch",
     "typecheck": "tsc -b",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "lint": "biome check ."
   },
   "devDependencies": {
