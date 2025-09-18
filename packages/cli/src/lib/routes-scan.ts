@@ -63,12 +63,7 @@ export const routes = manifest.entries
   }
 }
 
-function scanDirectory(
-  dir: string,
-  type: 'app' | 'pages',
-  entries: any[],
-  root: string,
-) {
+function scanDirectory(dir: string, type: 'app' | 'pages', entries: any[], root: string) {
   const files = fs.readdirSync(dir, { withFileTypes: true })
 
   for (const file of files) {
@@ -105,9 +100,7 @@ function extractKeyloomExport(content: string): any {
 
   try {
     let cleanedMatch = match[1] ? match[1].replace(/\s+as\s+const\s*$/, '') : ''
-    cleanedMatch = cleanedMatch
-      .replace(/([a-zA-Z0-9_]+)\s*:/g, '"$1":')
-      .replace(/'/g, '"')
+    cleanedMatch = cleanedMatch.replace(/([a-zA-Z0-9_]+)\s*:/g, '"$1":').replace(/'/g, '"')
     return JSON.parse(cleanedMatch)
   } catch {
     return null
