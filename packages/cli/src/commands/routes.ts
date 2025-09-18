@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { generateRoutes } from '../lib/index.js'
+import { generateRoutes } from '../lib/index.ts'
 
 export async function routesCommand(args: string[]) {
   // Parse simple flags: --out, --outJson, --cwd
