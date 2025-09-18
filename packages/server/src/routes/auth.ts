@@ -224,7 +224,7 @@ export function buildServer(env: Env) {
         .split('; ')
         .find((s) => s.startsWith('__keyloom_session='))
       const sid = cookie?.split('=')[1] ?? null
-      if (sid) await core.logout(sid, { adapter: baseAdapter })
+      if (sid) await core.logout(sid, baseAdapter)
       const cookieOpts = env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}
       clearSessionCookie(reply, {
         ...cookieOpts,

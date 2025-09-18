@@ -22,6 +22,10 @@
     "customConditions": [
       "development",
       "typescript"
+    ],
+    "typeRoots": [
+      "./types",
+      "./node_modules/@types"
     ]
   }
 }
