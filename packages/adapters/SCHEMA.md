@@ -1,6 +1,6 @@
 # Default Prisma Schema for Keyloom
 
-This is the reference Prisma schema used by the `@keyloom/adapters-prisma` adapter. Copy the models you need into your project's `schema.prisma` and run migrations.
+This is the reference Prisma schema used by the `@keyloom/adapters/prisma` adapter. Copy the models you need into your project's `schema.prisma` and run migrations.
 
 ```prisma
 generator client {

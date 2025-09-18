@@ -24,5 +24,5 @@ export default {
 }
 ```
 
-Use SCHEMA.md in the Prisma adapter package for the reference schema.
+See SCHEMA.md in this package for the reference Prisma schema.
 

@@ -5,7 +5,7 @@
     { "path": "packages/nextjs" },
     { "path": "packages/providers" },
     { "path": "packages/adapters" },
-    { "path": "packages/adapters/prisma" },
+
     { "path": "packages/adapters/drizzle" },
     { "path": "packages/adapters/postgres" },
     { "path": "packages/adapters/mysql2" },

@@ -13,14 +13,15 @@
       "require": "./dist/index.cjs"
     },
     "./prisma": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/prisma/index.d.ts",
       "import": "./dist/prisma.js",
       "require": "./dist/prisma.cjs"
     }
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "SCHEMA.md"
   ],
   "sideEffects": false,
   "scripts": {

@@ -239,6 +239,15 @@ export function isDatabaseStrategy(config: KeyloomConfig): boolean {
   return !config.session?.strategy || config.session.strategy === 'database'
 }
 
+/**
+ * DX helper: define Keyloom configuration with strong TS inference.
+ * Identity function at runtime; use in keyloom.config.ts
+ *   export default defineKeyloom({ ... })
+ */
+export function defineKeyloom<T extends KeyloomConfig>(config: T): T {
+  return config
+}
+
 // ---- Password hasher initialization helper ----
 
 let __defaultHasher: PasswordHasher | null = null
