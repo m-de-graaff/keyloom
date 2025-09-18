@@ -2,7 +2,7 @@
 # Node.js dependencies and build outputs
 node_modules/
 dist/
-lib/
+/lib/
 build/
 out/
 
