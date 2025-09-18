@@ -74,3 +74,30 @@ examples/*/.next/
 examples/*/.turbo/
 
 release.ps1
+
+
+# Databases and seeds (development only)
+prisma/
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+*.db-journal
+seed.sql
+seeds/
+
+# Coverage and reports
+coverage/
+*.lcov
+
+# Logs (ensure not committed)
+logs/
+*.log
+
+# Example/demo apps (if present)
+examples/**/node_modules/
+examples/**/.next/
+examples/**/dist/
+examples/**/build/
+examples/**/.turbo/
