@@ -18,6 +18,9 @@
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup && pnpm build:types",
     "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist --skipLibCheck",

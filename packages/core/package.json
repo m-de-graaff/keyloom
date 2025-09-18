@@ -9,53 +9,71 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "typescript": "./src/index.ts",
       "import": {
         "development": "./src/index.ts",
         "default": "./dist/index.js"
       },
-      "require": "./dist/index.cjs",
-      "typescript": "./src/index.ts"
+      "require": "./dist/index.cjs"
     },
     "./runtime/register": {
       "types": "./dist/runtime/register.d.ts",
+      "typescript": "./src/runtime/register.ts",
       "import": "./dist/runtime/register.js",
-      "require": "./dist/runtime/register.cjs",
-      "typescript": "./src/runtime/register.ts"
+      "require": "./dist/runtime/register.cjs"
     },
     "./runtime/login": {
       "types": "./dist/runtime/login.d.ts",
+      "typescript": "./src/runtime/login.ts",
       "import": "./dist/runtime/login.js",
-      "require": "./dist/runtime/login.cjs",
-      "typescript": "./src/runtime/login.ts"
+      "require": "./dist/runtime/login.cjs"
     },
     "./runtime/logout": {
       "types": "./dist/runtime/logout.d.ts",
+      "typescript": "./src/runtime/logout.ts",
       "import": "./dist/runtime/logout.js",
-      "require": "./dist/runtime/logout.cjs",
-      "typescript": "./src/runtime/logout.ts"
+      "require": "./dist/runtime/logout.cjs"
     },
     "./runtime/current-session": {
       "types": "./dist/runtime/current-session.d.ts",
+      "typescript": "./src/runtime/current-session.ts",
       "import": "./dist/runtime/current-session.js",
-      "require": "./dist/runtime/current-session.cjs",
-      "typescript": "./src/runtime/current-session.ts"
+      "require": "./dist/runtime/current-session.cjs"
     },
     "./guard/csrf": {
       "types": "./dist/guard/csrf.d.ts",
+      "typescript": "./src/guard/csrf.ts",
       "import": "./dist/guard/csrf.js",
-      "require": "./dist/guard/csrf.cjs",
-      "typescript": "./src/guard/csrf.ts"
+      "require": "./dist/guard/csrf.cjs"
+    },
+    "./guard/rate-limit": {
+      "types": "./dist/guard/rate-limit.d.ts",
+      "typescript": "./src/guard/rate-limit.ts",
+      "import": "./dist/guard/rate-limit.js",
+      "require": "./dist/guard/rate-limit.cjs"
+    },
+    "./session/cookie": {
+      "types": "./dist/session/cookie.d.ts",
+      "typescript": "./src/session/cookie.ts",
+      "import": "./dist/session/cookie.js",
+      "require": "./dist/session/cookie.cjs"
+    },
+    "./crypto/token-hash": {
+      "types": "./dist/crypto/token-hash.d.ts",
+      "typescript": "./src/crypto/token-hash.ts",
+      "import": "./dist/crypto/token-hash.js",
+      "require": "./dist/crypto/token-hash.cjs"
     },
     "./jwt": {
       "types": "./dist/jwt/index.d.ts",
+      "typescript": "./src/jwt/index.ts",
       "import": "./dist/jwt/index.js",
-      "require": "./dist/jwt/index.cjs",
-      "typescript": "./src/jwt/index.ts"
+      "require": "./dist/jwt/index.cjs"
     },
     "./adapter-types": {
+      "typescript": "./src/adapter-types.ts",
       "import": "./src/adapter-types.ts",
-      "require": "./dist/adapter-types.cjs",
-      "typescript": "./src/adapter-types.ts"
+      "require": "./dist/adapter-types.cjs"
     }
   },
   "files": [
@@ -64,7 +82,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsup && pnpm build:types",
-    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist --skipLibCheck",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist --skipLibCheck --target ES2022 --module ES2022 --lib ES2022,DOM src/session/cookie.ts src/runtime/register.ts src/runtime/login.ts src/runtime/logout.ts src/runtime/current-session.ts src/crypto/token-hash.ts src/guard/csrf.ts src/guard/rate-limit.ts src/jwt/index.ts src/adapters/memory/index.ts src/adapters/memory/store.ts src/adapters/memory/rbac.ts",
     "dev": "tsup --watch",
     "typecheck": "tsc -b",
     "test": "vitest run",

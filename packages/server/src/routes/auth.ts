@@ -1,5 +1,11 @@
 import { PrismaAdapter } from "@keyloom/adapters";
-import * as core from "@keyloom/core";
+import { register } from "@keyloom/core/runtime/register";
+import { login } from "@keyloom/core/runtime/login";
+import { logout } from "@keyloom/core/runtime/logout";
+import { getCurrentSession } from "@keyloom/core/runtime/current-session";
+import * as csrf from "@keyloom/core/guard/csrf";
+import * as rateLimit from "@keyloom/core/guard/rate-limit";
+import type { JwtAlg } from "@keyloom/core/jwt";
 import * as Prisma from "@prisma/client";
 import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import { createRefreshTokenStore } from "../prisma-refresh-store";
@@ -25,15 +31,18 @@ export function buildServer(env: Env) {
   const app = Fastify({ trustProxy: true });
   const db = new (Prisma as any).PrismaClient();
   const adapter = PrismaAdapter(db);
-  const baseAdapter = adapter as unknown as core.Adapter;
-  const credAdapter = adapter as unknown as core.Adapter & {
-    getCredentialByUserId(userId: core.ID): Promise<{ hash: string } | null>;
-    createCredential(
-      userId: core.ID,
-      hash: string
-    ): Promise<{ id: core.ID; userId: core.ID }>;
+  const baseAdapter: any = adapter as any;
+  const credAdapter: any = adapter as any;
+  const hasher = {
+    async hash(pw: string) {
+      const { hash } = await import("bcryptjs");
+      return hash(pw, 12);
+    },
+    async verify(hashVal: string, pw: string) {
+      const { compare } = await import("bcryptjs");
+      return compare(pw, hashVal);
+    },
   };
-  const hasher = core.argon2idHasher;
 
   // Initialize JWT components if using JWT strategy
   let _jwtService: ReturnType<typeof getJwtService> | null = null;
@@ -41,7 +50,7 @@ export function buildServer(env: Env) {
     // Initialize keystore
     const ksOpts: {
       jwksPath?: string;
-      alg?: core.jwt.JwtAlg;
+      alg?: JwtAlg;
       rotationDays?: number;
       overlapDays?: number;
     } = {
@@ -61,7 +70,7 @@ export function buildServer(env: Env) {
   }
 
   app.get("/v1/auth/csrf", async (_req, reply) => {
-    const t = core.csrf.issueCsrfToken();
+    const t = csrf.issueCsrfToken();
     reply.header(
       "Set-Cookie",
       `__keyloom_csrf=${t}; Path=/; SameSite=Lax; HttpOnly; Secure`
@@ -80,10 +89,10 @@ export function buildServer(env: Env) {
     ) => {
       const ip = req.ip;
       const rlKey = `reg:${ip}`;
-      if (!core.rateLimit.rateLimit(rlKey, { capacity: 5, refillPerSec: 0.2 }))
+      if (!rateLimit.rateLimit(rlKey, { capacity: 5, refillPerSec: 0.2 }))
         return reply.code(429).send({ error: "rate_limited" });
 
-      const ok = core.csrf.validateDoubleSubmit({
+      const ok = csrf.validateDoubleSubmit({
         cookieToken: req.cookies?.__keyloom_csrf ?? null,
         headerToken: req.headers["x-keyloom-csrf"] as string,
       });
@@ -93,7 +102,7 @@ export function buildServer(env: Env) {
         email: undefined as unknown as string,
         password: undefined as unknown as string,
       };
-      const out = await core.register(
+      const out = await register(
         { email, password, requireEmailVerify: false },
         { adapter: credAdapter, hasher }
       );
@@ -115,10 +124,10 @@ export function buildServer(env: Env) {
     ) => {
       const ip = req.ip;
       const rlKey = `login:${ip}`;
-      if (!core.rateLimit.rateLimit(rlKey, { capacity: 10, refillPerSec: 1 }))
+      if (!rateLimit.rateLimit(rlKey, { capacity: 10, refillPerSec: 1 }))
         return reply.code(429).send({ error: "rate_limited" });
 
-      const ok = core.csrf.validateDoubleSubmit({
+      const ok = csrf.validateDoubleSubmit({
         cookieToken: req.cookies?.__keyloom_csrf ?? null,
         headerToken: req.headers["x-keyloom-csrf"] as string,
       });
@@ -131,7 +140,7 @@ export function buildServer(env: Env) {
 
       if (env.SESSION_STRATEGY === "jwt") {
         // JWT strategy - issue tokens
-        const { user } = await core.login(
+        const { user } = await login(
           { email, password },
           { adapter: credAdapter, hasher }
         );
@@ -163,7 +172,7 @@ export function buildServer(env: Env) {
         };
       } else {
         // Database strategy - create session
-        const { session } = await core.login(
+        const { session } = await login(
           { email, password },
           { adapter: credAdapter, hasher }
         );
@@ -255,7 +264,7 @@ export function buildServer(env: Env) {
           .split("; ")
           .find((s) => s.startsWith("__keyloom_session="));
         const sid = cookie?.split("=")[1] ?? null;
-        if (sid) await core.logout(sid, baseAdapter);
+        if (sid) await logout(sid, baseAdapter);
         const cookieOpts = env.COOKIE_DOMAIN
           ? { domain: env.COOKIE_DOMAIN }
           : {};
@@ -276,7 +285,7 @@ export function buildServer(env: Env) {
         const ip = req.ip;
         const rlKey = `session:${ip}`;
         // Example: capacity 60, refill 5 tokens/sec (~300 req/min steady)
-        if (!core.rateLimit.rateLimit(rlKey, { capacity: 60, refillPerSec: 5 }))
+        if (!rateLimit.rateLimit(rlKey, { capacity: 60, refillPerSec: 5 }))
           return reply.code(429).send({ error: "rate_limited" });
       }
 
@@ -340,10 +349,7 @@ export function buildServer(env: Env) {
           .split("; ")
           .find((s) => s.startsWith("__keyloom_session="));
         const sid = cookie?.split("=")[1] ?? null;
-        const { session, user } = await core.getCurrentSession(
-          sid,
-          baseAdapter
-        );
+        const { session, user } = await getCurrentSession(sid, baseAdapter);
         return {
           session,
           user: user ? { id: user.id, email: user.email } : null,
