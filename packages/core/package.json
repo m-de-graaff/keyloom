@@ -13,41 +13,49 @@
         "development": "./src/index.ts",
         "default": "./dist/index.js"
       },
-      "require": "./dist/index.cjs"
+      "require": "./dist/index.cjs",
+      "typescript": "./src/index.ts"
     },
     "./runtime/register": {
       "types": "./dist/runtime/register.d.ts",
       "import": "./dist/runtime/register.js",
-      "require": "./dist/runtime/register.cjs"
+      "require": "./dist/runtime/register.cjs",
+      "typescript": "./src/runtime/register.ts"
     },
     "./runtime/login": {
       "types": "./dist/runtime/login.d.ts",
       "import": "./dist/runtime/login.js",
-      "require": "./dist/runtime/login.cjs"
+      "require": "./dist/runtime/login.cjs",
+      "typescript": "./src/runtime/login.ts"
     },
     "./runtime/logout": {
       "types": "./dist/runtime/logout.d.ts",
       "import": "./dist/runtime/logout.js",
-      "require": "./dist/runtime/logout.cjs"
+      "require": "./dist/runtime/logout.cjs",
+      "typescript": "./src/runtime/logout.ts"
     },
     "./runtime/current-session": {
       "types": "./dist/runtime/current-session.d.ts",
       "import": "./dist/runtime/current-session.js",
-      "require": "./dist/runtime/current-session.cjs"
+      "require": "./dist/runtime/current-session.cjs",
+      "typescript": "./src/runtime/current-session.ts"
     },
     "./guard/csrf": {
       "types": "./dist/guard/csrf.d.ts",
       "import": "./dist/guard/csrf.js",
-      "require": "./dist/guard/csrf.cjs"
+      "require": "./dist/guard/csrf.cjs",
+      "typescript": "./src/guard/csrf.ts"
     },
     "./jwt": {
       "types": "./dist/jwt/index.d.ts",
       "import": "./dist/jwt/index.js",
-      "require": "./dist/jwt/index.cjs"
+      "require": "./dist/jwt/index.cjs",
+      "typescript": "./src/jwt/index.ts"
     },
     "./adapter-types": {
       "import": "./src/adapter-types.ts",
-      "require": "./dist/adapter-types.cjs"
+      "require": "./dist/adapter-types.cjs",
+      "typescript": "./src/adapter-types.ts"
     }
   },
   "files": [
