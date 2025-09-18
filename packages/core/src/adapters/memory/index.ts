@@ -1,4 +1,5 @@
 import type { Adapter } from '../../adapter'
+import { tokenHash } from '../../crypto/token-hash'
 import { ERR, KeyloomError } from '../../errors'
 import type { RbacAdapter } from '../../rbac/types'
 import type { Account, AuditEvent, ID, Session, User, VerificationToken } from '../../types'
@@ -7,7 +8,7 @@ import { now } from '../../util/time'
 import { memoryRbac } from './rbac'
 import { type MemoryStore, newStore } from './store'
 
-export function memoryAdapter(init?: { store?: MemoryStore }): Adapter & {
+export function memoryAdapter(init?: { store?: MemoryStore; tokenSecret?: string }): Adapter & {
   __store: MemoryStore
 } & {
   createCredential(userId: ID, hash: string): Promise<{ id: ID; userId: ID }>
@@ -15,6 +16,8 @@ export function memoryAdapter(init?: { store?: MemoryStore }): Adapter & {
   updateCredential(userId: ID, hash: string): Promise<void>
 } & RbacAdapter {
   const store = init?.store ?? newStore()
+  const TOKEN_SECRET =
+    init?.tokenSecret ?? process.env.AUTH_SECRET ?? 'dev-secret-change-in-production'
 
   return Object.assign(
     {
@@ -107,19 +110,23 @@ export function memoryAdapter(init?: { store?: MemoryStore }): Adapter & {
       ): Promise<VerificationToken> {
         const id = newId()
         const vt: VerificationToken = { ...v, id }
-        // Phase 1: store token as plain (tests), Phase 2 will hash
-        store.tokens.set(`${v.identifier}:${v.token}`, vt)
+        // Hash at rest using provided or env secret
+        const hash = await tokenHash(v.token, TOKEN_SECRET)
+        const stored: VerificationToken = { ...vt, token: hash }
+        store.tokens.set(`${v.identifier}:${hash}`, stored)
         return vt
       },
       async useVerificationToken(
         identifier: string,
         token: string,
       ): Promise<VerificationToken | null> {
-        const key = `${identifier}:${token}`
+        const hash = await tokenHash(token, TOKEN_SECRET)
+        const key = `${identifier}:${hash}`
         const vt = store.tokens.get(key) ?? null
         if (!vt) return null
         store.tokens.delete(key) // single-use
-        return vt
+        // Return with plaintext token for caller convenience
+        return { ...vt, token }
       },
 
       // Audit

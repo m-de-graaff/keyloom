@@ -63,6 +63,9 @@ export type AuditEvent = {
   meta?: Record<string, unknown>
 }
 
+// Alias for external naming consistency
+export type AuditLog = AuditEvent
+
 export type KeyloomConfig = {
   adapter: unknown // Adapter factory or instance
   cookie?: {

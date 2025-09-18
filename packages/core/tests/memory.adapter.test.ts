@@ -22,7 +22,9 @@ describe('memory adapter', () => {
     expect(anonymous.email).toBeNull()
     expect(await adapter.getUserByEmail('missing@example.com')).toBeNull()
 
-    const updated = await adapter.updateUser(first.id, { email: 'other@example.com' })
+    const updated = await adapter.updateUser(first.id, {
+      email: 'other@example.com',
+    })
     expect(updated.email).toBe('other@example.com')
     expect(await adapter.getUserByEmail('other@example.com')).not.toBeNull()
     expect(await adapter.getUserByEmail('user@example.com')).toBeNull()
@@ -47,14 +49,17 @@ describe('memory adapter', () => {
       /ACCOUNT_LINKED/,
     )
 
-    const session = await adapter.createSession({ userId: user.id, expiresAt: new Date() })
+    const session = await adapter.createSession({
+      userId: user.id,
+      expiresAt: new Date(),
+    })
     expect(await adapter.getSession(session.id)).not.toBeNull()
     await adapter.deleteSession(session.id)
     expect(await adapter.getSession(session.id)).toBeNull()
   })
 
   it('handles verification tokens and credentials lifecycle', async () => {
-    const adapter = memoryAdapter()
+    const adapter = memoryAdapter({ tokenSecret: 'test-secret' })
     const user = await adapter.createUser({ email: 'cred@example.com' })
 
     const vt = await adapter.createVerificationToken({
@@ -62,6 +67,12 @@ describe('memory adapter', () => {
       token: 'tkn',
       expiresAt: new Date(Date.now() + 1000),
     })
+
+    // verify hashed-at-rest
+    const stored = Array.from(adapter.__store.tokens.values()).find((t) => t.id === vt.id)!
+    expect(stored.token).not.toBe(vt.token)
+    expect(adapter.__store.tokens.has(`${vt.identifier}:${vt.token}`)).toBe(false)
+
     expect(await adapter.useVerificationToken(vt.identifier, vt.token)).toMatchObject({ id: vt.id })
     expect(await adapter.useVerificationToken(vt.identifier, vt.token)).toBeNull()
 

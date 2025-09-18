@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   cleanupExpiredKeys,
@@ -147,7 +147,10 @@ describe('jwt crypto workflow', () => {
     expect(prevKey?.privateJwk).toBeUndefined()
 
     expect(getPublicKeysForVerification(rotated).length).toBeGreaterThanOrEqual(1)
-    expect(createDefaultRotationPolicy()).toEqual({ rotationDays: 90, overlapDays: 7 })
+    expect(createDefaultRotationPolicy()).toEqual({
+      rotationDays: 90,
+      overlapDays: 7,
+    })
   })
 
   it('signs and verifies JWTs end-to-end', async () => {
@@ -158,7 +161,13 @@ describe('jwt crypto workflow', () => {
     const signer = createSigner(privateKey, publicKey, kid, 'EdDSA')
 
     const now = Math.floor(Date.now() / 1000)
-    const claims = { iss: 'issuer', sub: 'user-1', iat: now, exp: now + 600, aud: 'web' }
+    const claims = {
+      iss: 'issuer',
+      sub: 'user-1',
+      iat: now,
+      exp: now + 600,
+      aud: 'web',
+    }
 
     const token = await signer.sign(claims)
 
@@ -190,7 +199,12 @@ describe('jwt crypto workflow', () => {
     const signer = createSigner(privateKey, publicKey, kid, 'EdDSA')
 
     const now = Math.floor(Date.now() / 1000)
-    const expired = await signer.sign({ iss: 'i', sub: 's', iat: now - 100, exp: now - 10 })
+    const expired = await signer.sign({
+      iss: 'i',
+      sub: 's',
+      iat: now - 100,
+      exp: now - 10,
+    })
 
     await expect(verifyJwtWithTiming(expired, [publicJwk], 0)).rejects.toMatchObject({
       code: JWT_ERRORS.JWT_EXPIRED,
@@ -275,11 +289,15 @@ describe('jwt verification edge cases', () => {
   })
 
   it('rejects tokens without three segments', async () => {
-    await expect(verifyJwt('a.b', [])).rejects.toMatchObject({ code: JWT_ERRORS.JWT_MALFORMED })
+    await expect(verifyJwt('a.b', [])).rejects.toMatchObject({
+      code: JWT_ERRORS.JWT_MALFORMED,
+    })
   })
 
   it('rejects tokens with empty parts', async () => {
-    await expect(verifyJwt('..', [])).rejects.toMatchObject({ code: JWT_ERRORS.JWT_MALFORMED })
+    await expect(verifyJwt('..', [])).rejects.toMatchObject({
+      code: JWT_ERRORS.JWT_MALFORMED,
+    })
   })
 
   it('rejects tokens with invalid header', async () => {
@@ -288,7 +306,9 @@ describe('jwt verification edge cases', () => {
       'base64url',
     )
     const token = `${header}.${payload}.sig`
-    await expect(verifyJwt(token, [])).rejects.toMatchObject({ code: JWT_ERRORS.JWT_MALFORMED })
+    await expect(verifyJwt(token, [])).rejects.toMatchObject({
+      code: JWT_ERRORS.JWT_MALFORMED,
+    })
   })
 
   it('rejects tokens with invalid claims structure', async () => {
@@ -299,7 +319,14 @@ describe('jwt verification edge cases', () => {
     const token = `${header}.${payload}.sig`
     await expect(
       verifyJwt(token, [
-        { kid: 'k', alg: 'EdDSA', use: 'sig', kty: 'OKP', crv: 'Ed25519', x: 'AA' },
+        {
+          kid: 'k',
+          alg: 'EdDSA',
+          use: 'sig',
+          kty: 'OKP',
+          crv: 'Ed25519',
+          x: 'AA',
+        },
       ]),
     ).rejects.toMatchObject({ code: JWT_ERRORS.JWT_MALFORMED })
   })
@@ -404,7 +431,12 @@ describe('jwt signer helpers', () => {
     ])) as CryptoKeyPair
     const kid = crypto.randomUUID()
     const signer = createSigner(keyPair.privateKey, keyPair.publicKey, kid, 'ES256')
-    const token = await signer.sign({ iss: 'issuer', sub: 'subject', iat: 1, exp: 10 })
+    const token = await signer.sign({
+      iss: 'issuer',
+      sub: 'subject',
+      iat: 1,
+      exp: 10,
+    })
     expect(typeof token).toBe('string')
     expect(signer.getKid()).toBe(kid)
     expect(signer.getAlgorithm()).toBe('ES256')

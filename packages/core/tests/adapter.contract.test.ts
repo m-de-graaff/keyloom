@@ -55,6 +55,19 @@ function runAdapterContract(make: () => Adapter) {
         token: 'T',
         expiresAt: new Date(Date.now() + 60000),
       })
+
+      // If adapter exposes a store (memory), ensure token is hashed at rest
+      const anyAdapter = a as any
+      if (anyAdapter.__store?.tokens) {
+        const stored = Array.from(anyAdapter.__store.tokens.values()).find(
+          (t: any) => t.id === vt.id,
+        )
+        expect(stored).toBeDefined()
+        expect(stored.token).not.toBe(vt.token)
+        // Ensure plaintext token key is not present
+        expect(anyAdapter.__store.tokens.has(`${vt.identifier}:${vt.token}`)).toBe(false)
+      }
+
       const used = await a.useVerificationToken('a@b', 'T')
       expect(used?.id).toBe(vt.id)
       const again = await a.useVerificationToken('a@b', 'T')

@@ -3,7 +3,7 @@ import type { VerificationToken } from '../types'
 import { now } from '../util/time'
 
 export function issueVerificationToken(identifier: string, ttlMinutes = 15) {
-  const token = randToken(32)
+  const token = randToken(16)
   const vt: Omit<VerificationToken, 'id'> = {
     identifier,
     token, // NOTE: store hashed in adapter impl (Phase 2)
