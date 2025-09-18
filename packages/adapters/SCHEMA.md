@@ -137,4 +137,62 @@ model RefreshToken {
   @@index([expiresAt])
   @@index([tokenHash])
 }
+
+// RBAC & Organizations
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Membership[]
+  invites     Invite[]
+  entitlement Entitlement?
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  userId    String
+  orgId     String
+  role      String
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, orgId])
+  @@index([orgId])
+  @@index([userId, orgId, role, status])
+}
+
+model Invite {
+  id         String   @id @default(cuid())
+  orgId      String
+  email      String
+  role       String
+  tokenHash  String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  acceptedAt DateTime?
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, tokenHash])
+  @@index([orgId])
+  @@index([expiresAt])
+}
+
+model Entitlement {
+  orgId      String   @id
+  plan       String?
+  seats      Int?
+  features   Json?
+  limits     Json?
+  validUntil DateTime?
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
 ```

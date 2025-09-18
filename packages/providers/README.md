@@ -95,8 +95,10 @@ export { GET, POST };
 3. Fill in the application details:
    - **Application name**: Your app name
    - **Homepage URL**: `http://localhost:3000` (for development)
-   - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
+   - **Authorization callback URL**: `http://localhost:3000/api/auth/oauth/github/callback`
 4. Save the **Client ID** and **Client Secret**
+
+Required scopes: `read:user user:email`
 
 Add to your `.env.local`:
 
@@ -105,14 +107,18 @@ GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 ```
 
+Example redirect URIs:
+- Local: `http://localhost:3000/api/auth/oauth/github/callback`
+- Prod: `https://yourapp.com/api/auth/oauth/github/callback`
+
 ## Client-side Usage
 
 ```typescript
-// Redirect to GitHub OAuth
-window.location.href = "/api/auth/login/github";
+// Redirect to GitHub OAuth (App Router)
+window.location.href = "/api/auth/oauth/github/start";
 
-// Or with custom redirect
-window.location.href = "/api/auth/login/github?redirect=/dashboard";
+// Or with custom post-auth redirect
+window.location.href = "/api/auth/oauth/github/start?callbackUrl=/dashboard";
 ```
 
 ## React Component Example
