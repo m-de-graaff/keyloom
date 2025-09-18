@@ -52,7 +52,8 @@ export function createAuthMiddleware(
     url: URL,
     isApi: boolean
   ) {
-    if (isApi && rule.mode === "401") {
+    // Default API behavior: 401 JSON for unauthorized
+    if (isApi && (rule.mode === "401" || !rule.mode)) {
       return new NextResponse(JSON.stringify({ error: "unauthorized" }), {
         status: 401,
         headers: { "content-type": "application/json" },
@@ -83,7 +84,14 @@ export function createAuthMiddleware(
       const sid = parseCookieValue(cookieHeader);
       let authed = !!sid;
 
-      const verify = rule.verify ?? "cookie";
+      const needsRole =
+        (rule.roles && rule.roles.length > 0) ||
+        (typeof rule.visibility === "string" &&
+          rule.visibility.startsWith("role:"));
+
+      // We need session JSON to resolve userId when role checks are needed
+      const verify = needsRole ? "session" : rule.verify ?? "cookie";
+      let userId: string | null = null;
       if (authed && verify !== "cookie") {
         try {
           const r = await fetch(new URL("/api/auth/session", url).toString(), {
@@ -91,6 +99,7 @@ export function createAuthMiddleware(
           });
           const j = await r.json();
           authed = !!j?.session;
+          userId = j?.user?.id ?? null;
         } catch {
           authed = false;
         }
@@ -98,12 +107,61 @@ export function createAuthMiddleware(
 
       if (!authed) return handleUnauthorized(rule, url, isApi);
 
-      if (rule.org === "required" && config?.rbac?.enabled !== false) {
-        const orgId = parseCookieValue(cookieHeader, ORG_COOKIE_NAME);
+      // Organization requirement
+      let orgId: string | null = null;
+      const orgRequired = rule.org === "required" || rule.org === true;
+      if (orgRequired && config?.rbac?.enabled !== false) {
+        orgId = parseCookieValue(cookieHeader, ORG_COOKIE_NAME);
         if (!orgId) return NextResponse.redirect(new URL("/select-org", url));
       }
 
-      // Edge cannot DB-check role by default; allow through. Server-side guard should enforce roles/membership.
+      // Role-based routes: try best-effort membership check
+      if (needsRole && config?.rbac?.enabled !== false) {
+        // Collect required roles
+        const required: string[] = [];
+        if (
+          typeof rule.visibility === "string" &&
+          rule.visibility.startsWith("role:")
+        ) {
+          required.push(rule.visibility.slice(5));
+        }
+        if (Array.isArray(rule.roles)) required.push(...rule.roles);
+
+        try {
+          if (!userId) {
+            // Attempt to retrieve session if not already fetched
+            const r = await fetch(
+              new URL("/api/auth/session", url).toString(),
+              {
+                headers: { cookie: cookieHeader ?? "" },
+              }
+            );
+            const j = await r.json();
+            userId = j?.user?.id ?? null;
+            if (!j?.session) return handleUnauthorized(rule, url, isApi);
+          }
+          if (!orgId) orgId = parseCookieValue(cookieHeader, ORG_COOKIE_NAME);
+          if (!orgId) return NextResponse.redirect(new URL("/select-org", url));
+
+          const m = await (config as any).adapter?.getMembership?.(
+            userId,
+            orgId
+          );
+          if (!m || !required.includes(m.role)) {
+            // Role denied: API => 401, Pages => redirect to /403
+            if (isApi)
+              return new NextResponse(JSON.stringify({ error: "forbidden" }), {
+                status: 401,
+                headers: { "content-type": "application/json" },
+              });
+            return NextResponse.redirect(new URL("/403", url));
+          }
+        } catch {
+          // If check fails (edge/db), allow and rely on server guard for final enforcement
+          return NextResponse.next();
+        }
+      }
+
       return NextResponse.next();
     }
 

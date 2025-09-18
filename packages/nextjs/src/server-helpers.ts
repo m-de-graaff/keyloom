@@ -17,14 +17,36 @@ function ensure(config?: NextKeyloomConfig) {
   return { config: _config, adapter: _adapter };
 }
 
+function resolveJwtEnv(
+  cfg: NextKeyloomConfig
+): Record<string, string> | undefined {
+  if (cfg.sessionStrategy !== "jwt") return undefined;
+  // If provided env-like keys, pass through
+  if (cfg.jwt && (cfg.jwt as any).KEYLOOM_JWT_JWKS_URL) return cfg.jwt as any;
+  // Otherwise, try to infer from baseUrl and core jwt config
+  const jwksUrl = cfg.baseUrl
+    ? `${cfg.baseUrl.replace(/\/$/, "")}/.well-known/jwks.json`
+    : undefined;
+  const issuer = (cfg as any).jwt?.issuer || cfg.baseUrl;
+  if (!jwksUrl || !issuer) return undefined as any;
+  const out: any = {
+    KEYLOOM_JWT_JWKS_URL: jwksUrl,
+    KEYLOOM_JWT_ISSUER: issuer,
+  };
+  return out;
+}
+
 export async function getSession(config?: NextKeyloomConfig) {
   const { config: cfg, adapter } = ensure(config);
 
   // Check if JWT strategy is enabled
-  if (cfg.sessionStrategy === "jwt" && cfg.jwt) {
-    const jwtConfig = createJwtConfig(cfg.jwt);
-    const result = await getJwtSession(jwtConfig);
-    return { session: result.session, user: result.user };
+  if (cfg.sessionStrategy === "jwt") {
+    const envLike = resolveJwtEnv(cfg);
+    if (envLike) {
+      const jwtConfig = createJwtConfig(envLike);
+      const result = await getJwtSession(jwtConfig);
+      return { session: result.session, user: result.user };
+    }
   }
 
   // Fallback to database session strategy
@@ -58,12 +80,17 @@ export async function guard(
   let user: any = null;
 
   // Check if JWT strategy is enabled
-  if (cfg.sessionStrategy === "jwt" && cfg.jwt) {
-    const jwtConfig = createJwtConfig(cfg.jwt);
-    const result = await getJwtSession(jwtConfig);
-    session = result.session;
-    user = result.user;
-  } else {
+  if (cfg.sessionStrategy === "jwt") {
+    const envLike = resolveJwtEnv(cfg);
+    if (envLike) {
+      const jwtConfig = createJwtConfig(envLike);
+      const result = await getJwtSession(jwtConfig);
+      session = result.session;
+      user = result.user;
+    }
+  }
+
+  if (!session || !user) {
     // Fallback to database session strategy
     const cookieHeader =
       (await headers()).get("cookie") ?? cookies().toString();

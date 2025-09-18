@@ -1,0 +1,1 @@
+-- See Keyloom adapters/SCHEMA.md for canonical schema

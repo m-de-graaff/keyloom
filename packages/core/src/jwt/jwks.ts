@@ -1,11 +1,11 @@
-import { generateKeyPair } from './jwk'
-import type { JwtAlg, Keystore, RotationPolicy } from './types'
+import { generateKeyPair } from "./jwk";
+import type { JwtAlg, Keystore, RotationPolicy } from "./types";
 
 /**
  * Create a new keystore with an initial active key
  */
 export async function createKeystore(alg: JwtAlg): Promise<Keystore> {
-  const { kid, publicJwk, privateJwk } = await generateKeyPair(alg)
+  const { kid, publicJwk, privateJwk } = await generateKeyPair(alg);
 
   return {
     active: {
@@ -15,26 +15,34 @@ export async function createKeystore(alg: JwtAlg): Promise<Keystore> {
       createdAt: new Date().toISOString(),
     },
     previous: [],
-  }
+  };
 }
 
 /**
  * Export public JWKS from keystore
  */
 export function exportPublicJwks(keystore: Keystore): { keys: JsonWebKey[] } {
-  const keys = [keystore.active.publicJwk, ...keystore.previous.map((prev) => prev.publicJwk)]
+  const keys = [
+    keystore.active.publicJwk,
+    ...keystore.previous.map((prev) => prev.publicJwk),
+  ];
 
-  return { keys }
+  return { keys };
 }
 
 /**
  * Check if keystore needs rotation based on policy
  */
-export function needsRotation(keystore: Keystore, policy: RotationPolicy): boolean {
-  const activeCreatedAt = new Date(keystore.active.createdAt)
-  const rotationThreshold = new Date(Date.now() - policy.rotationDays * 24 * 60 * 60 * 1000)
+export function needsRotation(
+  keystore: Keystore,
+  policy: RotationPolicy
+): boolean {
+  const activeCreatedAt = new Date(keystore.active.createdAt);
+  const rotationThreshold = new Date(
+    Date.now() - policy.rotationDays * 24 * 60 * 60 * 1000
+  );
 
-  return activeCreatedAt < rotationThreshold
+  return activeCreatedAt < rotationThreshold;
 }
 
 /**
@@ -43,13 +51,15 @@ export function needsRotation(keystore: Keystore, policy: RotationPolicy): boole
 export async function rotateKeystore(
   keystore: Keystore,
   alg: JwtAlg,
-  policy: RotationPolicy,
+  policy: RotationPolicy
 ): Promise<Keystore> {
   // Generate new active key
-  const { kid, publicJwk, privateJwk } = await generateKeyPair(alg)
+  const { kid, publicJwk, privateJwk } = await generateKeyPair(alg);
 
-  const now = new Date().toISOString()
-  const expiresAt = new Date(Date.now() + policy.overlapDays * 24 * 60 * 60 * 1000).toISOString()
+  const now = new Date().toISOString();
+  const expiresAt = new Date(
+    Date.now() + policy.overlapDays * 24 * 60 * 60 * 1000
+  ).toISOString();
 
   // Move current active key to previous
   const newPrevious = [
@@ -60,10 +70,12 @@ export async function rotateKeystore(
       expiresAt,
     },
     ...keystore.previous,
-  ]
+  ];
 
   // Clean up expired previous keys
-  const validPrevious = newPrevious.filter((prev) => new Date(prev.expiresAt) > new Date())
+  const validPrevious = newPrevious.filter(
+    (prev) => new Date(prev.expiresAt) > new Date()
+  );
 
   return {
     active: {
@@ -73,20 +85,22 @@ export async function rotateKeystore(
       createdAt: now,
     },
     previous: validPrevious,
-  }
+  };
 }
 
 /**
  * Clean up expired keys from keystore
  */
 export function cleanupExpiredKeys(keystore: Keystore): Keystore {
-  const now = new Date()
-  const validPrevious = keystore.previous.filter((prev) => new Date(prev.expiresAt) > now)
+  const now = new Date();
+  const validPrevious = keystore.previous.filter(
+    (prev) => new Date(prev.expiresAt) > now
+  );
 
   return {
     ...keystore,
     previous: validPrevious,
-  }
+  };
 }
 
 /**
@@ -94,52 +108,55 @@ export function cleanupExpiredKeys(keystore: Keystore): Keystore {
  */
 export function findKeyInKeystore(
   keystore: Keystore,
-  kid: string,
+  kid: string
 ): { publicJwk: JsonWebKey; privateJwk?: JsonWebKey } | null {
   // Check active key
   if (keystore.active.kid === kid) {
     return {
       publicJwk: keystore.active.publicJwk,
       privateJwk: keystore.active.privateJwk,
-    }
+    };
   }
 
   // Check previous keys (only public keys available)
-  const previousKey = keystore.previous.find((prev) => prev.kid === kid)
+  const previousKey = keystore.previous.find((prev) => prev.kid === kid);
   if (previousKey) {
     return {
       publicJwk: previousKey.publicJwk,
-    }
+    };
   }
 
-  return null
+  return null;
 }
 
 /**
  * Get all public keys from keystore for verification
  */
 export function getPublicKeysForVerification(keystore: Keystore): JsonWebKey[] {
-  return [keystore.active.publicJwk, ...keystore.previous.map((prev) => prev.publicJwk)]
+  return [
+    keystore.active.publicJwk,
+    ...keystore.previous.map((prev) => prev.publicJwk),
+  ];
 }
 
 /**
  * Validate keystore structure
  */
 export function validateKeystore(keystore: unknown): keystore is Keystore {
-  if (!keystore || typeof keystore !== 'object') {
-    return false
+  if (!keystore || typeof keystore !== "object") {
+    return false;
   }
 
-  const ks = keystore as any
+  const ks = keystore as any;
 
   return (
     ks.active &&
-    typeof ks.active.kid === 'string' &&
-    typeof ks.active.createdAt === 'string' &&
+    typeof ks.active.kid === "string" &&
+    typeof ks.active.createdAt === "string" &&
     ks.active.publicJwk &&
     ks.active.privateJwk &&
     Array.isArray(ks.previous)
-  )
+  );
 }
 
 /**
@@ -149,5 +166,50 @@ export function createDefaultRotationPolicy(): RotationPolicy {
   return {
     rotationDays: 90, // Rotate every 90 days
     overlapDays: 7, // Keep previous key valid for 7 days
+  };
+}
+
+// --- File storage helpers (Node.js only) ---
+export async function saveKeystoreToFile(
+  filePath: string,
+  keystore: Keystore
+): Promise<void> {
+  const fs = await import("node:fs/promises");
+  const body = JSON.stringify(keystore, null, 2);
+  await fs.writeFile(filePath, body, "utf8");
+}
+
+export async function loadKeystoreFromFile(
+  filePath: string
+): Promise<Keystore> {
+  const fs = await import("node:fs/promises");
+  const body = await fs.readFile(filePath, "utf8");
+  const parsed = JSON.parse(body);
+  if (!validateKeystore(parsed)) throw new Error("Invalid keystore file");
+  return parsed;
+}
+
+export async function ensureKeystoreFile(
+  filePath: string,
+  alg: JwtAlg
+): Promise<Keystore> {
+  const fs = await import("node:fs/promises");
+  try {
+    return await loadKeystoreFromFile(filePath);
+  } catch {
+    const ks = await createKeystore(alg);
+    await saveKeystoreToFile(filePath, ks);
+    return ks;
   }
+}
+
+export async function rotateKeystoreFile(
+  filePath: string,
+  alg: JwtAlg,
+  policy: RotationPolicy
+): Promise<Keystore> {
+  const ks = await ensureKeystoreFile(filePath, alg);
+  const rotated = await rotateKeystore(ks, alg, policy);
+  await saveKeystoreToFile(filePath, rotated);
+  return rotated;
 }

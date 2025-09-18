@@ -47,7 +47,7 @@ function readJSON(path: string): any | null {
 function hasDep(pkg: any, name: string) {
   return Boolean(pkg?.dependencies?.[name] || pkg?.devDependencies?.[name]);
 }
-function detectAdapter(cwd: string): AdapterKind {
+export function detectAdapter(cwd: string): AdapterKind {
   const pkg = readJSON(join(cwd, "package.json"));
   // Drizzle dialect detection first
   if (hasDep(pkg, "drizzle-orm")) {
