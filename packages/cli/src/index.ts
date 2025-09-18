@@ -26,6 +26,11 @@ export async function run(argv: string[]) {
       await generateCommand(args);
       return;
     }
+    case "ui": {
+      const { uiCommand } = await import("./commands/ui");
+      await uiCommand(args);
+      return;
+    }
     default: {
       console.log("keyloom CLI");
       console.log("Usage:");

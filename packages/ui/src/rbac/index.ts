@@ -1,0 +1,2 @@
+export { RoleGate } from './RoleGate'
+
