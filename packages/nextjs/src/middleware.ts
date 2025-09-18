@@ -16,6 +16,16 @@ type Options = {
     next: () => NextResponse;
     redirect: (to: string) => NextResponse;
   }) => NextResponse;
+  /**
+   * Optional custom checks at the edge. Limited runtime: no direct DB drivers.
+   * Return a NextResponse to short-circuit, otherwise return undefined to continue.
+   */
+  customValidate?: (ctx: {
+    req: NextRequest;
+    url: URL;
+    authed: boolean;
+    userId?: string | null;
+  }) => Promise<NextResponse | undefined> | NextResponse | undefined;
 };
 
 function isPublic(urlPath: string, rules: (string | RegExp)[] = []) {
@@ -107,6 +117,21 @@ export function createAuthMiddleware(
 
       if (!authed) return handleUnauthorized(rule, url, isApi);
 
+      // Optional custom edge validation
+      if (opts.customValidate) {
+        try {
+          const override = await opts.customValidate({
+            req,
+            url,
+            authed,
+            userId,
+          });
+          if (override) return override;
+        } catch {
+          // fail-open to avoid accidental lockouts at the edge
+        }
+      }
+
       // Organization requirement
       let orgId: string | null = null;
       const orgRequired = rule.org === "required" || rule.org === true;
@@ -184,6 +209,16 @@ export function createAuthMiddleware(
 
     const next = () => NextResponse.next();
     const redirect = (to: string) => NextResponse.redirect(new URL(to, url));
+
+    // Optional custom edge validation for legacy mode as well
+    if (opts.customValidate) {
+      try {
+        const override = await opts.customValidate({ req, url, authed });
+        if (override) return override;
+      } catch {
+        // fail-open
+      }
+    }
 
     if (opts.afterAuth) return opts.afterAuth({ authed, req, next, redirect });
 

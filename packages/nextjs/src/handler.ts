@@ -51,6 +51,15 @@ export function createNextHandler(config: NextKeyloomConfig) {
     if (!match)
       return NextResponse.json({ error: "not_found" }, { status: 404 });
 
+    // Optional global hook (Node runtime)
+    if (config.hooks?.onRequest) {
+      const hookResp = await config.hooks.onRequest({
+        kind: (match.kind as any) ?? "unknown",
+        req,
+      });
+      if (hookResp) return hookResp as any;
+    }
+
     if (match.kind === "session") {
       // Support both DB and JWT strategy
       const envLike = resolveJwtEnv(config);
@@ -170,6 +179,15 @@ export function createNextHandler(config: NextKeyloomConfig) {
     const adapter = getAdapter(config);
     if (!match)
       return NextResponse.json({ error: "not_found" }, { status: 404 });
+
+    // Optional global hook (Node runtime)
+    if (config.hooks?.onRequest) {
+      const hookResp = await config.hooks.onRequest({
+        kind: (match.kind as any) ?? "unknown",
+        req,
+      });
+      if (hookResp) return hookResp as any;
+    }
 
     // Apple and some IdPs can POST back the callback (response_mode=form_post)
     if (match.kind === "oauth_callback") {

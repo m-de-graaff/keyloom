@@ -210,10 +210,12 @@ export function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
       if (!name || name.length > 128) throw new Error("invalid_name");
       let slug = data.slug ?? null;
       if (slug != null) {
-        slug = String(slug)
-          .toLowerCase()
-          .replace(/[^a-z0-9-]+/g, "-")
-          .replace(/^-+|-+$/g, "");
+        // Sanitize slug defensively: bound length first, avoid ambiguous alternation regex
+        slug = String(slug).toLowerCase();
+        if (slug.length > 512) slug = slug.slice(0, 512);
+        slug = slug.replace(/[^a-z0-9-]+/g, "-");
+        // Trim leading/trailing hyphens with separate anchored patterns (no alternation)
+        slug = slug.replace(/^-+/, "").replace(/-+$/, "");
         if (!slug || slug.length > 64) throw new Error("invalid_slug");
       }
       const org = await prisma.organization.create({
