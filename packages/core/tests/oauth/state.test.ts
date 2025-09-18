@@ -15,6 +15,10 @@ describe('oauth/state', () => {
 
   it('rejects tampered ciphertext', async () => {
     const sealed = await sealState(key, payload)
-    await expect(openState(key, sealed.nonce, sealed.ct.replace(/.$/, 'A'))).rejects.toThrow()
+    const tamperedBytes = Buffer.from(sealed.ct, 'base64url')
+    if (tamperedBytes.length === 0) throw new Error('seal produced empty ciphertext')
+    tamperedBytes[0] ^= 0x01
+    const tamperedCt = Buffer.from(tamperedBytes).toString('base64url')
+    await expect(openState(key, sealed.nonce, tamperedCt)).rejects.toThrow()
   })
 })
