@@ -24,7 +24,7 @@ export * as jwt from "./jwt";
 export { makeAppleClientSecret } from "./oauth/apple";
 export { completeOAuth, startOAuth } from "./oauth/flow";
 // OAuth API
-export type { OAuthProvider, Tokens } from "./oauth/types";
+export type { OAuthProvider, Tokens, Profile } from "./oauth/types";
 export * from "./rbac/context";
 export * from "./rbac/invites";
 export * from "./rbac/policy";

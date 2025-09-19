@@ -1,4 +1,4 @@
-import type { OAuthProvider, Profile, Tokens } from "@keyloom/core/oauth/types";
+import type { OAuthProvider, Profile, Tokens } from "@keyloom/core";
 
 export type StandardProviderConfig = {
   id: string;

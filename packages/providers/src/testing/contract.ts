@@ -1,4 +1,4 @@
-import type { OAuthProvider, Tokens } from "@keyloom/core/oauth/types";
+import type { OAuthProvider, Tokens } from "@keyloom/core";
 import { lintProviderShape } from "../factory";
 
 export type ProviderContractResult = {
