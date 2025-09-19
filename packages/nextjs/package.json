@@ -1,6 +1,6 @@
 {
   "name": "@keyloom/nextjs",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
