@@ -82,7 +82,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsup && pnpm build:types",
-    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist --skipLibCheck --target ES2022 --module ES2022 --lib ES2022,DOM src/session/cookie.ts src/runtime/register.ts src/runtime/login.ts src/runtime/logout.ts src/runtime/current-session.ts src/crypto/token-hash.ts src/guard/csrf.ts src/guard/rate-limit.ts src/jwt/index.ts src/adapters/memory/index.ts src/adapters/memory/store.ts src/adapters/memory/rbac.ts",
+    "build:types": "tsc -p tsconfig.json --declaration --emitDeclarationOnly",
     "dev": "tsup --watch",
     "typecheck": "tsc -b",
     "test": "vitest run",

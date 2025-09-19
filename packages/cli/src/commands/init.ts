@@ -46,6 +46,20 @@ function detectTs(cwd: string) {
   return fs.existsSync(path.join(cwd, "tsconfig.json"));
 }
 
+function ensureTsIncludesTypesDir(tsconfigPath: string) {
+  try {
+    const raw = fs.readFileSync(tsconfigPath, 'utf8');
+    const json = JSON.parse(raw);
+    const include: string[] = Array.isArray(json.include) ? json.include : [];
+    if (!include.includes('types')) {
+      json.include = [...include, 'types'];
+      fs.writeFileSync(tsconfigPath, JSON.stringify(json, null, 2) + '\n');
+      return true;
+    }
+  } catch {}
+  return false;
+}
+
 function detectPkgManager(cwd: string) {
   if (fs.existsSync(path.join(cwd, "pnpm-lock.yaml"))) return "pnpm";
   if (fs.existsSync(path.join(cwd, "yarn.lock"))) return "yarn";
@@ -162,7 +176,7 @@ export async function initCommand(args: string[]) {
   banner('Keyloom Init');
 
   // Step 1: Detect & configure
-  const total = 6;
+  const total = 7;
   step(1, total, 'Project configuration');
   const ts = detectTs(cwd);
   const includeNext = isNext;
@@ -280,6 +294,37 @@ export async function initCommand(args: string[]) {
   } catch (e) {
     sRoutes.fail('Failed to generate routes manifest');
     ui.warn(String(e));
+  }
+
+  // Step 7: Ensure TypeScript declarations (fallback until packages ship .d.ts)
+  if (ts) {
+    step(7, total, 'Ensure TypeScript declarations');
+    const sTypes = spinner('Checking installed Keyloom type declarations');
+    try {
+      const coreDts = path.join(cwd, 'node_modules', '@keyloom', 'core', 'dist', 'index.d.ts');
+      const nextDts = path.join(cwd, 'node_modules', '@keyloom', 'nextjs', 'dist', 'index.d.ts');
+      const routeDts = path.join(cwd, 'node_modules', '@keyloom', 'nextjs', 'dist', 'route-types.d.ts');
+      const needShim = !fs.existsSync(coreDts) || !fs.existsSync(nextDts) || !fs.existsSync(routeDts);
+      if (needShim) {
+        const typesDir = path.join(cwd, 'types');
+        ensureDir(typesDir);
+        const shimPath = path.join(typesDir, 'keyloom-shims.d.ts');
+        if (!fs.existsSync(shimPath)) {
+          const shim = "declare module '@keyloom/core';\n" +
+                       "declare module '@keyloom/nextjs';\n" +
+                       "declare module '@keyloom/nextjs/route-types';\n";
+          fs.writeFileSync(shimPath, shim);
+        }
+        ensureTsIncludesTypesDir(path.join(cwd, 'tsconfig.json'));
+        sTypes.succeed('Added local Keyloom type shims');
+        ui.info('Temporary until packages include .d.ts');
+      } else {
+        sTypes.succeed('Keyloom packages include type declarations');
+      }
+    } catch (e) {
+      sTypes.fail('Failed to verify/add type declarations');
+      ui.warn(String(e));
+    }
   }
 
   // Summary
