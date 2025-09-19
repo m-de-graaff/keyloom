@@ -4,9 +4,9 @@
   "description": "Keyloom command-line tools: init, migrate, routes, doctor",
   "type": "module",
   "bin": {
-    "keyloom": "./dist/keyloom.cjs"
+    "keyloom": "./dist/keyloom.js"
   },
-  "main": "./dist/keyloom.cjs",
+  "main": "./dist/keyloom.js",
   "module": "./dist/keyloom.js",
   "files": [
     "dist",

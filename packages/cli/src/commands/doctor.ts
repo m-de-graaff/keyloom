@@ -1,4 +1,5 @@
 import { runDoctorChecks } from "../lib/doctor/checks";
+import { banner, section, step, ui, spinner } from "../lib/ui";
 
 function parseArgs(args: string[]) {
   const out: { json?: boolean; strict?: boolean; cwd?: string } = {};
@@ -14,21 +15,43 @@ function parseArgs(args: string[]) {
 export async function doctorCommand(args: string[]) {
   const flags = parseArgs(args);
   const cwd = flags.cwd || process.cwd();
-  const checks = await runDoctorChecks(cwd);
 
+  // JSON mode: machine-friendly output
+  const checks = await runDoctorChecks(cwd);
   if (flags.json) {
-    console.log(
-      JSON.stringify({ ok: checks.every((c) => c.ok), checks }, null, 2)
-    );
+    console.log(JSON.stringify({ ok: checks.every((c) => c.ok), checks }, null, 2));
     return;
   }
 
-  console.log("keyloom doctor");
+  banner("Keyloom Doctor");
+
+  step(1, 3, "Project context");
+  ui.info(`cwd: ${cwd}`);
+  ui.info(`NODE_ENV: ${process.env.NODE_ENV || "development"}`);
+
+  step(2, 3, "Running checks");
+  const s = spinner("Evaluating environment and wiring");
+  try {
+    // We already have checks computed above; simulate spinner work
+    await new Promise((r) => setTimeout(r, 200));
+    s.succeed("Checks complete");
+  } catch {
+    s.fail("Checks encountered an error");
+  }
+
+  section("Results");
   let okAll = true;
   for (const c of checks) {
     okAll &&= c.ok;
-    const status = c.ok ? "✔" : c.warn ? "!" : "✖";
-    console.log(`${status} ${c.id} — ${c.message}`);
+    if (c.ok) ui.success(`${c.id} — ${c.message}`);
+    else if (c.warn) ui.warn(`${c.id} — ${c.message}`);
+    else ui.error(`${c.id} — ${c.message}`);
   }
-  console.log(okAll ? "All checks passed" : "Some checks failed; see above");
+
+  section("Summary");
+  if (okAll) {
+    ui.success("All checks passed");
+  } else {
+    ui.warn("Some checks failed or require attention; see above");
+  }
 }
