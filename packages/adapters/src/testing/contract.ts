@@ -1,4 +1,4 @@
-import type { KeyloomAdapter } from "@keyloom/core/adapter-types";
+import type { KeyloomAdapter } from "@keyloom/core";
 
 export type AdapterContractResult = { ok: boolean; errors: string[] };
 

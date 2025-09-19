@@ -83,7 +83,8 @@ export function SignUpForm({
             />
             <button
               type="button"
-              className="absolute inset-y-0 right-2 inline-flex items-center text-xs text-muted-foreground hover:text-foreground"
+              className="absolute inset-y-0 inline-flex items-center text-xs text-muted-foreground hover:text-foreground"
+              style={{ insetInlineEnd: '0.5rem' }}
               onClick={() => setShowPassword((s) => !s)}
               aria-label={showPassword ? "Hide password" : "Show password"}
             >

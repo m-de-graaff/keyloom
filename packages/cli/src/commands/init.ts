@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
-import { ensureDir, writeFileSafe } from "../lib/fs";
+import { writeFileSafe } from "../lib/fs";
 import { detectAdapter, generateMigration } from "./generate";
 
 import { Command } from "commander";
@@ -46,19 +46,6 @@ function detectTs(cwd: string) {
   return fs.existsSync(path.join(cwd, "tsconfig.json"));
 }
 
-function ensureTsIncludesTypesDir(tsconfigPath: string) {
-  try {
-    const raw = fs.readFileSync(tsconfigPath, 'utf8');
-    const json = JSON.parse(raw);
-    const include: string[] = Array.isArray(json.include) ? json.include : [];
-    if (!include.includes('types')) {
-      json.include = [...include, 'types'];
-      fs.writeFileSync(tsconfigPath, JSON.stringify(json, null, 2) + '\n');
-      return true;
-    }
-  } catch {}
-  return false;
-}
 
 function detectPkgManager(cwd: string) {
   if (fs.existsSync(path.join(cwd, "pnpm-lock.yaml"))) return "pnpm";
@@ -71,38 +58,74 @@ function createConfigBody(opts: {
   ts: boolean;
   session: "database" | "jwt";
   adapter: string;
+  providers?: string[];
   issuer?: string;
   rbac: boolean;
   roles?: string[];
   permissions?: string[];
 }) {
   const ext = opts.ts ? "ts" : "js";
-  const header = `import { defineKeyloom } from '@keyloom/core'\n`;
-  const adapterImport =
-    opts.adapter === "prisma"
-      ? `// TODO: import your Prisma client and pass to prismaAdapter\n// import { prismaAdapter } from '@keyloom/adapters'\n// import { PrismaClient } from '@prisma/client'\n// const client = new PrismaClient()\n`
-      : opts.adapter.startsWith("drizzle")
-      ? `// TODO: import your Drizzle client and pass to adapter\n// import { createDrizzleAdapter } from '@keyloom/adapter-drizzle'\n`
-      : opts.adapter === "postgres"
-      ? `// TODO: import and configure Postgres adapter\n// import { postgresAdapter } from '@keyloom/adapters-postgres'\n`
-      : opts.adapter === "mysql2"
-      ? `// TODO: import and configure MySQL2 adapter\n// import { mysql2Adapter } from '@keyloom/adapters-mysql2'\n`
-      : opts.adapter === "mongo"
-      ? `// TODO: import and configure Mongo adapter\n// import { mongoAdapter } from '@keyloom/adapters-mongo'\n`
-      : `// TODO: configure adapter\n`;
-  const adapterConfig = `// adapter: prismaAdapter({ client }),\n`;
-  const jwtBlock =
-    opts.session === "jwt"
-      ? `,\n  jwt: {\n    issuer: '${opts.issuer || "http://localhost:3000"}',\n  }\n`
-      : "";
-  let rbacBlock = "";
-  if (opts.rbac) {
-    const roles = JSON.stringify(opts.roles || ["admin", "user"]);
-    const perms = JSON.stringify(opts.permissions || ["read", "write"]);
-    rbacBlock = `,\n  rbac: { enabled: true, roles: ${roles}, permissions: ${perms} }\n`;
+  const lines: string[] = [];
+  lines.push("import { defineKeyloom } from '@keyloom/core'");
+
+  // Adapter imports and setup
+  if (opts.adapter === 'prisma') {
+    lines.push("import { prismaAdapter } from '@keyloom/adapters'");
+    lines.push("import { PrismaClient } from '@prisma/client'");
+    lines.push("const client = new PrismaClient()");
+  } else if (opts.adapter.startsWith('drizzle')) {
+    lines.push("// TODO: import drizzle adapter for your dialect and client instance");
+  } else if (opts.adapter === 'postgres') {
+    lines.push("// TODO: import and setup postgres adapter");
+  } else if (opts.adapter === 'mysql2') {
+    lines.push("// TODO: import and setup mysql2 adapter");
+  } else if (opts.adapter === 'mongo') {
+    lines.push("// TODO: import and setup mongo adapter");
   }
-  const body = `${header}${adapterImport}\nexport default defineKeyloom({\n  session: { strategy: '${opts.session}' }${jwtBlock}${rbacBlock}})\n`;
-  return { ext, body };
+
+  // Provider imports
+  const provs = new Set(opts.providers || []);
+  if (provs.has('github')) lines.push("import github from '@keyloom/providers/github'");
+  if (provs.has('google')) lines.push("import google from '@keyloom/providers/google'");
+  if (provs.has('discord')) lines.push("import discord from '@keyloom/providers/discord'");
+
+  // Begin config
+  lines.push("\nexport default defineKeyloom({");
+  lines.push(`  session: { strategy: '${opts.session}' },`);
+
+  // Adapter usage
+  if (opts.adapter === 'prisma') {
+    lines.push("  adapter: prismaAdapter(client),");
+  } else {
+    lines.push("  // adapter: <your-adapter>(...),");
+  }
+
+  // Providers array
+  if (provs.size > 0) {
+    lines.push("  providers: [");
+    if (provs.has('github')) lines.push("    github({ clientId: process.env.GITHUB_CLIENT_ID!, clientSecret: process.env.GITHUB_CLIENT_SECRET! }),");
+    if (provs.has('google')) lines.push("    google({ clientId: process.env.GOOGLE_CLIENT_ID!, clientSecret: process.env.GOOGLE_CLIENT_SECRET! }),");
+    if (provs.has('discord')) lines.push("    discord({ clientId: process.env.DISCORD_CLIENT_ID!, clientSecret: process.env.DISCORD_CLIENT_SECRET! }),");
+    lines.push("  ],");
+  }
+
+  // RBAC (optional)
+  if (opts.rbac) {
+    const roles = JSON.stringify(opts.roles || ['admin', 'user']);
+    const perms = JSON.stringify(opts.permissions || ['read', 'write']);
+    lines.push(`  rbac: { enabled: true, roles: ${roles}, permissions: ${perms} },`);
+  }
+
+  // JWT extras (optional)
+  if (opts.session === 'jwt') {
+    lines.push(`  jwt: { issuer: '${opts.issuer || 'http://localhost:3000'}' },`);
+    lines.push('  secrets: { authSecret: process.env.AUTH_SECRET! },');
+  }
+
+  lines.push('})');
+  lines.push('');
+
+  return { ext, body: lines.join('\n') };
 }
 
 function createHandlerBody(router: "app" | "pages", ts: boolean) {
@@ -176,7 +199,7 @@ export async function initCommand(args: string[]) {
   banner('Keyloom Init');
 
   // Step 1: Detect & configure
-  const total = 7;
+  const total = 6;
   step(1, total, 'Project configuration');
   const ts = detectTs(cwd);
   const includeNext = isNext;
@@ -237,7 +260,7 @@ export async function initCommand(args: string[]) {
 
   // Step 3: keyloom.config
   step(3, total, 'Generate configuration');
-  const cfgOpts: any = { ts, session, adapter, rbac: rbacEnabled };
+  const cfgOpts: any = { ts, session, adapter, rbac: rbacEnabled, providers };
   if (roles && roles.length) cfgOpts.roles = roles;
   if (permissions && permissions.length) cfgOpts.permissions = permissions;
   const { ext, body } = createConfigBody(cfgOpts);
@@ -296,36 +319,6 @@ export async function initCommand(args: string[]) {
     ui.warn(String(e));
   }
 
-  // Step 7: Ensure TypeScript declarations (fallback until packages ship .d.ts)
-  if (ts) {
-    step(7, total, 'Ensure TypeScript declarations');
-    const sTypes = spinner('Checking installed Keyloom type declarations');
-    try {
-      const coreDts = path.join(cwd, 'node_modules', '@keyloom', 'core', 'dist', 'index.d.ts');
-      const nextDts = path.join(cwd, 'node_modules', '@keyloom', 'nextjs', 'dist', 'index.d.ts');
-      const routeDts = path.join(cwd, 'node_modules', '@keyloom', 'nextjs', 'dist', 'route-types.d.ts');
-      const needShim = !fs.existsSync(coreDts) || !fs.existsSync(nextDts) || !fs.existsSync(routeDts);
-      if (needShim) {
-        const typesDir = path.join(cwd, 'types');
-        ensureDir(typesDir);
-        const shimPath = path.join(typesDir, 'keyloom-shims.d.ts');
-        if (!fs.existsSync(shimPath)) {
-          const shim = "declare module '@keyloom/core';\n" +
-                       "declare module '@keyloom/nextjs';\n" +
-                       "declare module '@keyloom/nextjs/route-types';\n";
-          fs.writeFileSync(shimPath, shim);
-        }
-        ensureTsIncludesTypesDir(path.join(cwd, 'tsconfig.json'));
-        sTypes.succeed('Added local Keyloom type shims');
-        ui.info('Temporary until packages include .d.ts');
-      } else {
-        sTypes.succeed('Keyloom packages include type declarations');
-      }
-    } catch (e) {
-      sTypes.fail('Failed to verify/add type declarations');
-      ui.warn(String(e));
-    }
-  }
 
   // Summary
   section('Summary');
