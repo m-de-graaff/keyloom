@@ -8,9 +8,11 @@ export const ADAPTER_DEPS: Record<string, string[]> = {
 }
 
 export const PROVIDER_DEPS: Record<string, string[]> = {
-  github: ['@keyloom/providers/github'],
-  google: ['@keyloom/providers/google'],
-  discord: ['@keyloom/providers/discord'],
+  // All OAuth providers live under the monorepo package '@keyloom/providers'.
+  // Install the base package once regardless of which providers are selected.
+  github: ['@keyloom/providers'],
+  google: ['@keyloom/providers'],
+  discord: ['@keyloom/providers'],
 }
 
 export type AdapterChoice = keyof typeof ADAPTER_DEPS

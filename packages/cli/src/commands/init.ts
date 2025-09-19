@@ -11,6 +11,7 @@ import { installPackages, getMissingPackages, buildInstallCommand } from "../lib
 import { resolveInitDeps, type AdapterChoice, type ProviderChoice } from "../lib/deps";
 
 import { detectNext, detectRouter, detectPackageManager } from "../lib/detect";
+import { generateRoutes } from "../lib/index";
 
 function parseArgs(args: string[]) {
   const out: {
@@ -58,6 +59,8 @@ function createConfigBody(opts: {
   adapter: string;
   issuer?: string;
   rbac: boolean;
+  roles?: string[];
+  permissions?: string[];
 }) {
   const ext = opts.ts ? "ts" : "js";
   const header = `import { defineKeyloom } from '@keyloom/core'\n`;
@@ -76,12 +79,15 @@ function createConfigBody(opts: {
   const adapterConfig = `// adapter: prismaAdapter({ client }),\n`;
   const jwtBlock =
     opts.session === "jwt"
-      ? `,\n  jwt: {\n    issuer: '${
-          opts.issuer || "http://localhost:3000"
-        }',\n  }\n`
+      ? `,\n  jwt: {\n    issuer: '${opts.issuer || "http://localhost:3000"}',\n  }\n`
       : "";
-  const rbacLine = opts.rbac ? ",\n  rbac: { enabled: true }\n" : "";
-  const body = `${header}${adapterImport}\nexport default defineKeyloom({\n  session: { strategy: '${opts.session}' }${jwtBlock}${rbacLine}})\n`;
+  let rbacBlock = "";
+  if (opts.rbac) {
+    const roles = JSON.stringify(opts.roles || ["admin", "user"]);
+    const perms = JSON.stringify(opts.permissions || ["read", "write"]);
+    rbacBlock = `,\n  rbac: { enabled: true, roles: ${roles}, permissions: ${perms} }\n`;
+  }
+  const body = `${header}${adapterImport}\nexport default defineKeyloom({\n  session: { strategy: '${opts.session}' }${jwtBlock}${rbacBlock}})\n`;
   return { ext, body };
 }
 
@@ -101,7 +107,10 @@ function createEnvExample(opts: {
   providers: string[];
   session: "database" | "jwt";
 }) {
-  const lines = [`# Keyloom\nAUTH_SECRET=${randomBytes(32).toString("hex")}\n`];
+  const lines = [
+    `# Keyloom\nAUTH_SECRET=${randomBytes(32).toString("hex")}\n`,
+    `# Database (update to match your DB)\nDATABASE_URL=postgresql://user:password@localhost:5432/mydb?schema=public\n`,
+  ];
   if (opts.session === "jwt") {
     lines.push(`# JWT\nKEYLOOM_JWT_ISSUER=http://localhost:3000\n`);
   }
@@ -110,6 +119,9 @@ function createEnvExample(opts: {
   }
   if (opts.providers.includes("github")) {
     lines.push(`# GitHub\nGITHUB_CLIENT_ID=\nGITHUB_CLIENT_SECRET=\n`);
+  }
+  if (opts.providers.includes("discord")) {
+    lines.push(`# Discord\nDISCORD_CLIENT_ID=\nDISCORD_CLIENT_SECRET=\n`);
   }
   return lines.join("\n");
 }
@@ -150,7 +162,7 @@ export async function initCommand(args: string[]) {
   banner('Keyloom Init');
 
   // Step 1: Detect & configure
-  const total = 5;
+  const total = 6;
   step(1, total, 'Project configuration');
   const ts = detectTs(cwd);
   const includeNext = isNext;
@@ -165,12 +177,26 @@ export async function initCommand(args: string[]) {
         { name: 'Google', value: 'google' },
         { name: 'Discord', value: 'discord' },
       ], default: flags.providers || [] },
+    { name: 'rbacEnabled', type: 'confirm', message: 'Enable RBAC (Role-Based Access Control)?', default: flags.rbac ?? true },
+    { name: 'rbacSetup', type: 'confirm', message: 'Setup default roles and permissions?', default: true, when: (ans: any) => ans.rbacEnabled },
+    { name: 'rbacRoles', type: 'checkbox', message: 'Select roles to create', choices: ['admin','user','moderator'], default: ['admin','user'], when: (ans: any) => ans.rbacEnabled && ans.rbacSetup },
+    { name: 'rbacRolesCustom', type: 'input', message: 'Custom roles (comma-separated, optional)', when: (ans: any) => ans.rbacEnabled && ans.rbacSetup },
+    { name: 'rbacPerms', type: 'checkbox', message: 'Select permissions to define', choices: ['read','write','delete','manage_users'], default: ['read','write'], when: (ans: any) => ans.rbacEnabled && ans.rbacSetup },
+    { name: 'rbacPermsCustom', type: 'input', message: 'Custom permissions (comma-separated, optional)', when: (ans: any) => ans.rbacEnabled && ans.rbacSetup },
   ]);
 
   const session = (flags.session || (answers as any).session || 'database') as 'database' | 'jwt';
   const adapter = (flags.adapter || (answers as any).adapter || detectedAdapter) as AdapterChoice;
   const providers = (flags.providers || (answers as any).providers || []) as ProviderChoice[];
-  const rbac = flags.rbac ?? true;
+  const rbacEnabled = flags.rbac ?? (answers as any).rbacEnabled ?? true;
+  const setup = (answers as any).rbacSetup ?? true;
+  const rolesParsed = ((answers as any).rbacRolesCustom || '')
+    .split(',').map((s: string) => s.trim()).filter(Boolean);
+  const permsParsed = ((answers as any).rbacPermsCustom || '')
+    .split(',').map((s: string) => s.trim()).filter(Boolean);
+  const roles = rbacEnabled && setup ? Array.from(new Set<string>([...(((answers as any).rbacRoles || []) as string[]), ...rolesParsed])) : undefined;
+  const permissions = rbacEnabled && setup ? Array.from(new Set<string>([...(((answers as any).rbacPerms || []) as string[]), ...permsParsed])) : undefined;
+
   ui.info(`Detected: TypeScript=${ts ? 'yes' : 'no'}, Router=${includeNext ? routerForFiles : 'none'}`);
 
   // Step 2: Install dependencies
@@ -197,7 +223,10 @@ export async function initCommand(args: string[]) {
 
   // Step 3: keyloom.config
   step(3, total, 'Generate configuration');
-  const { ext, body } = createConfigBody({ ts, session, adapter, rbac });
+  const cfgOpts: any = { ts, session, adapter, rbac: rbacEnabled };
+  if (roles && roles.length) cfgOpts.roles = roles;
+  if (permissions && permissions.length) cfgOpts.permissions = permissions;
+  const { ext, body } = createConfigBody(cfgOpts);
   const created: Array<{ path: string; skipped: boolean }> = [];
   const configPath = path.join(cwd, `keyloom.config.${ext}`);
   created.push(writeFileSafe(configPath, body));
@@ -238,6 +267,19 @@ export async function initCommand(args: string[]) {
   } catch (e) {
     s.fail('Failed to generate migrations');
     ui.error(String(e));
+  }
+
+  // Step 6: Generate route manifest
+  step(6, total, 'Generate route manifest');
+  const sRoutes = spinner('Scanning and generating routes');
+  try {
+    const res = await generateRoutes({ cwd });
+    sRoutes.succeed('Route manifest generated');
+    ui.success(`Wrote ${res.outTs}`);
+    ui.success(`Wrote ${res.outJson}`);
+  } catch (e) {
+    sRoutes.fail('Failed to generate routes manifest');
+    ui.warn(String(e));
   }
 
   // Summary
