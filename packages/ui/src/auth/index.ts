@@ -11,3 +11,5 @@ export { EmailVerificationForm } from "./EmailVerificationForm";
 export { AuthLayout } from "./AuthLayout";
 export { SignInPage } from "./pages/SignInPage";
 export { SignUpPage } from "./pages/SignUpPage";
+
+export { AcceptInvitationCard } from "./AcceptInvitationCard";

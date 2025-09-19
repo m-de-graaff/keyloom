@@ -4,3 +4,5 @@ export { MembersTable } from './MembersTable'
 export { InviteMemberDialog } from './InviteMemberDialog'
 export { RoleBadge } from './RoleBadge'
 
+
+export { OrganizationCellView } from './OrganizationCellView'

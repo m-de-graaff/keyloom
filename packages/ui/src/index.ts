@@ -6,3 +6,5 @@ export * as org from './org'
 export * as rbac from './rbac'
 export * as icons from './icons'
 
+
+export { AuthUIProvider, AuthUIContext } from './lib/auth-ui-provider'
