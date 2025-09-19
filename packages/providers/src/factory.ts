@@ -30,22 +30,26 @@ export function createOAuthProvider(cfg: StandardProviderConfig) {
       id: cfg.id,
       authorization: {
         url: cfg.authorizationUrl,
-        params: cfg.scopes?.length ? { scope: cfg.scopes.join(" ") } : undefined,
+        ...(cfg.scopes && cfg.scopes.length
+          ? { params: { scope: cfg.scopes.join(" ") } }
+          : {}),
       },
       token: {
         url: cfg.tokenUrl,
         style: cfg.tokenStyle ?? "json",
-        headers: cfg.tokenHeaders,
-        customizeBody: cfg.customizeTokenBody,
+        ...(cfg.tokenHeaders ? { headers: cfg.tokenHeaders } : {}),
+        ...(cfg.customizeTokenBody ? { customizeBody: cfg.customizeTokenBody } : {}),
       },
-      userinfo: cfg.userinfoUrl
+      ...(cfg.userinfoUrl
         ? {
-            url: cfg.userinfoUrl,
-            map: cfg.mapProfile,
+            userinfo: {
+              url: cfg.userinfoUrl,
+              ...(cfg.mapProfile ? { map: cfg.mapProfile } : {}),
+            },
           }
-        : undefined,
-      profileFromIdToken: cfg.profileFromIdToken,
-      scopes: cfg.scopes,
+        : {}),
+      ...(cfg.profileFromIdToken ? { profileFromIdToken: cfg.profileFromIdToken } : {}),
+      ...(cfg.scopes ? { scopes: cfg.scopes } : {}),
       clientId: opts.clientId,
       clientSecret: opts.clientSecret,
     };
