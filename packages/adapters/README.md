@@ -13,16 +13,15 @@ pnpm add @keyloom/adapters @prisma/client prisma
 ## Quick Start (Prisma)
 
 ```ts
-import { PrismaAdapter } from '@keyloom/adapters/prisma'
-import { PrismaClient } from '@prisma/client'
+import { PrismaAdapter } from "@keyloom/adapters";
+import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 export default {
   adapter: PrismaAdapter(prisma),
   // ...
-}
+};
 ```
 
 See SCHEMA.md in this package for the reference Prisma schema.
-

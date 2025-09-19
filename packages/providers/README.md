@@ -25,8 +25,6 @@ yarn add @keyloom/providers
 ### GitHub
 
 ```typescript
-import { github } from "@keyloom/providers/github";
-// or
 import { github } from "@keyloom/providers";
 
 const githubProvider = github({
@@ -41,8 +39,8 @@ const githubProvider = github({
 
 ```typescript
 import { createKeyloom } from "@keyloom/core";
-import { github } from "@keyloom/providers/github";
-import { PrismaAdapter } from "@keyloom/adapters/prisma";
+import { github } from "@keyloom/providers";
+import { PrismaAdapter } from "@keyloom/adapters";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -70,7 +68,7 @@ const keyloom = createKeyloom({
 
 ```typescript
 import { createNextHandler } from "@keyloom/nextjs";
-import { github } from "@keyloom/providers/github";
+import { github } from "@keyloom/providers";
 
 const keyloomConfig = {
   // ... other config
@@ -108,6 +106,7 @@ GITHUB_CLIENT_SECRET=your_github_client_secret
 ```
 
 Example redirect URIs:
+
 - Local: `http://localhost:3000/api/auth/oauth/github/callback`
 - Prod: `https://yourapp.com/api/auth/oauth/github/callback`
 
@@ -124,7 +123,7 @@ window.location.href = "/api/auth/oauth/github/start?callbackUrl=/dashboard";
 ## React Component Example
 
 ```tsx
-import { github } from "@keyloom/providers/github";
+import { github } from "@keyloom/providers";
 
 export function GitHubLoginButton() {
   const handleLogin = () => {

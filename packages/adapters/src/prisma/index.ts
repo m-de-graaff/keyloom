@@ -20,6 +20,17 @@ function mapPrismaError(e: unknown) {
   return e;
 }
 
+// Trim leading and trailing hyphens without regex (avoids ReDoS concerns entirely)
+function trimHyphens(input: string): string {
+  let start = 0;
+  let end = input.length - 1;
+  // 45 is '-'
+  while (start <= end && input.charCodeAt(start) === 45) start++;
+  while (end >= start && input.charCodeAt(end) === 45) end--;
+  return input.slice(start, end + 1);
+}
+
+
 export function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
   // credentials extension:
   createCredential(userId: ID, hash: string): Promise<{ id: ID; userId: ID }>;
@@ -210,12 +221,13 @@ export function prismaAdapter(prisma: AnyPrismaClient): Adapter & {
       if (!name || name.length > 128) throw new Error("invalid_name");
       let slug = data.slug ?? null;
       if (slug != null) {
-        // Sanitize slug defensively: bound length first, avoid ambiguous alternation regex
+        // Sanitize slug defensively: length bound first, normalize, collapse, trim (no regex trimming)
         slug = String(slug).toLowerCase();
         if (slug.length > 512) slug = slug.slice(0, 512);
+        // Replace non slug-safe chars with hyphens and collapse runs
         slug = slug.replace(/[^a-z0-9-]+/g, "-");
-        // Trim leading/trailing hyphens with separate anchored patterns (no alternation)
-        slug = slug.replace(/^-+/, "").replace(/-+$/, "");
+        // Trim leading and trailing hyphens without regex to avoid any ReDoS risk
+        slug = trimHyphens(slug);
         if (!slug || slug.length > 64) throw new Error("invalid_slug");
       }
       const org = await prisma.organization.create({

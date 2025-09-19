@@ -33,7 +33,7 @@
     "lint": "biome check ."
   },
   "dependencies": {
-    "@keyloom/core": "workspace:*"
+    "@keyloom/core": "latest"
   },
   "peerDependencies": {
     "@prisma/client": ">=5",
