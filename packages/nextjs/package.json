@@ -39,12 +39,13 @@
     "lint": "biome check ."
   },
   "devDependencies": {
-    "tsup": "^8.5.0"
-  },
-  "dependencies": {
+    "tsup": "^8.5.0",
     "@keyloom/core": "workspace:*"
   },
+  "dependencies": {
+  },
   "peerDependencies": {
+    "@keyloom/core": ">=2.1.7",
     "next": ">=13",
     "react": ">=18",
     "typescript": ">=5.4"
