@@ -41,5 +41,6 @@ export * from "./session/cookie";
 export * from "./session/model";
 export * from "./tokens/verification";
 export * from "./types";
+export * as plugins from "./plugins";
 // utilities & facades
 export * as util from "./util/time";

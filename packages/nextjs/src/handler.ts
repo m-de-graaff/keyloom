@@ -1,4 +1,5 @@
 import { argon2idHasher, completeOAuth, startOAuth } from "@keyloom/core";
+import { issueVerificationToken } from "@keyloom/core/tokens/verification";
 import { issueCsrfToken, validateDoubleSubmit } from "@keyloom/core/guard/csrf";
 import { getCurrentSession } from "@keyloom/core/runtime/current-session";
 import { login as doLogin } from "@keyloom/core/runtime/login";
@@ -47,6 +48,15 @@ export function createNextHandler(config: NextKeyloomConfig) {
     const url = new URL(req.url);
     const match = matchApiPath(url.pathname);
     const adapter = getAdapter(config);
+
+    // Plugin route handling (GET)
+    if (Array.isArray(config.plugins)) {
+      const route = config.plugins.find((r) => r.method === "GET" && r.path.test(url.pathname));
+      if (route) {
+        const out = await route.handler(req as any, { config, adapter } as any);
+        return out as any;
+      }
+    }
 
     if (!match)
       return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -177,6 +187,16 @@ export function createNextHandler(config: NextKeyloomConfig) {
     const url = new URL(req.url);
     const match = matchApiPath(url.pathname);
     const adapter = getAdapter(config);
+
+    // Plugin route handling (POST)
+    if (Array.isArray(config.plugins)) {
+      const route = config.plugins.find((r) => r.method === "POST" && r.path.test(url.pathname));
+      if (route) {
+        const out = await route.handler(req as any, { config, adapter } as any);
+        return out as any;
+      }
+    }
+
     if (!match)
       return NextResponse.json({ error: "not_found" }, { status: 404 });
 
@@ -303,6 +323,44 @@ export function createNextHandler(config: NextKeyloomConfig) {
         })
       );
       return res;
+    }
+
+    // Password reset request
+    if (match.kind === "password_request") {
+      const { email } = await req.json();
+      if (!email) return NextResponse.json({ error: "invalid_email" }, { status: 400 });
+      const vt = issueVerificationToken(String(email), 15);
+      await (adapter as any).createVerificationToken({ identifier: vt.identifier, token: (vt as any).token, expiresAt: vt.expiresAt });
+      // In real apps, send email with vt.token
+      return NextResponse.json({ ok: true });
+    }
+
+    // Password reset perform
+    if (match.kind === "password_reset") {
+      const { identifier, token, newPassword } = await req.json();
+      if (!identifier || !token || !newPassword) return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+      const used = await (adapter as any).useVerificationToken(String(identifier), String(token));
+      if (!used) return NextResponse.json({ error: "invalid_token" }, { status: 400 });
+      const user = await (adapter as any).getUserByEmail(String(identifier));
+      if (!user) return NextResponse.json({ error: "user_not_found" }, { status: 404 });
+      const hash = await argon2idHasher.hash(String(newPassword));
+      if (typeof (adapter as any).updateCredential === "function") {
+        await (adapter as any).updateCredential(user.id, hash);
+      } else if (typeof (adapter as any).createCredential === "function") {
+        await (adapter as any).createCredential(user.id, hash);
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    // Email verification
+    if (match.kind === "email_verify") {
+      const { identifier, token } = await req.json();
+      if (!identifier || !token) return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+      const used = await (adapter as any).useVerificationToken(String(identifier), String(token));
+      if (!used) return NextResponse.json({ error: "invalid_token" }, { status: 400 });
+      const user = await (adapter as any).getUserByEmail(String(identifier));
+      if (user) await (adapter as any).updateUser(user.id, { emailVerified: new Date() });
+      return NextResponse.json({ ok: true });
     }
 
     return NextResponse.json({ error: "method_not_allowed" }, { status: 405 });

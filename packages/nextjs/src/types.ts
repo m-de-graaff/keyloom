@@ -1,5 +1,6 @@
 import type { KeyloomConfig } from "@keyloom/core";
 import type { NextRequest } from "next/server";
+import type { NextRoute } from "@keyloom/core/plugins";
 
 export type NextKeyloomHooks = {
   /**
@@ -20,6 +21,9 @@ export type RequestKind =
   | "register"
   | "login"
   | "logout"
+  | "password_request"
+  | "password_reset"
+  | "email_verify"
   | "unknown";
 
 export type NextKeyloomConfig = KeyloomConfig & {
@@ -33,6 +37,8 @@ export type NextKeyloomConfig = KeyloomConfig & {
   };
   /** Optional hooks for custom validation or metrics */
   hooks?: NextKeyloomHooks;
+  /** Optional plugin-provided Next.js API routes */
+  plugins?: NextRoute[];
 };
 
 export type RuntimeCtx = {

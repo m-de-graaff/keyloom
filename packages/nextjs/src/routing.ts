@@ -4,6 +4,9 @@ export type RouteMatch =
   | { kind: 'register' }
   | { kind: 'login' }
   | { kind: 'logout' }
+  | { kind: 'password_request' }
+  | { kind: 'password_reset' }
+  | { kind: 'email_verify' }
   | { kind: 'oauth_start'; provider: string }
   | { kind: 'oauth_callback'; provider: string }
 
@@ -23,6 +26,15 @@ export function matchApiPath(pathname: string): RouteMatch | null {
       return { kind: 'login' }
     case 'logout':
       return { kind: 'logout' }
+    case 'request':
+      if (parts.includes('password')) return { kind: 'password_request' }
+      break
+    case 'reset':
+      if (parts.includes('password')) return { kind: 'password_reset' }
+      break
+    case 'verify':
+      if (parts.includes('email')) return { kind: 'email_verify' }
+      break
   }
 
   // OAuth routes: .../oauth/:provider/start or .../oauth/:provider/callback

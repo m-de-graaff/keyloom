@@ -10,6 +10,8 @@ export default defineConfig({
     'src/guard/csrf.ts',
     'src/jwt/index.ts',
     'src/adapter-types.ts',
+    'src/plugins/index.ts',
+    'src/tokens/verification.ts',
   ],
   format: ['cjs', 'esm'],
   dts: false,

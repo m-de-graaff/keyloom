@@ -1,0 +1,34 @@
+{
+  "name": "@keyloom/plugin-passkey",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Passkey (WebAuthn) authentication plugin for Keyloom with React hooks",
+  "license": "MIT",
+  "type": "module",
+  "files": ["dist/**/*", "README.md"],
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "build": "tsup && pnpm build:types",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist --skipLibCheck",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -b",
+    "test": "vitest run --passWithNoTests",
+    "lint": "biome check ."
+  },
+  "peerDependencies": {
+    "@keyloom/react": "workspace:*",
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "@keyloom/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.13",
+    "tsup": "^8.5.0",
+    "typescript": "^5.6.2"
+  }
+}
+

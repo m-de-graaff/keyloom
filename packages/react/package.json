@@ -1,0 +1,48 @@
+{
+  "name": "@keyloom/react",
+  "version": "0.1.0",
+  "private": false,
+  "description": "React hooks and utilities for Keyloom authentication (sessions, login, OAuth, and plugins)",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ],
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup && pnpm build:types",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist --skipLibCheck",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -b",
+    "test": "vitest run --passWithNoTests",
+    "lint": "biome check ."
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.0",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "jsdom": "^25.0.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "@keyloom/core": "workspace:*"
+  }
+}

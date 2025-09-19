@@ -74,6 +74,18 @@
       "typescript": "./src/adapter-types.ts",
       "import": "./src/adapter-types.ts",
       "require": "./dist/adapter-types.cjs"
+    },
+    "./plugins": {
+      "types": "./dist/plugins/index.d.ts",
+      "typescript": "./src/plugins/index.ts",
+      "import": "./dist/plugins/index.js",
+      "require": "./dist/plugins/index.cjs"
+    },
+    "./tokens/verification": {
+      "types": "./dist/tokens/verification.d.ts",
+      "typescript": "./src/tokens/verification.ts",
+      "import": "./dist/tokens/verification.js",
+      "require": "./dist/tokens/verification.cjs"
     }
   },
   "files": [
