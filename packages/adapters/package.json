@@ -1,6 +1,6 @@
 {
   "name": "@keyloom/adapters",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "type": "module",
   "description": "Database adapters for Keyloom (Prisma, etc.)",
   "main": "./dist/index.cjs",
