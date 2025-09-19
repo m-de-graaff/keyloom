@@ -41,10 +41,12 @@
   "devDependencies": {
     "tsup": "^8.5.0"
   },
+  "dependencies": {
+    "@keyloom/core": "workspace:*"
+  },
   "peerDependencies": {
     "next": ">=13",
     "react": ">=18",
-    "typescript": ">=5.4",
-    "@keyloom/core": "latest"
+    "typescript": ">=5.4"
   }
 }
