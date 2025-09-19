@@ -34,20 +34,18 @@ Keyloom is a modern, security-first authentication system for Next.js and Node.j
 
 Built for edge/runtime compatibility, strong crypto defaults, and minimal configuration.
 
-
 ## Monorepo Structure
 
 - @keyloom/core - Core auth logic, crypto, cookies, JWT/JWKS, RBAC, CSRF
 - @keyloom/nextjs - Next.js App/Pages Router integration, middleware, server helpers
-- @keyloom/adapters/* - Database adapters (Prisma, Drizzle, Postgres, MySQL2, Mongo)
-- @keyloom/providers/* - OAuth providers (GitHub, Google, Apple, Auth0, GitLab, Microsoft, X)
+- @keyloom/adapters/\* - Database adapters (Prisma, Drizzle, Postgres, MySQL2, Mongo)
+- @keyloom/providers/\* - OAuth providers (GitHub, Google, Apple, Auth0, GitLab, Microsoft, X)
 - @keyloom/cli - CLI: init, migrate, doctor, routes
 - @keyloom/server - Server utilities (Fastify, keystore, JWT helpers)
 
-
 ## Getting Started
 
-1) Install packages
+1. Install packages
 
 ```bash
 # Core + Next.js integration
@@ -57,14 +55,14 @@ pnpm add @keyloom/core @keyloom/nextjs
 pnpm add @keyloom/adapters @keyloom/providers
 ```
 
-2) Create a strong AUTH_SECRET (base64url, 32 bytes)
+2. Create a strong AUTH_SECRET (base64url, 32 bytes)
 
 ```bash
 # Example (Node.js):
 node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 ```
 
-3) Configure Keyloom (keyloom.config.ts)
+3. Configure Keyloom (keyloom.config.ts)
 
 ```ts
 import { memoryAdapter } from "@keyloom/core";
@@ -73,8 +71,8 @@ import github from "@keyloom/providers/github";
 export default {
   baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   session: {
-    strategy: "jwt",              // "jwt" or "database"
-    accessTokenTtl: 600,           // seconds (e.g. 10 minutes)
+    strategy: "jwt", // "jwt" or "database"
+    accessTokenTtl: 600, // seconds (e.g. 10 minutes)
     refreshTokenTtl: 60 * 60 * 24, // seconds (e.g. 1 day)
   },
   adapter: memoryAdapter(),
@@ -90,7 +88,7 @@ export default {
 };
 ```
 
-4) Next.js route
+4. Next.js route
 
 ```ts
 // app/api/auth/[[...keyloom]]/route.ts
@@ -99,7 +97,6 @@ import config from "../../../../keyloom.config";
 
 export const { GET, POST } = createNextHandler(config);
 ```
-
 
 ## Key Features
 
@@ -111,7 +108,6 @@ export const { GET, POST } = createNextHandler(config);
 - Next.js: App/Pages Router, middleware guards, Edge-compatible code paths
 - Adapters: Prisma, Drizzle, Postgres, MySQL2, Mongo - contract-tested
 - CLI: init, migrate, doctor, routes - adapter-aware and production-focused
-
 
 ## Security
 
@@ -127,15 +123,13 @@ Security-first design and defaults:
 
 See SECURITY.md for disclosure process.
 
-
 ## TypeScript
 
 All packages ship with first-class TypeScript types. Strict typing across core and integrations.
 
-
 ## Code Examples
 
-1) Basic Next.js API Route
+1. Basic Next.js API Route
 
 ```ts
 // app/api/auth/[[...keyloom]]/route.ts
@@ -144,7 +138,7 @@ import config from "../../../../keyloom.config";
 export const { GET, POST } = createNextHandler(config);
 ```
 
-2) Client: Minimal Session Hook
+2. Client: Minimal Session Hook
 
 ```tsx
 import { useEffect, useState } from "react";
@@ -159,20 +153,22 @@ export function useSession() {
       const data = await r.json().catch(() => ({}));
       if (alive) setSession(data?.session ?? null);
     });
-    return () => { alive = false };
+    return () => {
+      alive = false;
+    };
   }, []);
   return session;
 }
 ```
 
-3) Switching Session Strategy
+3. Switching Session Strategy
 
 ```ts
 // Database sessions
 export default {
   session: { strategy: "database", ttlMinutes: 60, rolling: true },
   // ...
-}
+};
 
 // JWT sessions
 export default {
@@ -182,16 +178,13 @@ export default {
     refreshTokenTtl: 60 * 60 * 24,
   },
   // ...
-}
+};
 ```
-
 
 ## Contributing
 
 Contributions are welcome! Please read the [Contributing Guide](CONTRIBUTING.md) and follow the code of conduct. Run tests locally with `pnpm test -w`.
 
-
 ## License
 
 MIT (c) Keyloom contributors. See [LICENSE](LICENSE).
-
