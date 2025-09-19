@@ -1,10 +1,20 @@
 import { ORG_COOKIE_NAME } from "@keyloom/core";
+import type { Session, User } from "@keyloom/core";
 import { getCurrentSession } from "@keyloom/core/runtime/current-session";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { parseCookieValue } from "./cookies";
 import { createJwtConfig, getJwtSession } from "./jwt-server";
 import type { NextKeyloomConfig } from "./types";
+
+// Public-returned shapes for JWT strategy
+export type JwtSessionShape = { id: string; userId: string; expiresAt: Date };
+export type JwtUserShape = { id: string; email?: string };
+
+export type GetSessionResult = {
+  session: Session | JwtSessionShape | null;
+  user: User | JwtUserShape | null;
+};
 
 // Module-local cache of adapter/config to avoid re-instantiations
 let _config: NextKeyloomConfig | undefined;
@@ -36,7 +46,7 @@ function resolveJwtEnv(
   return out;
 }
 
-export async function getSession(config?: NextKeyloomConfig) {
+export async function getSession(config?: NextKeyloomConfig): Promise<GetSessionResult> {
   const { config: cfg, adapter } = ensure(config);
 
   // Check if JWT strategy is enabled
@@ -56,7 +66,7 @@ export async function getSession(config?: NextKeyloomConfig) {
   return { session, user };
 }
 
-export async function getUser(config?: NextKeyloomConfig) {
+export async function getUser(config?: NextKeyloomConfig): Promise<User | JwtUserShape | null> {
   const out = await getSession(config);
   return out.user;
 }
