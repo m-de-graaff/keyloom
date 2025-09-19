@@ -1,6 +1,6 @@
 {
   "name": "@keyloom/nextjs",
-  "version": "2.1.8",
+  "version": "2.1.9",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -42,8 +42,7 @@
     "tsup": "^8.5.0",
     "@keyloom/core": "workspace:*"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "peerDependencies": {
     "@keyloom/core": ">=2.1.7",
     "next": ">=13",
