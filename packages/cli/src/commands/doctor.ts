@@ -54,4 +54,21 @@ export async function doctorCommand(args: string[]) {
   } else {
     ui.warn("Some checks failed or require attention; see above");
   }
+
+  // Helpful docs
+  section("Documentation");
+  ui.info("Keyloom docs: https://keyloom.markdegraaff.com/docs");
+  if (!okAll) {
+    const suggestions = new Set<string>();
+    for (const c of checks) {
+      if (c.ok) continue;
+      if (c.id === 'env:AUTH_SECRET') suggestions.add("Environment variables — AUTH_SECRET");
+      if (c.id === 'env:DATABASE_URL') suggestions.add("Database setup — DATABASE_URL");
+      if (c.id === 'routes:manifest') suggestions.add("Routes manifest generation");
+      if (c.id === 'middleware') suggestions.add("Next.js middleware wiring");
+      if (c.id === 'cookie:policy') suggestions.add("Cookie configuration & security");
+      if (c.id === 'https:baseUrl') suggestions.add("Base URL and HTTPS");
+    }
+    for (const s of suggestions) ui.info(`- ${s}`);
+  }
 }

@@ -6,9 +6,11 @@ import { detectAdapter, generateMigration } from "./generate";
 
 import { Command } from "commander";
 import inquirer from "inquirer";
-import { banner, section, step, ui, spinner } from "../lib/ui";
-import { installPackages, getMissingPackages } from "../lib/pm";
+import { banner, section, step, ui, spinner, detection, withCapturedStdout, list } from "../lib/ui";
+import { installPackages, getMissingPackages, buildInstallCommand } from "../lib/pm";
 import { resolveInitDeps, type AdapterChoice, type ProviderChoice } from "../lib/deps";
+
+import { detectNext, detectRouter, detectPackageManager } from "../lib/detect";
 
 function parseArgs(args: string[]) {
   const out: {
@@ -38,11 +40,6 @@ function parseArgs(args: string[]) {
   return out;
 }
 
-function detectNextEnv(cwd: string) {
-  const hasApp = fs.existsSync(path.join(cwd, "app"));
-  const hasPages = fs.existsSync(path.join(cwd, "pages"));
-  return { router: hasApp ? "app" : hasPages ? "pages" : "app" } as const;
-}
 
 function detectTs(cwd: string) {
   return fs.existsSync(path.join(cwd, "tsconfig.json"));
@@ -138,14 +135,26 @@ export async function initCommand(args: string[]) {
   if (typeof opt.providers === 'string') flags.providers = opt.providers.split(',');
 
   const cwd = flags.cwd || process.cwd();
+  // Project detection banner (before the stepper)
+  const isNext = detectNext(cwd);
+  const routerKind = detectRouter(cwd); // 'next-app' | 'next-pages' | 'none'
+  const detectionMsg = isNext
+    ? routerKind === 'next-app'
+      ? 'Next.js App Router project detected'
+      : routerKind === 'next-pages'
+        ? 'Next.js Pages Router project detected'
+        : 'Next.js project detected'
+    : 'Generic Node.js project detected';
+  detection(detectionMsg);
+
   banner('Keyloom Init');
 
   // Step 1: Detect & configure
   const total = 5;
   step(1, total, 'Project configuration');
   const ts = detectTs(cwd);
-  const nextEnv = detectNextEnv(cwd);
-  const includeNext = nextEnv.router === 'app' || nextEnv.router === 'pages';
+  const includeNext = isNext;
+  const routerForFiles: 'app' | 'pages' = routerKind === 'next-pages' ? 'pages' : 'app';
   const detectedAdapter = detectAdapter(cwd) as AdapterChoice;
 
   const answers = flags.yes ? {} : await inquirer.prompt([
@@ -162,21 +171,25 @@ export async function initCommand(args: string[]) {
   const adapter = (flags.adapter || (answers as any).adapter || detectedAdapter) as AdapterChoice;
   const providers = (flags.providers || (answers as any).providers || []) as ProviderChoice[];
   const rbac = flags.rbac ?? true;
-  ui.info(`Detected: TypeScript=${ts ? 'yes' : 'no'}, Router=${nextEnv.router}`);
+  ui.info(`Detected: TypeScript=${ts ? 'yes' : 'no'}, Router=${includeNext ? routerForFiles : 'none'}`);
 
   // Step 2: Install dependencies
   step(2, total, 'Install dependencies');
   const deps = resolveInitDeps({ adapter, providers, includeNextjs: includeNext });
   const missing = getMissingPackages(cwd, deps);
   if (missing.length) {
+    const manager = detectPackageManager(cwd);
+    const manualCmd = buildInstallCommand(manager as any, missing);
     const s = spinner(`Installing ${missing.length} package(s): ${missing.join(', ')}`);
     try {
-      const manager = detectPkgManager(cwd) as any;
-      await installPackages({ cwd, manager, packages: missing });
+      await installPackages({ cwd, manager: manager as any, packages: missing });
       s.succeed('Dependencies installed');
     } catch (e) {
-      s.fail('Failed to install dependencies');
-      ui.warn('You can install manually with your package manager.');
+      s.fail(`Failed to install dependencies with ${manager}`);
+      const msg: string = (String(e) || '').split('\n')[0] || 'Unknown error';
+      ui.error(msg);
+      ui.warn('To install manually, run:');
+      ui.info(manualCmd);
     }
   } else {
     ui.info('All required dependencies already present.');
@@ -193,14 +206,14 @@ export async function initCommand(args: string[]) {
   // Step 4: Handlers, middleware, env
   step(4, total, 'Scaffold files');
   const handlerPath = (() => {
-    if (nextEnv.router === 'app') {
+    if (routerForFiles === 'app') {
       return path.join(cwd, 'app', 'api', 'auth', '[...keyloom]', `route.${ext}`);
     } else {
       const file = `[...keyloom].${ext}`;
       return path.join(cwd, 'pages', 'api', 'auth', file);
     }
   })();
-  created.push(writeFileSafe(handlerPath, createHandlerBody(nextEnv.router, ts)));
+  created.push(writeFileSafe(handlerPath, createHandlerBody(routerForFiles, ts)));
   ui.success(`Wrote ${handlerPath}`);
 
   const middlewarePath = path.join(cwd, `middleware.${ext}`);
@@ -214,8 +227,18 @@ export async function initCommand(args: string[]) {
   // Step 5: Migration artifacts
   step(5, total, 'Generate migration artifacts');
   const s = spinner('Generating migration scaffolding');
-  try { await generateMigration(adapter as any); s.succeed('Generated migration artifacts'); }
-  catch { s.fail('Failed to generate migrations'); }
+  try {
+    const { logs } = await withCapturedStdout(() => generateMigration(adapter as any));
+    s.succeed('Generated migration artifacts');
+    if (logs && logs.length) {
+      const preview = logs.slice(0, 5);
+      list(preview, 'Details:');
+      if (logs.length > 5) ui.info(`... (${logs.length - 5} more)`);
+    }
+  } catch (e) {
+    s.fail('Failed to generate migrations');
+    ui.error(String(e));
+  }
 
   // Summary
   section('Summary');

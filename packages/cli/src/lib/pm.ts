@@ -28,6 +28,22 @@ function parseName(spec: string) {
   return spec.split('@')[0]
 }
 
+export function buildInstallCommand(manager: PackageManager, packages: string[], dev?: boolean): string {
+  const args: string[] = []
+  if (manager === 'pnpm') {
+    args.push('pnpm', 'add')
+    if (dev) args.push('-D')
+  } else if (manager === 'yarn') {
+    args.push('yarn', 'add')
+    if (dev) args.push('-D')
+  } else {
+    args.push('npm', 'install')
+    if (dev) args.push('--save-dev')
+  }
+  args.push(...packages)
+  return args.join(' ')
+}
+
 export async function installPackages(opts: {
   cwd: string
   manager: PackageManager
@@ -35,21 +51,8 @@ export async function installPackages(opts: {
   dev?: boolean
 }): Promise<void> {
   if (!opts.packages.length) return
-  const args: string[] = []
-  if (opts.manager === 'pnpm') {
-    args.push('pnpm', 'add')
-    if (opts.dev) args.push('-D')
-    args.push(...opts.packages)
-  } else if (opts.manager === 'yarn') {
-    args.push('yarn', 'add')
-    if (opts.dev) args.push('-D')
-    args.push(...opts.packages)
-  } else {
-    args.push('npm', 'install')
-    if (opts.dev) args.push('--save-dev')
-    args.push(...opts.packages)
-  }
-  await execShell(args.join(' '), opts.cwd)
+  const cmd = buildInstallCommand(opts.manager, opts.packages, opts.dev)
+  await execShell(cmd, opts.cwd)
 }
 
 function execShell(cmd: string, cwd: string): Promise<void> {
