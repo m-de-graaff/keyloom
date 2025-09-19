@@ -30,6 +30,10 @@
     "lint": "biome check ."
   },
   "dependencies": {
+    "chalk": "^5.6.2",
+    "commander": "^12.1.0",
+    "inquirer": "^9.3.8",
+    "ora": "^8.2.0",
     "typescript": "^5.9.2"
   },
   "devDependencies": {

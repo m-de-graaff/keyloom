@@ -2,7 +2,7 @@
   <img src="keyloom_banner.png" alt="Keyloom" width="850" height="250" />
   <h3>Authentication for Next.js</h3>
   <p><strong>Open Source. Full Stack. Own Your Data.</strong></p>
-  
+
   <p>
     <a href="https://www.npmjs.com/package/@keyloom/core">
       <img alt="npm (core)" src="https://img.shields.io/npm/v/%40keyloom%2Fcore?label=%40keyloom%2Fcore" />
@@ -24,25 +24,25 @@
 
 ## Overview
 
-Keyloom is a modern, securityfirst authentication system for Next.js and Node.js. It provides a complete, productionready solution for:
+Keyloom is a modern, security-first authentication system for Next.js and Node.js. It provides a complete, production-ready solution for:
 
 - JWT or database sessions (your choice)
 - OAuth 2.0/OIDC providers
-- RoleBased Access Control (RBAC) with orgs/teams
+- Role-Based Access Control (RBAC) with orgs/teams
 - Secure cookies, CSRF protection, and rate limiting
-- Firstclass DX with a typed API and a batteriesincluded CLI
+- First-class DX with a typed API and a batteries-included CLI
 
 Built for edge/runtime compatibility, strong crypto defaults, and minimal configuration.
 
 
 ## Monorepo Structure
 
-- @keyloom/core  Core auth logic, crypto, cookies, JWT/JWKS, RBAC, CSRF
-- @keyloom/nextjs  Next.js App/Pages Router integration, middleware, server helpers
-- @keyloom/adapters/*  Database adapters (Prisma, Drizzle, Postgres, MySQL2, Mongo)
-- @keyloom/providers/*  OAuth providers (GitHub, Google, Apple, Auth0, GitLab, Microsoft, X)
-- @keyloom/cli  CLI: init, migrate, doctor, routes
-- @keyloom/server  Server utilities (Fastify, keystore, JWT helpers)
+- @keyloom/core - Core auth logic, crypto, cookies, JWT/JWKS, RBAC, CSRF
+- @keyloom/nextjs - Next.js App/Pages Router integration, middleware, server helpers
+- @keyloom/adapters/* - Database adapters (Prisma, Drizzle, Postgres, MySQL2, Mongo)
+- @keyloom/providers/* - OAuth providers (GitHub, Google, Apple, Auth0, GitLab, Microsoft, X)
+- @keyloom/cli - CLI: init, migrate, doctor, routes
+- @keyloom/server - Server utilities (Fastify, keystore, JWT helpers)
 
 
 ## Getting Started
@@ -57,7 +57,7 @@ pnpm add @keyloom/core @keyloom/nextjs
 pnpm add @keyloom/adapters @keyloom/providers
 ```
 
-2) Create a strong AUTH_SECRET (base64url, 32 bytes)
+2) Create a strong AUTH_SECRET (base64url, 32 bytes)
 
 ```bash
 # Example (Node.js):
@@ -105,32 +105,32 @@ export const { GET, POST } = createNextHandler(config);
 
 - Sessions: JWT or database with rolling sessions, rotation, and JWKS support
 - OAuth: GitHub, Google, Apple, Auth0, GitLab, Microsoft, X (more pluggable)
-- RBAC: Multiorg memberships, roles, policies, lastowner protection
-- Security: CSRF doublesubmit, secure cookies, PKCE S256, sealed OAuth state
+- RBAC: Multi-org memberships, roles, policies, last-owner protection
+- Security: CSRF double-submit, secure cookies, PKCE S256, sealed OAuth state
 - Crypto: Argon2id (strong defaults) with bcrypt fallback; HMAC hashing for tokens at rest
-- Next.js: App/Pages Router, middleware guards, Edgecompatible code paths
-- Adapters: Prisma, Drizzle, Postgres, MySQL2, Mongo  contracttested
-- CLI: init, migrate, doctor, routes  adapteraware and productionfocused
+- Next.js: App/Pages Router, middleware guards, Edge-compatible code paths
+- Adapters: Prisma, Drizzle, Postgres, MySQL2, Mongo - contract-tested
+- CLI: init, migrate, doctor, routes - adapter-aware and production-focused
 
 
 ## Security
 
-Securityfirst design and defaults:
+Security-first design and defaults:
 
-- Secrets: AUTH_SECRET must be base64url and decode to 32 bytes (validated by CLI doctor)
+- Secrets: AUTH_SECRET must be base64url and decode to 32 bytes (validated by CLI doctor)
 - Cookies: HttpOnly + Secure by default; SameSite=Lax default; SameSite=None requires HTTPS
-- CSRF: Doublesubmit tokens and dedicated csrf endpoint
-- OAuth: PKCE S256, sealed state cookies (AESGCM) with 10minute TTL, cleared on callback
+- CSRF: Double-submit tokens and dedicated csrf endpoint
+- OAuth: PKCE S256, sealed state cookies (AES-GCM) with 10-minute TTL, cleared on callback
 - JWT: EdDSA/ES256, JWKS keystore with rotation and overlap, clock skew tolerance
-- Tokens: Singleuse verification tokens hashed at rest
-- Rate limiting: Utilities provided; Redisbacked limiter available
+- Tokens: Single-use verification tokens hashed at rest
+- Rate limiting: Utilities provided; Redis-backed limiter available
 
 See SECURITY.md for disclosure process.
 
 
 ## TypeScript
 
-All packages ship with firstclass TypeScript types. Strict typing across core and integrations.
+All packages ship with first-class TypeScript types. Strict typing across core and integrations.
 
 
 ## Code Examples
@@ -144,7 +144,7 @@ import config from "../../../../keyloom.config";
 export const { GET, POST } = createNextHandler(config);
 ```
 
-2) Client  Minimal Session Hook
+2) Client: Minimal Session Hook
 
 ```tsx
 import { useEffect, useState } from "react";
@@ -193,5 +193,5 @@ Contributions are welcome! Please read the [Contributing Guide](CONTRIBUTING.md)
 
 ## License
 
-MIT 9 Keyloom contributors. See [LICENSE](LICENSE).
+MIT (c) Keyloom contributors. See [LICENSE](LICENSE).
 

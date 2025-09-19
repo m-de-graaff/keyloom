@@ -4,6 +4,12 @@ import { randomBytes } from "node:crypto";
 import { ensureDir, writeFileSafe } from "../lib/fs";
 import { detectAdapter, generateMigration } from "./generate";
 
+import { Command } from "commander";
+import inquirer from "inquirer";
+import { banner, section, step, ui, spinner } from "../lib/ui";
+import { installPackages, getMissingPackages } from "../lib/pm";
+import { resolveInitDeps, type AdapterChoice, type ProviderChoice } from "../lib/deps";
+
 function parseArgs(args: string[]) {
   const out: {
     cwd?: string;
@@ -112,55 +118,111 @@ function createEnvExample(opts: {
 }
 
 export async function initCommand(args: string[]) {
-  const flags = parseArgs(args);
+  // Parse flags with commander (keeps backward-compat with manual flags)
+  const program = new Command()
+    .allowUnknownOption(true)
+    .option('--cwd <path>')
+    .option('-y, --yes')
+    .option('--preset <name>')
+    .option('--session <strategy>')
+    .option('--adapter <name>')
+    .option('--providers <list>')
+    .option('--rbac');
+  try { program.parse(['node','init', ...args], { from: 'user' }); } catch {}
+  const opt = program.opts() as any;
+  const base = parseArgs(args);
+  const flags = { ...base, ...opt } as {
+    cwd?: string; yes?: boolean; preset?: string;
+    session?: 'database' | 'jwt'; adapter?: AdapterChoice; providers?: string[]; rbac?: boolean;
+  };
+  if (typeof opt.providers === 'string') flags.providers = opt.providers.split(',');
+
   const cwd = flags.cwd || process.cwd();
+  banner('Keyloom Init');
+
+  // Step 1: Detect & configure
+  const total = 5;
+  step(1, total, 'Project configuration');
   const ts = detectTs(cwd);
-  const next = detectNextEnv(cwd);
-  const adapter = (flags.adapter as any) || detectAdapter(cwd);
-  const session = (flags.session as any) || "database";
-  const providers = flags.providers || [];
+  const nextEnv = detectNextEnv(cwd);
+  const includeNext = nextEnv.router === 'app' || nextEnv.router === 'pages';
+  const detectedAdapter = detectAdapter(cwd) as AdapterChoice;
+
+  const answers = flags.yes ? {} : await inquirer.prompt([
+    { name: 'session', type: 'list', message: 'Session strategy', choices: ['database','jwt'], default: flags.session || 'database' },
+    { name: 'adapter', type: 'list', message: 'Database adapter', choices: ['prisma','drizzle-pg','drizzle-mysql','postgres','mysql2','mongo'], default: flags.adapter || detectedAdapter },
+    { name: 'providers', type: 'checkbox', message: 'OAuth providers', choices: [
+        { name: 'GitHub', value: 'github' },
+        { name: 'Google', value: 'google' },
+        { name: 'Discord', value: 'discord' },
+      ], default: flags.providers || [] },
+  ]);
+
+  const session = (flags.session || (answers as any).session || 'database') as 'database' | 'jwt';
+  const adapter = (flags.adapter || (answers as any).adapter || detectedAdapter) as AdapterChoice;
+  const providers = (flags.providers || (answers as any).providers || []) as ProviderChoice[];
   const rbac = flags.rbac ?? true;
+  ui.info(`Detected: TypeScript=${ts ? 'yes' : 'no'}, Router=${nextEnv.router}`);
 
-  console.log("keyloom init");
+  // Step 2: Install dependencies
+  step(2, total, 'Install dependencies');
+  const deps = resolveInitDeps({ adapter, providers, includeNextjs: includeNext });
+  const missing = getMissingPackages(cwd, deps);
+  if (missing.length) {
+    const s = spinner(`Installing ${missing.length} package(s): ${missing.join(', ')}`);
+    try {
+      const manager = detectPkgManager(cwd) as any;
+      await installPackages({ cwd, manager, packages: missing });
+      s.succeed('Dependencies installed');
+    } catch (e) {
+      s.fail('Failed to install dependencies');
+      ui.warn('You can install manually with your package manager.');
+    }
+  } else {
+    ui.info('All required dependencies already present.');
+  }
 
-  // keyloom.config
+  // Step 3: keyloom.config
+  step(3, total, 'Generate configuration');
   const { ext, body } = createConfigBody({ ts, session, adapter, rbac });
+  const created: Array<{ path: string; skipped: boolean }> = [];
   const configPath = path.join(cwd, `keyloom.config.${ext}`);
-  writeFileSafe(configPath, body);
-  console.log(`✔ Wrote ${configPath}`);
+  created.push(writeFileSafe(configPath, body));
+  ui.success(`Wrote ${configPath}`);
 
-  // handler
+  // Step 4: Handlers, middleware, env
+  step(4, total, 'Scaffold files');
   const handlerPath = (() => {
-    if (next.router === "app") {
-      return path.join(
-        cwd,
-        "app",
-        "api",
-        "auth",
-        "[...keyloom]",
-        `route.${ext}`
-      );
+    if (nextEnv.router === 'app') {
+      return path.join(cwd, 'app', 'api', 'auth', '[...keyloom]', `route.${ext}`);
     } else {
       const file = `[...keyloom].${ext}`;
-      return path.join(cwd, "pages", "api", "auth", file);
+      return path.join(cwd, 'pages', 'api', 'auth', file);
     }
   })();
-  writeFileSafe(handlerPath, createHandlerBody(next.router, ts));
-  console.log(`✔ Wrote ${handlerPath}`);
+  created.push(writeFileSafe(handlerPath, createHandlerBody(nextEnv.router, ts)));
+  ui.success(`Wrote ${handlerPath}`);
 
-  // middleware
   const middlewarePath = path.join(cwd, `middleware.${ext}`);
-  writeFileSafe(middlewarePath, createMiddlewareBody(ts));
-  console.log(`✔ Wrote ${middlewarePath}`);
+  created.push(writeFileSafe(middlewarePath, createMiddlewareBody(ts)));
+  ui.success(`Wrote ${middlewarePath}`);
 
-  // env example
-  const envExamplePath = path.join(cwd, ".env.example");
-  writeFileSafe(envExamplePath, createEnvExample({ providers, session }));
-  console.log(`✔ Wrote ${envExamplePath}`);
+  const envExamplePath = path.join(cwd, '.env.example');
+  created.push(writeFileSafe(envExamplePath, createEnvExample({ providers, session })));
+  ui.success(`Wrote ${envExamplePath}`);
 
-  // migrations (generator only)
-  await generateMigration(adapter as any);
-  console.log("✔ Generated migration artifacts (adapter-aware)");
+  // Step 5: Migration artifacts
+  step(5, total, 'Generate migration artifacts');
+  const s = spinner('Generating migration scaffolding');
+  try { await generateMigration(adapter as any); s.succeed('Generated migration artifacts'); }
+  catch { s.fail('Failed to generate migrations'); }
 
-  console.log("Initialization complete.");
+  // Summary
+  section('Summary');
+  const added = created.filter((x) => !x.skipped).map((x) => x.path);
+  if (added.length) ui.success(`Created ${added.length} file(s)`);
+  ui.info('Next steps:');
+  ui.info('- Configure your adapter and providers in keyloom.config');
+  ui.info('- Set environment variables in .env');
+  ui.info('- Run your database migrations');
 }

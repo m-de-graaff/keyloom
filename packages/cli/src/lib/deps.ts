@@ -1,9 +1,10 @@
 export const ADAPTER_DEPS: Record<string, string[]> = {
-  prisma: ['@prisma/client', 'prisma'],
-  drizzle: ['drizzle-orm', 'drizzle-kit'],
-  pg: ['pg'],
-  mysql2: ['mysql2'],
-  mongo: ['mongoose'],
+  prisma: ['@prisma/client', 'prisma', '@keyloom/adapters'],
+  'drizzle-pg': ['drizzle-orm', 'drizzle-kit', 'pg', '@keyloom/adapters'],
+  'drizzle-mysql': ['drizzle-orm', 'drizzle-kit', 'mysql2', '@keyloom/adapters'],
+  postgres: ['pg', '@keyloom/adapters'],
+  mysql2: ['mysql2', '@keyloom/adapters'],
+  mongo: ['mongoose', '@keyloom/adapters'],
 }
 
 export const PROVIDER_DEPS: Record<string, string[]> = {
@@ -12,15 +13,17 @@ export const PROVIDER_DEPS: Record<string, string[]> = {
   discord: ['@keyloom/providers/discord'],
 }
 
-export async function ensureDeps(opts: {
-  adapter?: keyof typeof ADAPTER_DEPS
-  providers: (keyof typeof PROVIDER_DEPS)[]
-  sessionStrategy?: 'database' | 'jwt'
-  packageManager: 'pnpm' | 'npm' | 'yarn'
-}) {
-  const wanted = new Set<string>()
+export type AdapterChoice = keyof typeof ADAPTER_DEPS
+export type ProviderChoice = keyof typeof PROVIDER_DEPS
+
+export function resolveInitDeps(opts: {
+  adapter?: AdapterChoice
+  providers: ProviderChoice[]
+  includeNextjs: boolean
+}): string[] {
+  const wanted = new Set<string>(['@keyloom/core'])
+  if (opts.includeNextjs) wanted.add('@keyloom/nextjs')
   if (opts.adapter) ADAPTER_DEPS[opts.adapter]?.forEach((d) => wanted.add(d))
   for (const p of opts.providers) PROVIDER_DEPS[p]?.forEach((d) => wanted.add(d))
-  // JWT strategy might add jose later
   return Array.from(wanted)
 }
