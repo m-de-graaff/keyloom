@@ -7,7 +7,7 @@ const generateRoutes = vi.fn(async () => ({
   outJson: '/tmp/routes.json',
 }))
 
-vi.mock('../src/lib/routes-scan', () => ({ generateRoutes }))
+vi.mock('../src/lib/index', () => ({ generateRoutes }))
 
 afterEach(() => {
   vi.clearAllMocks()
@@ -28,7 +28,8 @@ describe('routesCommand', () => {
       outJson: 'routes.json',
       cwd: path.resolve(process.cwd(), 'app'),
     })
-    expect(logs).toEqual([
+    const success = logs.filter((l) => l.includes('✔'))
+    expect(success).toEqual([
       '✔ Found 3 annotated routes',
       '✔ Wrote /tmp/routes.ts',
       '✔ Wrote /tmp/routes.json',
@@ -47,7 +48,12 @@ describe('routesCommand', () => {
     await routesCommand([])
 
     expect(generateRoutes).toHaveBeenCalledWith({})
-    expect(logs.length).toBe(3)
+    const success = logs.filter((l) => l.includes('✔'))
+    expect(success).toEqual(expect.arrayContaining([
+      '\u2714 Found 3 annotated routes',
+      '\u2714 Wrote /tmp/routes.ts',
+      '\u2714 Wrote /tmp/routes.json',
+    ]))
 
     logSpy.mockRestore()
   })

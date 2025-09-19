@@ -1,15 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { ensureDeps } from '../src/lib/deps'
+import { resolveInitDeps } from '../src/lib/deps'
 
-describe('ensureDeps', () => {
+describe('resolveInitDeps', () => {
   it('collects adapter and provider deps without duplicates', async () => {
-    const deps = await ensureDeps({
+    const deps = resolveInitDeps({
       adapter: 'prisma',
       providers: ['github', 'google'],
-      packageManager: 'pnpm',
+      includeNextjs: true,
     })
-    expect(deps).toEqual(expect.arrayContaining(['@prisma/client', 'prisma']))
-    expect(deps).toEqual(expect.arrayContaining(['@keyloom/providers/github']))
+    expect(deps).toEqual(expect.arrayContaining(['@prisma/client', 'prisma', '@keyloom/adapters']))
+    // Providers are bundled under @keyloom/providers
+    expect(deps).toEqual(expect.arrayContaining(['@keyloom/providers']))
+    // Core and Next.js integration
+    expect(deps).toEqual(expect.arrayContaining(['@keyloom/core', '@keyloom/nextjs']))
+    // No duplicates
     expect(new Set(deps).size).toBe(deps.length)
   })
 })

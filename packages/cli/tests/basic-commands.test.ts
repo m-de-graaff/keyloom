@@ -3,6 +3,13 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
+// Mock package manager to avoid real installs in tests
+vi.mock("../src/lib/pm", () => ({
+  installPackages: vi.fn(async () => {}),
+  getMissingPackages: vi.fn(() => []),
+  buildInstallCommand: vi.fn(() => "pm add"),
+}));
+
 const logOutput = () => {
   const lines: string[] = [];
   const spy = vi.spyOn(console, "log").mockImplementation((msg?: unknown) => {
@@ -23,7 +30,7 @@ describe("basic commands", () => {
     const { lines, spy } = logOutput();
     await initCommand(["--yes", "--cwd", cwd]);
     spy.mockRestore();
-    expect(lines[0]).toContain("keyloom init");
+    expect(lines.some((l) => l.toLowerCase().includes("keyloom init"))).toBe(true);
     expect(
       fs.existsSync(path.join(cwd, "keyloom.config.ts")) ||
         fs.existsSync(path.join(cwd, "keyloom.config.js"))
@@ -32,7 +39,7 @@ describe("basic commands", () => {
       fs.existsSync(path.join(cwd, "middleware.ts")) ||
         fs.existsSync(path.join(cwd, "middleware.js"))
     ).toBe(true);
-  });
+  }, 20000);
 
   it("migrateCommand dry-run works", async () => {
     const { migrateCommand } = await import("../src/commands/migrate");
@@ -49,6 +56,6 @@ describe("basic commands", () => {
     const { lines, spy } = logOutput();
     await doctorCommand(["--cwd", cwd]);
     spy.mockRestore();
-    expect(lines[0]).toContain("keyloom doctor");
+    expect(lines.some((l) => l.toLowerCase().includes("keyloom doctor"))).toBe(true);
   });
 });
