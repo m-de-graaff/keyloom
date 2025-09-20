@@ -45,10 +45,10 @@ export async function run(argv: string[]) {
       console.log(
         "  keyloom routes [--out <file>] [--include <glob>] [--exclude <glob>]"
       );
-      console.log("  keyloom doctor [--json] [--strict]");
+      console.log("  keyloom doctor [--json] [--strict] [--fix] [--yes]");
       console.log("  keyloom generate migration");
       console.log(
-        "  keyloom scaffold [login|register|admin|settings|forgot-password|reset-password|verify-email|setup-2fa|verify-2fa] [--router app|pages]"
+        "  keyloom scaffold [login|register|admin|settings|forgot-password|reset-password|verify-email|setup-2fa|verify-2fa] [--router app|pages] [--all]"
       );
       process.exit(cmd ? 1 : 0);
     }

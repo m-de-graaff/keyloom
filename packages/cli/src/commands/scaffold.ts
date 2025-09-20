@@ -5,12 +5,18 @@ import { spinner, ui, section, banner } from "../lib/ui";
 import { existsSync } from "node:fs";
 
 function parseArgs(args: string[]) {
-  const out: { pages?: string[]; router?: "app" | "pages"; cwd?: string } = {};
+  const out: {
+    pages?: string[];
+    router?: "app" | "pages";
+    cwd?: string;
+    all?: boolean;
+  } = {};
   const rest: string[] = [];
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === "--router") out.router = (args[++i] as any) ?? undefined;
     else if (a === "--cwd") out.cwd = args[++i];
+    else if (a === "--all") out.all = true;
     else rest.push(a);
   }
   if (rest.length) out.pages = rest;
@@ -40,7 +46,9 @@ export async function scaffoldCommand(argv: string[]) {
   banner("Keyloom Scaffold");
 
   // 1) Decide what to scaffold
-  const pages: PageKind[] = flags.pages?.length
+  const pages: PageKind[] = flags.all
+    ? [...PAGE_KINDS]
+    : flags.pages?.length
     ? (flags.pages.filter((p): p is PageKind =>
         (PAGE_KINDS as readonly string[]).includes(p)
       ) as PageKind[])
