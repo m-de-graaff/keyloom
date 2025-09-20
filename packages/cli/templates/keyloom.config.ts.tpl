@@ -1,5 +1,7 @@
 import { defineKeyloom } from '@keyloom/core';
-import adapter from '@keyloom/adapters/{{adapter}}';
+import { PrismaAdapter } from '@keyloom/adapters';
+import { PrismaClient } from '@prisma/client';
+const db = new PrismaClient();
 {{#providers.github}}import github from '@keyloom/providers/github';{{/providers.github}}
 {{#providers.google}}import google from '@keyloom/providers/google';{{/providers.google}}
 {{#providers.discord}}import discord from '@keyloom/providers/discord';{{/providers.discord}}
@@ -7,7 +9,7 @@ import adapter from '@keyloom/adapters/{{adapter}}';
 export default defineKeyloom({
   baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
   session: { strategy: '{{sessionStrategy}}', ttlMinutes: 60, rolling: true },
-  adapter: adapter({ url: process.env.DATABASE_URL! }),
+  adapter: PrismaAdapter(db),
   providers: [
     {{#providers.github}}github({ clientId: process.env.GITHUB_CLIENT_ID!, clientSecret: process.env.GITHUB_CLIENT_SECRET! }),{{/providers.github}}
     {{#providers.google}}google({ clientId: process.env.GOOGLE_CLIENT_ID!, clientSecret: process.env.GOOGLE_CLIENT_SECRET! }),{{/providers.google}}

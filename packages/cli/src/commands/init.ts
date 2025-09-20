@@ -6,9 +6,26 @@ import { detectAdapter, generateMigration } from "./generate";
 
 import { Command } from "commander";
 import inquirer from "inquirer";
-import { banner, section, step, ui, spinner, detection, withCapturedStdout, list } from "../lib/ui";
-import { installPackages, getMissingPackages, buildInstallCommand } from "../lib/pm";
-import { resolveInitDeps, type AdapterChoice, type ProviderChoice } from "../lib/deps";
+import {
+  banner,
+  section,
+  step,
+  ui,
+  spinner,
+  detection,
+  withCapturedStdout,
+  list,
+} from "../lib/ui";
+import {
+  installPackages,
+  getMissingPackages,
+  buildInstallCommand,
+} from "../lib/pm";
+import {
+  resolveInitDeps,
+  type AdapterChoice,
+  type ProviderChoice,
+} from "../lib/deps";
 
 import { detectNext, detectRouter, detectPackageManager } from "../lib/detect";
 import { generateRoutes } from "../lib/index";
@@ -41,11 +58,9 @@ function parseArgs(args: string[]) {
   return out;
 }
 
-
 function detectTs(cwd: string) {
   return fs.existsSync(path.join(cwd, "tsconfig.json"));
 }
-
 
 function detectPkgManager(cwd: string) {
   if (fs.existsSync(path.join(cwd, "pnpm-lock.yaml"))) return "pnpm";
@@ -69,33 +84,38 @@ function createConfigBody(opts: {
   lines.push("import { defineKeyloom } from '@keyloom/core'");
 
   // Adapter imports and setup
-  if (opts.adapter === 'prisma') {
-    lines.push("import { prismaAdapter } from '@keyloom/adapters'");
+  if (opts.adapter === "prisma") {
+    lines.push("import { PrismaAdapter } from '@keyloom/adapters'");
     lines.push("import { PrismaClient } from '@prisma/client'");
     lines.push("const client = new PrismaClient()");
-  } else if (opts.adapter.startsWith('drizzle')) {
-    lines.push("// TODO: import drizzle adapter for your dialect and client instance");
-  } else if (opts.adapter === 'postgres') {
+  } else if (opts.adapter.startsWith("drizzle")) {
+    lines.push(
+      "// TODO: import drizzle adapter for your dialect and client instance"
+    );
+  } else if (opts.adapter === "postgres") {
     lines.push("// TODO: import and setup postgres adapter");
-  } else if (opts.adapter === 'mysql2') {
+  } else if (opts.adapter === "mysql2") {
     lines.push("// TODO: import and setup mysql2 adapter");
-  } else if (opts.adapter === 'mongo') {
+  } else if (opts.adapter === "mongo") {
     lines.push("// TODO: import and setup mongo adapter");
   }
 
   // Provider imports
   const provs = new Set(opts.providers || []);
-  if (provs.has('github')) lines.push("import github from '@keyloom/providers/github'");
-  if (provs.has('google')) lines.push("import google from '@keyloom/providers/google'");
-  if (provs.has('discord')) lines.push("import discord from '@keyloom/providers/discord'");
+  if (provs.has("github"))
+    lines.push("import github from '@keyloom/providers/github'");
+  if (provs.has("google"))
+    lines.push("import google from '@keyloom/providers/google'");
+  if (provs.has("discord"))
+    lines.push("import discord from '@keyloom/providers/discord'");
 
   // Begin config
   lines.push("\nexport default defineKeyloom({");
   lines.push(`  session: { strategy: '${opts.session}' },`);
 
   // Adapter usage
-  if (opts.adapter === 'prisma') {
-    lines.push("  adapter: prismaAdapter(client),");
+  if (opts.adapter === "prisma") {
+    lines.push("  adapter: PrismaAdapter(client),");
   } else {
     lines.push("  // adapter: <your-adapter>(...),");
   }
@@ -103,29 +123,42 @@ function createConfigBody(opts: {
   // Providers array
   if (provs.size > 0) {
     lines.push("  providers: [");
-    if (provs.has('github')) lines.push("    github({ clientId: process.env.GITHUB_CLIENT_ID!, clientSecret: process.env.GITHUB_CLIENT_SECRET! }),");
-    if (provs.has('google')) lines.push("    google({ clientId: process.env.GOOGLE_CLIENT_ID!, clientSecret: process.env.GOOGLE_CLIENT_SECRET! }),");
-    if (provs.has('discord')) lines.push("    discord({ clientId: process.env.DISCORD_CLIENT_ID!, clientSecret: process.env.DISCORD_CLIENT_SECRET! }),");
+    if (provs.has("github"))
+      lines.push(
+        "    github({ clientId: process.env.GITHUB_CLIENT_ID!, clientSecret: process.env.GITHUB_CLIENT_SECRET! }),"
+      );
+    if (provs.has("google"))
+      lines.push(
+        "    google({ clientId: process.env.GOOGLE_CLIENT_ID!, clientSecret: process.env.GOOGLE_CLIENT_SECRET! }),"
+      );
+    if (provs.has("discord"))
+      lines.push(
+        "    discord({ clientId: process.env.DISCORD_CLIENT_ID!, clientSecret: process.env.DISCORD_CLIENT_SECRET! }),"
+      );
     lines.push("  ],");
   }
 
   // RBAC (optional)
   if (opts.rbac) {
-    const roles = JSON.stringify(opts.roles || ['admin', 'user']);
-    const perms = JSON.stringify(opts.permissions || ['read', 'write']);
-    lines.push(`  rbac: { enabled: true, roles: ${roles}, permissions: ${perms} },`);
+    const roles = JSON.stringify(opts.roles || ["admin", "user"]);
+    const perms = JSON.stringify(opts.permissions || ["read", "write"]);
+    lines.push(
+      `  rbac: { enabled: true, roles: ${roles}, permissions: ${perms} },`
+    );
   }
 
   // JWT extras (optional)
-  if (opts.session === 'jwt') {
-    lines.push(`  jwt: { issuer: '${opts.issuer || 'http://localhost:3000'}' },`);
-    lines.push('  secrets: { authSecret: process.env.AUTH_SECRET! },');
+  if (opts.session === "jwt") {
+    lines.push(
+      `  jwt: { issuer: '${opts.issuer || "http://localhost:3000"}' },`
+    );
+    lines.push("  secrets: { authSecret: process.env.AUTH_SECRET! },");
   }
 
-  lines.push('})');
-  lines.push('');
+  lines.push("})");
+  lines.push("");
 
-  return { ext, body: lines.join('\n') };
+  return { ext, body: lines.join("\n") };
 }
 
 function createHandlerBody(router: "app" | "pages", ts: boolean) {
@@ -145,7 +178,9 @@ function createEnvExample(opts: {
   session: "database" | "jwt";
 }) {
   const lines = [
-    `# Keyloom\nAUTH_SECRET=${randomBytes(32).toString("hex")}\n`,
+    `# Keyloom\n# AUTH_SECRET must be base64url and decode to 32 bytes\nAUTH_SECRET=${randomBytes(
+      32
+    ).toString("base64url")}\n`,
     `# Database (update to match your DB)\nDATABASE_URL=postgresql://user:password@localhost:5432/mydb?schema=public\n`,
   ];
   if (opts.session === "jwt") {
@@ -167,99 +202,210 @@ export async function initCommand(args: string[]) {
   // Parse flags with commander (keeps backward-compat with manual flags)
   const program = new Command()
     .allowUnknownOption(true)
-    .option('--cwd <path>')
-    .option('-y, --yes')
-    .option('--preset <name>')
-    .option('--session <strategy>')
-    .option('--adapter <name>')
-    .option('--providers <list>')
-    .option('--rbac');
-  try { program.parse(['node','init', ...args], { from: 'user' }); } catch {}
+    .option("--cwd <path>")
+    .option("-y, --yes")
+    .option("--preset <name>")
+    .option("--session <strategy>")
+    .option("--adapter <name>")
+    .option("--providers <list>")
+    .option("--rbac");
+  try {
+    program.parse(["node", "init", ...args], { from: "user" });
+  } catch {}
   const opt = program.opts() as any;
   const base = parseArgs(args);
   const flags = { ...base, ...opt } as {
-    cwd?: string; yes?: boolean; preset?: string;
-    session?: 'database' | 'jwt'; adapter?: AdapterChoice; providers?: string[]; rbac?: boolean;
+    cwd?: string;
+    yes?: boolean;
+    preset?: string;
+    session?: "database" | "jwt";
+    adapter?: AdapterChoice;
+    providers?: string[];
+    rbac?: boolean;
   };
-  if (typeof opt.providers === 'string') flags.providers = opt.providers.split(',');
+  if (typeof opt.providers === "string")
+    flags.providers = opt.providers.split(",");
 
   const cwd = flags.cwd || process.cwd();
   // Project detection banner (before the stepper)
   const isNext = detectNext(cwd);
   const routerKind = detectRouter(cwd); // 'next-app' | 'next-pages' | 'none'
   const detectionMsg = isNext
-    ? routerKind === 'next-app'
-      ? 'Next.js App Router project detected'
-      : routerKind === 'next-pages'
-        ? 'Next.js Pages Router project detected'
-        : 'Next.js project detected'
-    : 'Generic Node.js project detected';
+    ? routerKind === "next-app"
+      ? "Next.js App Router project detected"
+      : routerKind === "next-pages"
+      ? "Next.js Pages Router project detected"
+      : "Next.js project detected"
+    : "Generic Node.js project detected";
   detection(detectionMsg);
 
-  banner('Keyloom Init');
+  banner("Keyloom Init");
 
   // Step 1: Detect & configure
   const total = 6;
-  step(1, total, 'Project configuration');
+  step(1, total, "Project configuration");
   const ts = detectTs(cwd);
   const includeNext = isNext;
-  const routerForFiles: 'app' | 'pages' = routerKind === 'next-pages' ? 'pages' : 'app';
+  const routerForFiles: "app" | "pages" =
+    routerKind === "next-pages" ? "pages" : "app";
   const detectedAdapter = detectAdapter(cwd) as AdapterChoice;
 
-  const answers = flags.yes ? {} : await inquirer.prompt([
-    { name: 'session', type: 'list', message: 'Session strategy', choices: ['database','jwt'], default: flags.session || 'database' },
-    { name: 'adapter', type: 'list', message: 'Database adapter', choices: ['prisma','drizzle-pg','drizzle-mysql','postgres','mysql2','mongo'], default: flags.adapter || detectedAdapter },
-    { name: 'providers', type: 'checkbox', message: 'OAuth providers', choices: [
-        { name: 'GitHub', value: 'github' },
-        { name: 'Google', value: 'google' },
-        { name: 'Discord', value: 'discord' },
-      ], default: flags.providers || [] },
-    { name: 'rbacEnabled', type: 'confirm', message: 'Enable RBAC (Role-Based Access Control)?', default: flags.rbac ?? true },
-    { name: 'rbacSetup', type: 'confirm', message: 'Setup default roles and permissions?', default: true, when: (ans: any) => ans.rbacEnabled },
-    { name: 'rbacRoles', type: 'checkbox', message: 'Select roles to create', choices: ['admin','user','moderator'], default: ['admin','user'], when: (ans: any) => ans.rbacEnabled && ans.rbacSetup },
-    { name: 'rbacRolesCustom', type: 'input', message: 'Custom roles (comma-separated, optional)', when: (ans: any) => ans.rbacEnabled && ans.rbacSetup },
-    { name: 'rbacPerms', type: 'checkbox', message: 'Select permissions to define', choices: ['read','write','delete','manage_users'], default: ['read','write'], when: (ans: any) => ans.rbacEnabled && ans.rbacSetup },
-    { name: 'rbacPermsCustom', type: 'input', message: 'Custom permissions (comma-separated, optional)', when: (ans: any) => ans.rbacEnabled && ans.rbacSetup },
-  ]);
+  const answers = flags.yes
+    ? {}
+    : await inquirer.prompt([
+        {
+          name: "session",
+          type: "list",
+          message: "Session strategy",
+          choices: ["database", "jwt"],
+          default: flags.session || "database",
+        },
+        {
+          name: "adapter",
+          type: "list",
+          message: "Database adapter",
+          choices: [
+            "prisma",
+            "drizzle-pg",
+            "drizzle-mysql",
+            "postgres",
+            "mysql2",
+            "mongo",
+          ],
+          default: flags.adapter || detectedAdapter,
+        },
+        {
+          name: "providers",
+          type: "checkbox",
+          message: "OAuth providers",
+          choices: [
+            { name: "GitHub", value: "github" },
+            { name: "Google", value: "google" },
+            { name: "Discord", value: "discord" },
+          ],
+          default: flags.providers || [],
+        },
+        {
+          name: "rbacEnabled",
+          type: "confirm",
+          message: "Enable RBAC (Role-Based Access Control)?",
+          default: flags.rbac ?? true,
+        },
+        {
+          name: "rbacSetup",
+          type: "confirm",
+          message: "Setup default roles and permissions?",
+          default: true,
+          when: (ans: any) => ans.rbacEnabled,
+        },
+        {
+          name: "rbacRoles",
+          type: "checkbox",
+          message: "Select roles to create",
+          choices: ["admin", "user", "moderator"],
+          default: ["admin", "user"],
+          when: (ans: any) => ans.rbacEnabled && ans.rbacSetup,
+        },
+        {
+          name: "rbacRolesCustom",
+          type: "input",
+          message: "Custom roles (comma-separated, optional)",
+          when: (ans: any) => ans.rbacEnabled && ans.rbacSetup,
+        },
+        {
+          name: "rbacPerms",
+          type: "checkbox",
+          message: "Select permissions to define",
+          choices: ["read", "write", "delete", "manage_users"],
+          default: ["read", "write"],
+          when: (ans: any) => ans.rbacEnabled && ans.rbacSetup,
+        },
+        {
+          name: "rbacPermsCustom",
+          type: "input",
+          message: "Custom permissions (comma-separated, optional)",
+          when: (ans: any) => ans.rbacEnabled && ans.rbacSetup,
+        },
+      ]);
 
-  const session = (flags.session || (answers as any).session || 'database') as 'database' | 'jwt';
-  const adapter = (flags.adapter || (answers as any).adapter || detectedAdapter) as AdapterChoice;
-  const providers = (flags.providers || (answers as any).providers || []) as ProviderChoice[];
+  const session = (flags.session || (answers as any).session || "database") as
+    | "database"
+    | "jwt";
+  const adapter = (flags.adapter ||
+    (answers as any).adapter ||
+    detectedAdapter) as AdapterChoice;
+  const providers = (flags.providers ||
+    (answers as any).providers ||
+    []) as ProviderChoice[];
   const rbacEnabled = flags.rbac ?? (answers as any).rbacEnabled ?? true;
   const setup = (answers as any).rbacSetup ?? true;
-  const rolesParsed = ((answers as any).rbacRolesCustom || '')
-    .split(',').map((s: string) => s.trim()).filter(Boolean);
-  const permsParsed = ((answers as any).rbacPermsCustom || '')
-    .split(',').map((s: string) => s.trim()).filter(Boolean);
-  const roles = rbacEnabled && setup ? Array.from(new Set<string>([...(((answers as any).rbacRoles || []) as string[]), ...rolesParsed])) : undefined;
-  const permissions = rbacEnabled && setup ? Array.from(new Set<string>([...(((answers as any).rbacPerms || []) as string[]), ...permsParsed])) : undefined;
+  const rolesParsed = ((answers as any).rbacRolesCustom || "")
+    .split(",")
+    .map((s: string) => s.trim())
+    .filter(Boolean);
+  const permsParsed = ((answers as any).rbacPermsCustom || "")
+    .split(",")
+    .map((s: string) => s.trim())
+    .filter(Boolean);
+  const roles =
+    rbacEnabled && setup
+      ? Array.from(
+          new Set<string>([
+            ...(((answers as any).rbacRoles || []) as string[]),
+            ...rolesParsed,
+          ])
+        )
+      : undefined;
+  const permissions =
+    rbacEnabled && setup
+      ? Array.from(
+          new Set<string>([
+            ...(((answers as any).rbacPerms || []) as string[]),
+            ...permsParsed,
+          ])
+        )
+      : undefined;
 
-  ui.info(`Detected: TypeScript=${ts ? 'yes' : 'no'}, Router=${includeNext ? routerForFiles : 'none'}`);
+  ui.info(
+    `Detected: TypeScript=${ts ? "yes" : "no"}, Router=${
+      includeNext ? routerForFiles : "none"
+    }`
+  );
 
   // Step 2: Install dependencies
-  step(2, total, 'Install dependencies');
-  const deps = resolveInitDeps({ adapter, providers, includeNextjs: includeNext });
+  step(2, total, "Install dependencies");
+  const deps = resolveInitDeps({
+    adapter,
+    providers,
+    includeNextjs: includeNext,
+  });
   const missing = getMissingPackages(cwd, deps);
   if (missing.length) {
     const manager = detectPackageManager(cwd);
     const manualCmd = buildInstallCommand(manager as any, missing);
-    const s = spinner(`Installing ${missing.length} package(s): ${missing.join(', ')}`);
+    const s = spinner(
+      `Installing ${missing.length} package(s): ${missing.join(", ")}`
+    );
     try {
-      await installPackages({ cwd, manager: manager as any, packages: missing });
-      s.succeed('Dependencies installed');
+      await installPackages({
+        cwd,
+        manager: manager as any,
+        packages: missing,
+      });
+      s.succeed("Dependencies installed");
     } catch (e) {
       s.fail(`Failed to install dependencies with ${manager}`);
-      const msg: string = (String(e) || '').split('\n')[0] || 'Unknown error';
+      const msg: string = (String(e) || "").split("\n")[0] || "Unknown error";
       ui.error(msg);
-      ui.warn('To install manually, run:');
+      ui.warn("To install manually, run:");
       ui.info(manualCmd);
     }
   } else {
-    ui.info('All required dependencies already present.');
+    ui.info("All required dependencies already present.");
   }
 
   // Step 3: keyloom.config
-  step(3, total, 'Generate configuration');
+  step(3, total, "Generate configuration");
   const cfgOpts: any = { ts, session, adapter, rbac: rbacEnabled, providers };
   if (roles && roles.length) cfgOpts.roles = roles;
   if (permissions && permissions.length) cfgOpts.permissions = permissions;
@@ -270,62 +416,74 @@ export async function initCommand(args: string[]) {
   ui.success(`Wrote ${configPath}`);
 
   // Step 4: Handlers, middleware, env
-  step(4, total, 'Scaffold files');
+  step(4, total, "Scaffold files");
   const handlerPath = (() => {
-    if (routerForFiles === 'app') {
-      return path.join(cwd, 'app', 'api', 'auth', '[...keyloom]', `route.${ext}`);
+    if (routerForFiles === "app") {
+      return path.join(
+        cwd,
+        "app",
+        "api",
+        "auth",
+        "[...keyloom]",
+        `route.${ext}`
+      );
     } else {
       const file = `[...keyloom].${ext}`;
-      return path.join(cwd, 'pages', 'api', 'auth', file);
+      return path.join(cwd, "pages", "api", "auth", file);
     }
   })();
-  created.push(writeFileSafe(handlerPath, createHandlerBody(routerForFiles, ts)));
+  created.push(
+    writeFileSafe(handlerPath, createHandlerBody(routerForFiles, ts))
+  );
   ui.success(`Wrote ${handlerPath}`);
 
   const middlewarePath = path.join(cwd, `middleware.${ext}`);
   created.push(writeFileSafe(middlewarePath, createMiddlewareBody(ts)));
   ui.success(`Wrote ${middlewarePath}`);
 
-  const envExamplePath = path.join(cwd, '.env.example');
-  created.push(writeFileSafe(envExamplePath, createEnvExample({ providers, session })));
+  const envExamplePath = path.join(cwd, ".env.example");
+  created.push(
+    writeFileSafe(envExamplePath, createEnvExample({ providers, session }))
+  );
   ui.success(`Wrote ${envExamplePath}`);
 
   // Step 5: Migration artifacts
-  step(5, total, 'Generate migration artifacts');
-  const s = spinner('Generating migration scaffolding');
+  step(5, total, "Generate migration artifacts");
+  const s = spinner("Generating migration scaffolding");
   try {
-    const { logs } = await withCapturedStdout(() => generateMigration(adapter as any));
-    s.succeed('Generated migration artifacts');
+    const { logs } = await withCapturedStdout(() =>
+      generateMigration(adapter as any)
+    );
+    s.succeed("Generated migration artifacts");
     if (logs && logs.length) {
       const preview = logs.slice(0, 5);
-      list(preview, 'Details:');
+      list(preview, "Details:");
       if (logs.length > 5) ui.info(`... (${logs.length - 5} more)`);
     }
   } catch (e) {
-    s.fail('Failed to generate migrations');
+    s.fail("Failed to generate migrations");
     ui.error(String(e));
   }
 
   // Step 6: Generate route manifest
-  step(6, total, 'Generate route manifest');
-  const sRoutes = spinner('Scanning and generating routes');
+  step(6, total, "Generate route manifest");
+  const sRoutes = spinner("Scanning and generating routes");
   try {
     const res = await generateRoutes({ cwd });
-    sRoutes.succeed('Route manifest generated');
+    sRoutes.succeed("Route manifest generated");
     ui.success(`Wrote ${res.outTs}`);
     ui.success(`Wrote ${res.outJson}`);
   } catch (e) {
-    sRoutes.fail('Failed to generate routes manifest');
+    sRoutes.fail("Failed to generate routes manifest");
     ui.warn(String(e));
   }
 
-
   // Summary
-  section('Summary');
+  section("Summary");
   const added = created.filter((x) => !x.skipped).map((x) => x.path);
   if (added.length) ui.success(`Created ${added.length} file(s)`);
-  ui.info('Next steps:');
-  ui.info('- Configure your adapter and providers in keyloom.config');
-  ui.info('- Set environment variables in .env');
-  ui.info('- Run your database migrations');
+  ui.info("Next steps:");
+  ui.info("- Configure your adapter and providers in keyloom.config");
+  ui.info("- Set environment variables in .env");
+  ui.info("- Run your database migrations");
 }

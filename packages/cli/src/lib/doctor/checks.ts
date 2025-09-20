@@ -137,5 +137,87 @@ export async function runDoctorChecks(
     message: "System clock check OK",
   });
 
+  // Database connectivity (Prisma) — best-effort
+  try {
+    if (dbUrl) {
+      const mod = await import("@prisma/client").catch(() => null as any);
+      if (mod && (mod as any).PrismaClient) {
+        const PrismaClient = (mod as any).PrismaClient;
+        const client = new PrismaClient();
+        try {
+          await Promise.race([
+            client.$connect(),
+            new Promise((_, rej) =>
+              setTimeout(() => rej(new Error("timeout")), 3000)
+            ),
+          ]);
+          results.push({
+            id: "db:connect",
+            ok: true,
+            message: "Database connectivity OK (Prisma)",
+          });
+        } catch (e: any) {
+          results.push({
+            id: "db:connect",
+            ok: false,
+            message: `Database connectivity failed: ${e?.message || e}`,
+          });
+        } finally {
+          await client.$disconnect().catch(() => {});
+        }
+      } else {
+        results.push({
+          id: "db:connect",
+          ok: false,
+          warn: true,
+          message: "@prisma/client not installed — skipping live DB check",
+        });
+      }
+    } else {
+      results.push({
+        id: "db:connect",
+        ok: false,
+        warn: true,
+        message: "DATABASE_URL missing — skipping live DB check",
+      });
+    }
+  } catch {
+    // Ignore — keep doctor resilient
+  }
+
+  // Provider environment sanity
+  const providerKeys = [
+    ["GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET"],
+    ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
+    ["DISCORD_CLIENT_ID", "DISCORD_CLIENT_SECRET"],
+    ["AUTH0_CLIENT_ID", "AUTH0_CLIENT_SECRET"],
+  ];
+  const presentPairs = providerKeys.map(([id, sec]) => ({
+    id,
+    sec,
+    hasId: !!process.env[id],
+    hasSec: !!process.env[sec],
+  }));
+  const anyProviderConfigured = presentPairs.some((p) => p.hasId || p.hasSec);
+  if (!anyProviderConfigured) {
+    results.push({
+      id: "providers:env",
+      ok: true,
+      warn: true,
+      message: "No OAuth providers configured — skip if not needed",
+    });
+  } else {
+    const allComplete = presentPairs.every((p) =>
+      !p.hasId && !p.hasSec ? true : p.hasId && p.hasSec
+    );
+    results.push({
+      id: "providers:env",
+      ok: allComplete,
+      message: allComplete
+        ? "OAuth provider env looks complete"
+        : "Some provider envs are incomplete (missing id/secret)",
+    });
+  }
+
   return results;
 }

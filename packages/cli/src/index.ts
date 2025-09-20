@@ -31,6 +31,12 @@ export async function run(argv: string[]) {
       await uiCommand(args);
       return;
     }
+    case "scaffold": {
+      const { scaffoldCommand } = await import("./commands/scaffold");
+      await scaffoldCommand(args);
+      return;
+    }
+
     default: {
       console.log("keyloom CLI");
       console.log("Usage:");
@@ -41,6 +47,9 @@ export async function run(argv: string[]) {
       );
       console.log("  keyloom doctor [--json] [--strict]");
       console.log("  keyloom generate migration");
+      console.log(
+        "  keyloom scaffold [login|register|admin|settings|forgot-password|reset-password|verify-email|setup-2fa|verify-2fa] [--router app|pages]"
+      );
       process.exit(cmd ? 1 : 0);
     }
   }

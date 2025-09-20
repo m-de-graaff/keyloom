@@ -31,14 +31,14 @@ yarn add @keyloom/nextjs @keyloom/core
 import { memoryAdapter } from '@keyloom/core'
 
 export default {
-  adapter: memoryAdapter(), // Use prismaAdapter(prisma) in production
-  session: { 
-    strategy: 'database' as const, 
-    ttlMinutes: 60, 
-    rolling: true 
+  adapter: memoryAdapter(), // Use PrismaAdapter(prisma) in production
+  session: {
+    strategy: 'database' as const,
+    ttlMinutes: 60,
+    rolling: true
   },
-  secrets: { 
-    authSecret: process.env.AUTH_SECRET ?? 'dev-secret-change-in-production' 
+  secrets: {
+    authSecret: process.env.AUTH_SECRET ?? 'dev-secret-change-in-production'
   },
   baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
 }
