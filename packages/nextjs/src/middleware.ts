@@ -35,6 +35,11 @@ function isPublic(urlPath: string, rules: (string | RegExp)[] = []) {
 }
 
 function compilePattern(pat: string): RegExp {
+  // Allow explicit regex via prefix: "regex:^/admin/.*$"
+  if (pat.startsWith('regex:')) {
+    const body = pat.slice(6).trim()
+    return new RegExp(body)
+  }
   const segs = pat.split('/').filter((s) => s.length > 0)
   const reSegs = segs.map((s) => {
     if (s === '*') return '.*'
@@ -61,7 +66,10 @@ export function createAuthMiddleware(config: NextKeyloomConfig, opts: Options = 
       })
     }
     const to = rule.redirectTo ?? '/sign-in'
-    return NextResponse.redirect(new URL(to, url))
+    const target = new URL(to, url)
+    // Avoid redirect loops
+    if (target.pathname === url.pathname) return NextResponse.next()
+    return NextResponse.redirect(target)
   }
 
   return async (req: NextRequest, _ev: NextFetchEvent) => {
@@ -73,8 +81,8 @@ export function createAuthMiddleware(config: NextKeyloomConfig, opts: Options = 
 
     const cookieHeader = req.headers.get('cookie')
 
-    // If manifest provided, use it; otherwise fallback to legacy publicRoutes behavior
-    if (compiled.length > 0) {
+    // If manifest was provided (even if empty), use it; otherwise fallback to legacy publicRoutes behavior
+    if (opts.routes) {
       const hit = compiled.find((c) => c.re.test(url.pathname))
       if (!hit) return NextResponse.next()
       const rule = hit.entry.rule
@@ -171,7 +179,10 @@ export function createAuthMiddleware(config: NextKeyloomConfig, opts: Options = 
       return NextResponse.next()
     }
 
-    // Legacy behavior
+    // Legacy behavior (public by default when not configured)
+    if (!opts.publicRoutes || opts.publicRoutes.length === 0) {
+      return NextResponse.next()
+    }
     const publicHit = isPublic(url.pathname, opts.publicRoutes)
     const sid = parseCookieValue(cookieHeader)
     let authed = !!sid
