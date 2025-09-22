@@ -73,6 +73,18 @@
       "import": "./dist/crypto/token-hash.js",
       "require": "./dist/crypto/token-hash.cjs"
     },
+    "./crypto/hash": {
+      "types": "./dist/crypto/hash.d.ts",
+      "typescript": "./src/crypto/hash.ts",
+      "import": "./dist/crypto/hash.js",
+      "require": "./dist/crypto/hash.cjs"
+    },
+    "./crypto/default-hasher": {
+      "types": "./dist/crypto/default-hasher.d.ts",
+      "typescript": "./src/crypto/default-hasher.ts",
+      "import": "./dist/crypto/default-hasher.js",
+      "require": "./dist/crypto/default-hasher.cjs"
+    },
     "./jwt": {
       "types": "./dist/jwt/index.d.ts",
       "typescript": "./src/jwt/index.ts",
