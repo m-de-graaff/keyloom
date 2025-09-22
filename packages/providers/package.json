@@ -8,51 +8,61 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "typescript": "./src/index.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
     "./github": {
-      "types": "./dist/github.d.ts",
+      "types": "./dist/github/index.d.ts",
+      "typescript": "./src/github/index.ts",
       "import": "./dist/github.js",
       "require": "./dist/github.cjs"
     },
     "./google": {
-      "types": "./dist/google.d.ts",
+      "types": "./dist/google/index.d.ts",
+      "typescript": "./src/google/index.ts",
       "import": "./dist/google.js",
       "require": "./dist/google.cjs"
     },
     "./discord": {
-      "types": "./dist/discord.d.ts",
+      "types": "./dist/discord/index.d.ts",
+      "typescript": "./src/discord/index.ts",
       "import": "./dist/discord.js",
       "require": "./dist/discord.cjs"
     },
     "./x": {
-      "types": "./dist/x.d.ts",
+      "types": "./dist/x/index.d.ts",
+      "typescript": "./src/x/index.ts",
       "import": "./dist/x.js",
       "require": "./dist/x.cjs"
     },
     "./gitlab": {
-      "types": "./dist/gitlab.d.ts",
+      "types": "./dist/gitlab/index.d.ts",
+      "typescript": "./src/gitlab/index.ts",
       "import": "./dist/gitlab.js",
       "require": "./dist/gitlab.cjs"
     },
     "./microsoft": {
-      "types": "./dist/microsoft.d.ts",
+      "types": "./dist/microsoft/index.d.ts",
+      "typescript": "./src/microsoft/index.ts",
       "import": "./dist/microsoft.js",
       "require": "./dist/microsoft.cjs"
     },
     "./apple": {
-      "types": "./dist/apple.d.ts",
+      "types": "./dist/apple/index.d.ts",
+      "typescript": "./src/apple/index.ts",
       "import": "./dist/apple.js",
       "require": "./dist/apple.cjs"
     },
     "./auth0": {
-      "types": "./dist/auth0.d.ts",
+      "types": "./dist/auth0/index.d.ts",
+      "typescript": "./src/auth0/index.ts",
       "import": "./dist/auth0.js",
       "require": "./dist/auth0.cjs"
     },
     "./dev": {
-      "types": "./dist/dev.d.ts",
+      "types": "./dist/dev/index.d.ts",
+      "typescript": "./src/dev/index.ts",
       "import": "./dist/dev.js",
       "require": "./dist/dev.cjs"
     }
@@ -64,7 +74,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsup && pnpm build:types",
-    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist --skipLibCheck",
+    "build:types": "tsc -b --force",
     "dev": "tsup --watch",
     "typecheck": "tsc -b",
     "test": "vitest run --passWithNoTests",

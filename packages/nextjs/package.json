@@ -32,7 +32,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsup && pnpm build:types",
-    "build:types": "tsc -p tsconfig.json --declaration --emitDeclarationOnly",
+    "build:types": "tsc -b --force",
     "dev": "tsup --watch",
     "typecheck": "tsc -b",
     "test": "vitest run",

@@ -27,8 +27,7 @@
     "releaseit:ui": "pnpm -C packages/ui exec release-it",
     "releaseit:server": "pnpm -C packages/server exec release-it",
     "releaseit:react": "pnpm -C packages/react exec release-it",
-    "releaseit:plugin-passkey": "pnpm -C packages/plugins/passkey exec release-it",
-    "releaseit:all": "pnpm run releaseit:core && pnpm run releaseit:nextjs && pnpm run releaseit:providers && pnpm run releaseit:adapters && pnpm run releaseit:cli && pnpm run releaseit:ui && pnpm run releaseit:server && pnpm run releaseit:react && pnpm run releaseit:plugin-passkey"
+    "releaseit:all": "pnpm run releaseit:core && pnpm run releaseit:nextjs && pnpm run releaseit:providers && pnpm run releaseit:adapters && pnpm run releaseit:cli && pnpm run releaseit:ui && pnpm run releaseit:server && pnpm run releaseit:react"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
