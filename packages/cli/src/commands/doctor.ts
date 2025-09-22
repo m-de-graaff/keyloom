@@ -42,9 +42,9 @@ function parseEnvContent(body: string): Record<string, string> {
   return out
 }
 
-function readEnvFiles(cwd: string): Record<string, string> {
-  const fs = require('node:fs') as typeof import('node:fs')
-  const path = require('node:path') as typeof import('node:path')
+async function readEnvFiles(cwd: string): Promise<Record<string, string>> {
+  const fs = await import('node:fs')
+  const path = await import('node:path')
   const envName = process.env.NODE_ENV || 'development'
   const order = [
     path.join(cwd, '.env'),
@@ -110,14 +110,14 @@ export async function doctorCommand(args: string[]) {
         doctor: { ...(current.doctor || {}), envAccessConsent: consent },
       }
       fs.mkdirSync(path.dirname(configPath), { recursive: true })
-      fs.writeFileSync(configPath, JSON.stringify(next, null, 2) + '\n', 'utf8')
+      fs.writeFileSync(configPath, `${JSON.stringify(next, null, 2)}\n`, 'utf8')
     } catch {}
   } else {
     // JSON mode, no prompt
     consent = false
   }
 
-  const envFromFiles = consent ? readEnvFiles(cwd) : undefined
+  const envFromFiles = consent ? await readEnvFiles(cwd) : undefined
   const checkOpts = consent ? { env: envFromFiles } : { skipEnvChecks: true }
 
   // JSON mode: machine-friendly output
