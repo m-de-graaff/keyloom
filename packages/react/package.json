@@ -1,6 +1,6 @@
 {
   "name": "@keyloom/react",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "private": false,
   "description": "React hooks and utilities for Keyloom authentication (sessions, login, OAuth, and plugins)",
   "license": "MIT",
