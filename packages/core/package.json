@@ -10,10 +10,7 @@
     ".": {
       "types": "./dist/index.d.ts",
       "typescript": "./src/index.ts",
-      "import": {
-        "development": "./src/index.ts",
-        "default": "./dist/index.js"
-      },
+      "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
     "./runtime/register": {
