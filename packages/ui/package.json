@@ -1,6 +1,6 @@
 {
   "name": "@keyloom/ui",
-  "version": "2.1.7",
+  "version": "3.0.0",
   "private": false,
   "description": "Keyloom UI component library: auth flows, org management, primitives, and theme",
   "license": "MIT",
