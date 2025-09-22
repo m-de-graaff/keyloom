@@ -15,7 +15,9 @@ export function readPackageJson(cwd: string): any | null {
 
 export function getMissingPackages(cwd: string, wanted: string[]): string[] {
   const pkg = readPackageJson(cwd)
-  const have = new Set<string>(Object.keys({ ...(pkg?.dependencies||{}), ...(pkg?.devDependencies||{}) }))
+  const have = new Set<string>(
+    Object.keys({ ...(pkg?.dependencies || {}), ...(pkg?.devDependencies || {}) }),
+  )
   return wanted.filter((d) => !have.has(parseName(d)))
 }
 
@@ -28,7 +30,11 @@ function parseName(spec: string) {
   return spec.split('@')[0]
 }
 
-export function buildInstallCommand(manager: PackageManager, packages: string[], dev?: boolean): string {
+export function buildInstallCommand(
+  manager: PackageManager,
+  packages: string[],
+  dev?: boolean,
+): string {
   const args: string[] = []
   if (manager === 'pnpm') {
     args.push('pnpm', 'add')
@@ -57,12 +63,11 @@ export async function installPackages(opts: {
 
 function execShell(cmd: string, cwd: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn(cmd, { cwd, shell: true, stdio: 'ignore' })
-    child.on('error', reject)
+    const child = spawn(cmd, { cwd, shell: true, stdio: 'inherit' })
+    child.on('error', (err) => reject(err))
     child.on('exit', (code) => {
       if (code === 0) resolve()
       else reject(new Error(`Command failed (${code}): ${cmd}`))
     })
   })
 }
-
