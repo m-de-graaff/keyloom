@@ -1,4 +1,4 @@
-import { COOKIE_NAME } from '@keyloom/core'
+import { COOKIE_NAME } from '@keyloom/core/constants'
 
 // Edge-safe cookie utilities (no Node.js-only dependencies)
 export function parseCookieValue(cookieHeader: string | null, name = COOKIE_NAME) {

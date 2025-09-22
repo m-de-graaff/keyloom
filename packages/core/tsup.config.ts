@@ -3,6 +3,9 @@ import { defineConfig } from 'tsup'
 export default defineConfig({
   entry: [
     'src/index.ts',
+    'src/config.ts',
+    'src/constants.ts',
+    'src/session/cookie.ts',
     'src/runtime/register.ts',
     'src/runtime/login.ts',
     'src/runtime/logout.ts',

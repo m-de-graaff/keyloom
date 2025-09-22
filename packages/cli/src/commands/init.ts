@@ -72,7 +72,7 @@ function createConfigBody(opts: {
 }) {
   const ext = opts.ts ? 'ts' : 'js'
   const lines: string[] = []
-  lines.push("import { defineKeyloom } from '@keyloom/core'")
+  lines.push("import { defineKeyloom } from '@keyloom/core/config'")
 
   // Adapter imports and setup
   if (opts.adapter === 'prisma') {

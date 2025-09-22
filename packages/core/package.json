@@ -13,6 +13,18 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./config": {
+      "types": "./dist/config.d.ts",
+      "typescript": "./src/config.ts",
+      "import": "./dist/config.js",
+      "require": "./dist/config.cjs"
+    },
+    "./constants": {
+      "types": "./dist/constants.d.ts",
+      "typescript": "./src/constants.ts",
+      "import": "./dist/constants.js",
+      "require": "./dist/constants.cjs"
+    },
     "./runtime/register": {
       "types": "./dist/runtime/register.d.ts",
       "typescript": "./src/runtime/register.ts",
