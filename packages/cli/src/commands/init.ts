@@ -32,19 +32,48 @@ function parseArgs(args: string[]) {
   } = {}
   for (let i = 0; i < args.length; i++) {
     const a = args[i]
-    if (a === '--cwd') out.cwd = args[++i]
-    else if (a === '--yes' || a === '-y') out.yes = true
-    else if (a.startsWith('--preset=')) out.preset = a.split('=')[1]
-    else if (a === '--preset') out.preset = args[++i]
-    else if (a.startsWith('--session=')) out.session = a.split('=')[1] as any
-    else if (a === '--session') out.session = args[++i] as any
-    else if (a.startsWith('--adapter=')) out.adapter = a.split('=')[1]
-    else if (a === '--adapter') out.adapter = args[++i]
-    else if (a.startsWith('--providers=')) out.providers = a.split('=')[1].split(',')
-    else if (a === '--providers') out.providers = args[++i].split(',')
-    else if (a === '--rbac') out.rbac = true
-    else if (a.startsWith('--pm=')) out.pm = a.split('=')[1]
-    else if (a === '--pm') out.pm = args[++i]
+    if (typeof a !== 'string') continue
+    if (a === '--cwd') {
+      const next = args[++i]
+      if (typeof next === 'string') out.cwd = next
+    } else if (a === '--yes' || a === '-y') out.yes = true
+    else if (a.startsWith('--preset=')) {
+      const parts = a.split('=')
+      const val = parts.length > 1 ? parts[1] : undefined
+      if (typeof val === 'string') out.preset = val
+    } else if (a === '--preset') {
+      const next = args[++i]
+      if (typeof next === 'string') out.preset = next
+    } else if (a.startsWith('--session=')) {
+      const parts = a.split('=')
+      const val = parts.length > 1 ? parts[1] : undefined
+      if (typeof val === 'string') out.session = val as any
+    } else if (a === '--session') {
+      const next = args[++i]
+      if (typeof next === 'string') out.session = next as any
+    } else if (a.startsWith('--adapter=')) {
+      const parts = a.split('=')
+      const val = parts.length > 1 ? parts[1] : undefined
+      if (typeof val === 'string') out.adapter = val
+    } else if (a === '--adapter') {
+      const next = args[++i]
+      if (typeof next === 'string') out.adapter = next
+    } else if (a.startsWith('--providers=')) {
+      const parts = a.split('=')
+      const val = parts.length > 1 ? parts[1] : ''
+      out.providers = val ? val.split(',') : []
+    } else if (a === '--providers') {
+      const next = args[++i]
+      if (typeof next === 'string') out.providers = next.split(',')
+    } else if (a === '--rbac') out.rbac = true
+    else if (a.startsWith('--pm=')) {
+      const parts = a.split('=')
+      const val = parts.length > 1 ? parts[1] : undefined
+      if (typeof val === 'string') out.pm = val
+    } else if (a === '--pm') {
+      const next = args[++i]
+      if (typeof next === 'string') out.pm = next
+    }
   }
   return out
 }
@@ -126,9 +155,16 @@ function createConfigBody(opts: {
 
   // RBAC (optional)
   if (opts.rbac) {
-    const roles = JSON.stringify(opts.roles || ['admin', 'user'])
-    const perms = JSON.stringify(opts.permissions || ['read', 'write'])
-    lines.push(`  rbac: { enabled: true, roles: ${roles}, permissions: ${perms} },`)
+    const roles = opts.roles || ['admin', 'user']
+    const perms = opts.permissions || ['read', 'write']
+    lines.push('  rbac: { enabled: true, roles: {')
+    for (const role of roles) {
+      const isAdmin = role === 'admin' || role === 'owner'
+      const defaultUserPerms = perms.filter((p) => p === 'read' || p === 'write')
+      const assigned = isAdmin ? perms : defaultUserPerms.length ? defaultUserPerms : perms
+      lines.push(`    ${JSON.stringify(role)}: { permissions: ${JSON.stringify(assigned)} },`)
+    }
+    lines.push('  } },')
   }
 
   // JWT extras (optional)
@@ -368,6 +404,12 @@ export async function initCommand(args: string[]) {
   // Step 3: keyloom.config
   step(3, total, 'Generate configuration')
   const cfgOpts: any = { ts, session, adapter, rbac: rbacEnabled, providers }
+  if (rbacEnabled) {
+    ui.info('RBAC is enabled with structured role→permissions mapping by default.')
+    ui.info('Migration tip: if you previously used flat rbac.roles and rbac.permissions arrays,')
+    ui.info('replace them with rbac.roles = { <role>: { permissions: [ ... ] }, ... }')
+  }
+
   if (roles && roles.length) cfgOpts.roles = roles
   if (permissions && permissions.length) cfgOpts.permissions = permissions
   const { ext, body } = createConfigBody(cfgOpts)

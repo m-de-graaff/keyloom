@@ -88,16 +88,20 @@ export function createAuthMiddleware(config: NextKeyloomConfig, opts: Options = 
       const rule = hit.entry.rule
       const isApi = url.pathname.startsWith('/api')
 
+      // Public pages are always allowed
       if (rule.visibility === 'public') return NextResponse.next()
+
+      // Normalize simplified visibility to legacy equivalents
+      const effectiveVisibility = rule.visibility === '!public' ? 'private' : rule.visibility
 
       const sid = parseCookieValue(cookieHeader)
       let authed = !!sid
 
       const needsRole =
         (rule.roles && rule.roles.length > 0) ||
-        (typeof rule.visibility === 'string' && rule.visibility.startsWith('role:'))
+        (typeof effectiveVisibility === 'string' && effectiveVisibility.startsWith('role:'))
 
-      // We need session JSON to resolve userId when role checks are needed
+      // We may need session JSON to resolve userId when role checks are needed
       const verify = needsRole ? 'session' : (rule.verify ?? 'cookie')
       let userId: string | null = null
       if (authed && verify !== 'cookie') {
@@ -113,6 +117,18 @@ export function createAuthMiddleware(config: NextKeyloomConfig, opts: Options = 
         }
       }
 
+      // New: routes only for unauthenticated users
+      if (effectiveVisibility === '!authed') {
+        if (authed) {
+          const to = rule.redirectTo ?? '/'
+          const target = new URL(to, url)
+          if (target.pathname === url.pathname) return NextResponse.next()
+          return NextResponse.redirect(target)
+        }
+        return NextResponse.next()
+      }
+
+      // Private and role-protected routes require authentication
       if (!authed) return handleUnauthorized(rule, url, isApi)
 
       // Optional custom edge validation
@@ -142,8 +158,8 @@ export function createAuthMiddleware(config: NextKeyloomConfig, opts: Options = 
       if (needsRole && config?.rbac?.enabled !== false) {
         // Collect required roles
         const required: string[] = []
-        if (typeof rule.visibility === 'string' && rule.visibility.startsWith('role:')) {
-          required.push(rule.visibility.slice(5))
+        if (typeof effectiveVisibility === 'string' && effectiveVisibility.startsWith('role:')) {
+          required.push(effectiveVisibility.slice(5))
         }
         if (Array.isArray(rule.roles)) required.push(...rule.roles)
 

@@ -207,12 +207,16 @@ export async function runDoctorChecks(
     ['DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET'],
     ['AUTH0_CLIENT_ID', 'AUTH0_CLIENT_SECRET'],
   ]
-  const presentPairs = providerKeys.map(([id, sec]) => ({
-    id,
-    sec,
-    hasId: !!ENV[id],
-    hasSec: !!ENV[sec],
-  }))
+  const presentPairs = providerKeys.map((pair) => {
+    const id = pair[0] as string
+    const sec = pair[1] as string
+    return {
+      id,
+      sec,
+      hasId: !!ENV[id],
+      hasSec: !!ENV[sec],
+    }
+  })
   const anyProviderConfigured = presentPairs.some((p) => p.hasId || p.hasSec)
   if (!anyProviderConfigured) {
     results.push({

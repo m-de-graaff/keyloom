@@ -29,7 +29,7 @@ export async function detectPackageManager(
 
   // No lockfile found — ask the user interactively
   try {
-    const ans = await inquirer.prompt<{ pm: PackageManager }>([
+    const ans = (await (inquirer as any).prompt([
       {
         name: 'pm',
         type: 'list',
@@ -41,7 +41,7 @@ export async function detectPackageManager(
         ],
         default: 'pnpm',
       },
-    ])
+    ])) as { pm: PackageManager }
     return ans.pm
   } catch {
     // Fall back to npm if prompt fails (non-interactive)

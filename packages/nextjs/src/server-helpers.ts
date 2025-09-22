@@ -1,5 +1,6 @@
 import { ORG_COOKIE_NAME } from '@keyloom/core/constants'
 import type { Session, User } from '@keyloom/core'
+
 import { getCurrentSession } from '@keyloom/core/runtime/current-session'
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -72,8 +73,9 @@ export async function getUser(config?: NextKeyloomConfig): Promise<User | JwtUse
 // Server-side guard for App Router
 export async function guard(
   rule?: {
-    visibility?: 'public' | 'private' | `role:${string}`
+    visibility?: 'public' | '!public' | '!authed' | 'private' | `role:${string}`
     roles?: string[]
+    permission?: string
     org?: boolean | 'required'
     redirectTo?: string
   },
@@ -81,7 +83,8 @@ export async function guard(
 ) {
   const { config: cfg, adapter } = ensure(config)
 
-  const isPublic = rule?.visibility === 'public'
+  const effVis = rule?.visibility === '!public' ? 'private' : rule?.visibility
+  const isPublic = effVis === 'public'
   if (isPublic) return
 
   let session: any = null
@@ -107,19 +110,27 @@ export async function guard(
     user = sessionResult.user
   }
 
+  // New simplified visibility: routes only for unauthenticated users
+  if (effVis === '!authed') {
+    if (session && user) return redirect(rule?.redirectTo ?? '/')
+    return { session, user }
+  }
+
+  // Private and role-protected routes require authentication
   if (!session || !user) return redirect(rule?.redirectTo ?? '/sign-in')
 
-  const needsRole = (rule?.roles && rule.roles.length > 0) || rule?.visibility?.startsWith('role:')
-  if (needsRole) {
-    const need = rule?.visibility?.startsWith('role:')
-      ? [rule.visibility.slice(5)]
-      : (rule?.roles as string[])
+  const needsRole = (rule?.roles && rule.roles.length > 0) || effVis?.startsWith('role:')
+  const needsPermission = !!rule?.permission
+  if (needsRole || needsPermission) {
+    const need = effVis?.startsWith('role:')
+      ? [effVis.slice(5)]
+      : (rule?.roles as string[] | undefined)
 
-    // If role is checked, require an active org unless explicitly disabled
+    // If role/permission is checked, require an active org unless explicitly disabled
     const orgRequired = rule?.org === 'required' || rule?.org === true || true
 
     if (cfg?.rbac?.enabled === false) {
-      // Skip org/role checks if RBAC is disabled
+      // Skip org/role/permission checks if RBAC is disabled
       return { session, user }
     }
 
@@ -128,7 +139,28 @@ export async function guard(
     if (orgRequired && !orgId) return redirect('/select-org')
 
     const m = await adapter.getMembership(user.id, orgId)
-    if (!m || !need.includes(m.role)) return redirect('/403')
+    if (!m) return redirect('/403')
+
+    if (need && need.length > 0 && !need.includes(m.role)) return redirect('/403')
+
+    if (needsPermission && rule?.permission) {
+      // Derive permission map from structured RBAC config if available
+      const rolesDecl = (cfg as any)?.rbac?.roles as any
+      const permMap: Record<string, string[]> = {}
+      if (rolesDecl && typeof rolesDecl === 'object' && !Array.isArray(rolesDecl)) {
+        for (const [r, obj] of Object.entries(rolesDecl)) {
+          const perms = (obj as any)?.permissions || []
+          for (const p of perms) {
+            if (!permMap[p]) permMap[p] = []
+            if (!permMap[p].includes(r)) permMap[p].push(r)
+          }
+        }
+      }
+      if (Object.keys(permMap).length > 0) {
+        const allowed = (permMap[rule.permission] ?? []).includes(m.role)
+        if (!allowed) return redirect('/403')
+      }
+    }
 
     return { session, user, role: m.role as string, orgId }
   }

@@ -1,5 +1,5 @@
 import chalk from 'chalk'
-import ora, { Ora } from 'ora'
+import ora, { type Ora } from 'ora'
 
 export function banner(title: string) {
   console.log('\n' + chalk.bold.cyan(title))
@@ -34,12 +34,20 @@ export function list(items: string[], label?: string) {
   for (const it of items) console.log(chalk.gray(`  • ${it}`))
 }
 
-export async function withCapturedStdout<T>(fn: () => Promise<T> | T): Promise<{ result: T; logs: string[] }> {
+export async function withCapturedStdout<T>(
+  fn: () => Promise<T> | T,
+): Promise<{ result: T; logs: string[] }> {
   const logs: string[] = []
   const orig = { log: console.log, warn: console.warn, info: console.info }
-  console.log = (...a: any[]) => { logs.push(a.map(String).join(' ')) }
-  console.warn = (...a: any[]) => { logs.push(a.map(String).join(' ')) }
-  console.info = (...a: any[]) => { logs.push(a.map(String).join(' ')) }
+  console.log = (...a: any[]) => {
+    logs.push(a.map(String).join(' '))
+  }
+  console.warn = (...a: any[]) => {
+    logs.push(a.map(String).join(' '))
+  }
+  console.info = (...a: any[]) => {
+    logs.push(a.map(String).join(' '))
+  }
   try {
     const result = await fn()
     return { result, logs }
@@ -49,4 +57,3 @@ export async function withCapturedStdout<T>(fn: () => Promise<T> | T): Promise<{
     console.info = orig.info
   }
 }
-

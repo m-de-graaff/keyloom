@@ -1,4 +1,4 @@
-export type Visibility = 'public' | 'private' | `role:${string}`
+export type Visibility = 'public' | '!public' | '!authed' | 'private' | `role:${string}`
 
 export type KeyloomRouteRule = {
   visibility: Visibility

@@ -18,7 +18,13 @@ export function getMissingPackages(cwd: string, wanted: string[]): string[] {
   const have = new Set<string>(
     Object.keys({ ...(pkg?.dependencies || {}), ...(pkg?.devDependencies || {}) }),
   )
-  return wanted.filter((d) => !have.has(parseName(d)))
+  const list: string[] = wanted.filter((d): d is string => typeof d === 'string')
+  const missing: string[] = []
+  for (const dep of list) {
+    const name = parseName(dep)
+    if (!have.has(name as string)) missing.push(dep)
+  }
+  return missing
 }
 
 function parseName(spec: string) {

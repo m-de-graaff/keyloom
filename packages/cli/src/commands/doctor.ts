@@ -17,8 +17,10 @@ function parseArgs(args: string[]) {
     else if (a === '--strict') out.strict = true
     else if (a === '--fix') out.fix = true
     else if (a === '--yes') out.yes = true
-    else if (a === '--cwd') out.cwd = args[++i]
-    else if (a === '--skip-env-consent') out.skipEnvConsent = true
+    else if (a === '--cwd') {
+      const next = args[++i]
+      if (typeof next === 'string') out.cwd = next
+    } else if (a === '--skip-env-consent') out.skipEnvConsent = true
     else if (a === '--no-env-access') out.noEnvAccess = true
   }
   return out
@@ -32,12 +34,13 @@ function parseEnvContent(body: string): Record<string, string> {
     if (!line || line.startsWith('#')) continue
     const m = line.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/)
     if (!m) continue
-    let v = m[2]
+    let v: string = m[2] ?? ''
     if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
       v = v.slice(1, -1)
     }
     v = v.replace(/\\n/g, '\n')
-    out[m[1]] = v
+    const key = m[1] as string
+    out[key] = v
   }
   return out
 }
@@ -72,7 +75,6 @@ export async function doctorCommand(args: string[]) {
   // Determine consent to read .env files
   const path = await import('node:path')
   const fs = await import('node:fs')
-  const { upsertJson } = await import('../lib/fs')
 
   const skipByFlag = !!(flags.skipEnvConsent || flags.noEnvAccess)
   const configPath = path.join(cwd, '.keyloom', 'config.json')
@@ -91,7 +93,7 @@ export async function doctorCommand(args: string[]) {
     consent = storedConsent
   } else if (!flags.json) {
     const inquirer = (await import('inquirer')).default
-    const ans = await inquirer.prompt<{ ok: boolean }>([
+    const ans = (await (inquirer as any).prompt([
       {
         name: 'ok',
         type: 'confirm',
@@ -99,7 +101,7 @@ export async function doctorCommand(args: string[]) {
           'Do you grant Keyloom permission to read your local .env files for analysis? (Nothing is uploaded - this is only for local validation purposes)',
         default: true,
       },
-    ])
+    ])) as { ok: boolean }
     consent = !!ans.ok
     try {
       const current = fs.existsSync(configPath)
@@ -207,14 +209,14 @@ async function applyFixes(
       const doFix = opts.yes
         ? true
         : (
-            await inquirer.prompt<{ ok: boolean }>([
+            (await (inquirer as any).prompt([
               {
                 name: 'ok',
                 type: 'confirm',
                 message: 'Generate and write a secure AUTH_SECRET to .env.local (or .env)?',
                 default: true,
               },
-            ])
+            ])) as { ok: boolean }
           ).ok
       if (doFix) {
         const secret = crypto.randomBytes(32).toString('base64url')
@@ -239,14 +241,14 @@ async function applyFixes(
       const doFix = opts.yes
         ? true
         : (
-            await inquirer.prompt<{ ok: boolean }>([
+            (await (inquirer as any).prompt([
               {
                 name: 'ok',
                 type: 'confirm',
                 message: 'Create keyloom.config.ts stub with PrismaAdapter(db)?',
                 default: true,
               },
-            ])
+            ])) as { ok: boolean }
           ).ok
       if (doFix) {
         const code = `import { PrismaAdapter } from '@keyloom/adapters'\nimport { PrismaClient } from '@prisma/client'\n\nconst db = new PrismaClient()\nexport default {\n  adapter: PrismaAdapter(db),\n  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,\n}\n`
@@ -270,14 +272,14 @@ async function applyFixes(
         const doFix = opts.yes
           ? true
           : (
-              await inquirer.prompt<{ ok: boolean }>([
+              (await (inquirer as any).prompt([
                 {
                   name: 'ok',
                   type: 'confirm',
                   message: 'Create middleware.ts stub using Keyloom default middleware?',
                   default: true,
                 },
-              ])
+              ])) as { ok: boolean }
             ).ok
         if (doFix) {
           const mwCode = `export { default } from '@keyloom/nextjs/middleware'\n`
