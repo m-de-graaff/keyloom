@@ -6,6 +6,7 @@ export default defineConfig({
     'src/config.ts',
     'src/constants.ts',
     'src/session/cookie.ts',
+    'src/runtime/index.ts',
     'src/runtime/register.ts',
     'src/runtime/login.ts',
     'src/runtime/logout.ts',

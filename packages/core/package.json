@@ -43,6 +43,12 @@
       "import": "./dist/runtime/logout.js",
       "require": "./dist/runtime/logout.cjs"
     },
+    "./runtime": {
+      "types": "./dist/runtime/index.d.ts",
+      "typescript": "./src/runtime/index.ts",
+      "import": "./dist/runtime/index.js",
+      "require": "./dist/runtime/index.cjs"
+    },
     "./runtime/current-session": {
       "types": "./dist/runtime/current-session.d.ts",
       "typescript": "./src/runtime/current-session.ts",
