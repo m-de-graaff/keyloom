@@ -23,7 +23,7 @@
   },
   "scripts": {
     "build": "tsup && pnpm build:types",
-    "build:types": "tsc --project tsconfig.json",
+    "build:types": "tsc src/index.ts src/auth/index.ts src/components/index.ts src/primitives/index.ts src/org/index.ts src/rbac/index.ts src/icons/index.tsx src/theme/tokens.ts --declaration --emitDeclarationOnly --outDir dist --jsx react-jsx --moduleResolution bundler --module ES2022 --target ES2022 --skipLibCheck",
     "dev": "tsup --watch",
     "typecheck": "tsc -b",
     "test": "vitest run --passWithNoTests",
