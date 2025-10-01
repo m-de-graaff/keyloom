@@ -23,7 +23,7 @@
   },
   "scripts": {
     "build": "tsup && pnpm build:types",
-    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist --skipLibCheck",
+    "build:types": "tsc --project tsconfig.json",
     "dev": "tsup --watch",
     "typecheck": "tsc -b",
     "test": "vitest run --passWithNoTests",
