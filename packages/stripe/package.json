@@ -1,0 +1,88 @@
+{
+  "name": "@keyloom/stripe",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "typescript": "./src/index.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "typescript": "./src/client.ts",
+      "import": "./dist/client.js",
+      "require": "./dist/client.cjs"
+    },
+    "./payments": {
+      "types": "./dist/payments.d.ts",
+      "typescript": "./src/payments.ts",
+      "import": "./dist/payments.js",
+      "require": "./dist/payments.cjs"
+    },
+    "./customers": {
+      "types": "./dist/customers.d.ts",
+      "typescript": "./src/customers.ts",
+      "import": "./dist/customers.js",
+      "require": "./dist/customers.cjs"
+    },
+    "./subscriptions": {
+      "types": "./dist/subscriptions.d.ts",
+      "typescript": "./src/subscriptions.ts",
+      "import": "./dist/subscriptions.js",
+      "require": "./dist/subscriptions.cjs"
+    },
+    "./payment-methods": {
+      "types": "./dist/payment-methods.d.ts",
+      "typescript": "./src/payment-methods.ts",
+      "import": "./dist/payment-methods.js",
+      "require": "./dist/payment-methods.cjs"
+    },
+    "./webhooks": {
+      "types": "./dist/webhooks.d.ts",
+      "typescript": "./src/webhooks.ts",
+      "import": "./dist/webhooks.js",
+      "require": "./dist/webhooks.cjs"
+    }
+  },
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup && pnpm build:types",
+    "build:types": "tsc -b --declaration --emitDeclarationOnly",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -b",
+    "test": "vitest run --passWithNoTests",
+    "lint": "biome check ."
+  },
+  "devDependencies": {
+    "@keyloom/core": "workspace:*",
+    "tsup": "^8.5.0"
+  },
+  "dependencies": {
+    "stripe": "^17.4.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.4"
+  },
+  "license": "MIT",
+  "author": "Keyloom Contributors",
+  "description": "Stripe payment integration for Keyloom authentication library",
+  "keywords": [
+    "keyloom",
+    "stripe",
+    "payments",
+    "subscriptions",
+    "billing"
+  ]
+}

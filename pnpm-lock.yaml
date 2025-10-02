@@ -55,7 +55,7 @@ importers:
     dependencies:
       '@keyloom/core':
         specifier: latest
-        version: 2.1.7(typescript@5.9.2)
+        version: 3.1.2(typescript@5.9.2)
       '@prisma/client':
         specifier: '>=5'
         version: 6.16.1(prisma@6.16.1(magicast@0.3.5)(typescript@5.9.2))(typescript@5.9.2)
@@ -277,10 +277,10 @@ importers:
     dependencies:
       '@keyloom/adapters':
         specifier: latest
-        version: 2.1.7(@prisma/client@6.16.1(prisma@6.16.1(magicast@0.3.5)(typescript@5.9.2))(typescript@5.9.2))(typescript@5.9.2)
+        version: 3.1.1(@prisma/client@6.16.1(prisma@6.16.1(magicast@0.3.5)(typescript@5.9.2))(typescript@5.9.2))(typescript@5.9.2)
       '@keyloom/core':
         specifier: latest
-        version: 2.1.7(typescript@5.9.2)
+        version: 3.1.2(typescript@5.9.2)
       '@node-rs/argon2':
         specifier: ^2.0.2
         version: 2.0.2
@@ -300,6 +300,22 @@ importers:
         specifier: ^4.1.8
         version: 4.1.8
     devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(jiti@2.5.1)(postcss@8.5.6)(typescript@5.9.2)
+
+  packages/stripe:
+    dependencies:
+      stripe:
+        specifier: ^17.4.0
+        version: 17.7.0
+      typescript:
+        specifier: '>=5.4'
+        version: 5.9.2
+    devDependencies:
+      '@keyloom/core':
+        specifier: workspace:*
+        version: link:../core
       tsup:
         specifier: ^8.5.0
         version: 8.5.0(jiti@2.5.1)(postcss@8.5.6)(typescript@5.9.2)
@@ -1053,14 +1069,14 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@keyloom/adapters@2.1.7':
-    resolution: {integrity: sha512-p+G28hm6iSRLeQsEEwPRjQ70SbMUny8/jFBytJkDdDZ1V1+Unuvi24HIRk44yTBuKDTMsDIQVVgGwXBPSkyM8Q==}
+  '@keyloom/adapters@3.1.1':
+    resolution: {integrity: sha512-8KwVR57wodA3abSbDXXLUR7mAS+8H0Kh6+2C58Vu+0yepQ33bFmTzsl0TlL1Hv7G8de8KdKCqBgTzdYu6MTBEw==}
     peerDependencies:
       '@prisma/client': '>=5'
       typescript: '>=5.4'
 
-  '@keyloom/core@2.1.7':
-    resolution: {integrity: sha512-jQgfZMEz61IakiqAamjGN/EQE0PJVFEOecA2eFgLI6XLHXRyNA7+QtVscC3OxtyNPWFlwJAbRK/0O4oW4wyE6g==}
+  '@keyloom/core@3.1.2':
+    resolution: {integrity: sha512-uQX6IGTspFGj79ml1JIkcjzZ8bbnBw2+rcCM53o+gu4qHP1mJQy3UBOVgbk8e/a+c8OuYsOJmxaP/Phmb+nw2A==}
     peerDependencies:
       typescript: '>=5.4'
 
@@ -3845,6 +3861,10 @@ packages:
   pure-rand@6.1.0:
     resolution: {integrity: sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==}
 
+  qs@6.14.0:
+    resolution: {integrity: sha512-YWWTjgABSKcvs/nWBi9PycY/JiPJqOD4JA6o9Sej2AtvSGarXxKC3OQSk4pAarbdQlKAh5D4FCQkJNkW+GAn3w==}
+    engines: {node: '>=0.6'}
+
   quansync@0.2.11:
     resolution: {integrity: sha512-AifT7QEbW9Nri4tAwR5M/uzpBuqfZf+zwaEM/QkzEjj7NBuFD2rBuy0K3dE+8wltbezDV7JMA0WfnCPYRSYbXA==}
 
@@ -4209,6 +4229,10 @@ packages:
 
   strip-literal@3.0.0:
     resolution: {integrity: sha512-TcccoMhJOM3OebGhSBEmp3UZ2SfDMZUEBdRA/9ynfLi8yYajyWX3JiXArcJt4Umh4vISpspkQIY8ZZoCqjbviA==}
+
+  stripe@17.7.0:
+    resolution: {integrity: sha512-aT2BU9KkizY9SATf14WhhYVv2uOapBWX0OFWF4xvcj1mPaNotlSc2CsxpS4DS46ZueSppmCF5BX1sNYBtwBvfw==}
+    engines: {node: '>=12.*'}
 
   styled-jsx@5.1.6:
     resolution: {integrity: sha512-qSVyDTeMotdvQYoHWLNGwRFJHC+i+ZvdBRYosOFgC+Wg1vx4frN2/RG/NA7SYqqvKNLf39P2LSRA2pu6n0XYZA==}
@@ -5330,13 +5354,13 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@keyloom/adapters@2.1.7(@prisma/client@6.16.1(prisma@6.16.1(magicast@0.3.5)(typescript@5.9.2))(typescript@5.9.2))(typescript@5.9.2)':
+  '@keyloom/adapters@3.1.1(@prisma/client@6.16.1(prisma@6.16.1(magicast@0.3.5)(typescript@5.9.2))(typescript@5.9.2))(typescript@5.9.2)':
     dependencies:
-      '@keyloom/core': 2.1.7(typescript@5.9.2)
+      '@keyloom/core': 3.1.2(typescript@5.9.2)
       '@prisma/client': 6.16.1(prisma@6.16.1(magicast@0.3.5)(typescript@5.9.2))(typescript@5.9.2)
       typescript: 5.9.2
 
-  '@keyloom/core@2.1.7(typescript@5.9.2)':
+  '@keyloom/core@3.1.2(typescript@5.9.2)':
     dependencies:
       typescript: 5.9.2
 
@@ -8142,6 +8166,10 @@ snapshots:
   pure-rand@6.1.0:
     optional: true
 
+  qs@6.14.0:
+    dependencies:
+      side-channel: 1.1.0
+
   quansync@0.2.11: {}
 
   queue-microtask@1.2.3: {}
@@ -8587,6 +8615,11 @@ snapshots:
   strip-literal@3.0.0:
     dependencies:
       js-tokens: 9.0.1
+
+  stripe@17.7.0:
+    dependencies:
+      '@types/node': 24.5.0
+      qs: 6.14.0
 
   styled-jsx@5.1.6(react@19.1.1):
     dependencies:
