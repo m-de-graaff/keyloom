@@ -18,6 +18,11 @@ export async function getRoleForUser(userId: string, orgId: string, adapter: any
   return m?.role ?? null
 }
 
+export async function getGlobalRoleForUser(userId: string, adapter: any) {
+  const gr = await adapter.getUserGlobalRole?.(userId)
+  return gr?.role ?? null
+}
+
 export async function withRole(
   action: () => Promise<Response>,
   opts: {
@@ -55,5 +60,114 @@ export async function withRole(
     const allowed = (effectivePermMap[opts.requiredPermission] ?? []).includes(role)
     if (!allowed) return new Response('forbidden', { status: 403 })
   }
+  return action()
+}
+
+export async function withGlobalRole(
+  action: () => Promise<Response>,
+  opts: {
+    requiredRoles?: string[]
+    requiredPermission?: string
+    permMap?: Record<string, string[]>
+    getUser: () => Promise<{ id: string } | null>
+    adapter: any
+    onDenied?: () => Response
+    rbacEnabled?: boolean
+    /** Optional config to auto-derive permMap from rbac roles mapping when provided */
+    config?: NextKeyloomConfig
+  },
+) {
+  // If RBAC is disabled, skip role checks
+  if (opts.rbacEnabled === false) {
+    return action()
+  }
+
+  const user = await opts.getUser()
+  if (!user) return opts.onDenied ? opts.onDenied() : new Response('unauthorized', { status: 401 })
+
+  const globalRole = await getGlobalRoleForUser(user.id, opts.adapter)
+  if (!globalRole)
+    return opts.onDenied ? opts.onDenied() : new Response('forbidden', { status: 403 })
+
+  if (opts.requiredRoles?.length && !opts.requiredRoles.includes(globalRole))
+    return new Response('forbidden', { status: 403 })
+
+  // Determine effective permission map (explicit > derived-from-config)
+  const derivedMap = opts.config ? toPermissionMap(opts.config.rbac) : {}
+  const effectivePermMap = opts.permMap ?? derivedMap
+
+  if (opts.requiredPermission && effectivePermMap && Object.keys(effectivePermMap).length) {
+    const allowed = (effectivePermMap[opts.requiredPermission] ?? []).includes(globalRole)
+    if (!allowed) return new Response('forbidden', { status: 403 })
+  }
+
+  return action()
+}
+
+export async function withAnyRole(
+  action: () => Promise<Response>,
+  opts: {
+    requiredRoles?: string[]
+    requiredGlobalRoles?: string[]
+    requiredPermission?: string
+    permMap?: Record<string, string[]>
+    getUser: () => Promise<{ id: string } | null>
+    adapter: any
+    orgId?: string | null
+    onDenied?: () => Response
+    rbacEnabled?: boolean
+    /** Optional config to auto-derive permMap from rbac roles mapping when provided */
+    config?: NextKeyloomConfig
+  },
+) {
+  // If RBAC is disabled, skip role checks
+  if (opts.rbacEnabled === false) {
+    return action()
+  }
+
+  const user = await opts.getUser()
+  if (!user) return opts.onDenied ? opts.onDenied() : new Response('unauthorized', { status: 401 })
+
+  let hasAccess = false
+  let userRole: string | null = null
+
+  // Check global role first
+  if (opts.requiredGlobalRoles?.length) {
+    const globalRole = await getGlobalRoleForUser(user.id, opts.adapter)
+    if (globalRole && opts.requiredGlobalRoles.includes(globalRole)) {
+      hasAccess = true
+      userRole = globalRole
+    }
+  }
+
+  // If no global access, check organization role
+  if (!hasAccess && opts.requiredRoles?.length) {
+    const orgId = opts.orgId ?? getActiveOrgId()
+    if (orgId) {
+      const orgRole = await getRoleForUser(user.id, orgId, opts.adapter)
+      if (orgRole && opts.requiredRoles.includes(orgRole)) {
+        hasAccess = true
+        userRole = orgRole
+      }
+    }
+  }
+
+  if (!hasAccess)
+    return opts.onDenied ? opts.onDenied() : new Response('forbidden', { status: 403 })
+
+  // Determine effective permission map (explicit > derived-from-config)
+  const derivedMap = opts.config ? toPermissionMap(opts.config.rbac) : {}
+  const effectivePermMap = opts.permMap ?? derivedMap
+
+  if (
+    opts.requiredPermission &&
+    effectivePermMap &&
+    Object.keys(effectivePermMap).length &&
+    userRole
+  ) {
+    const allowed = (effectivePermMap[opts.requiredPermission] ?? []).includes(userRole)
+    if (!allowed) return new Response('forbidden', { status: 403 })
+  }
+
   return action()
 }

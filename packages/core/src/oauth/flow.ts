@@ -16,7 +16,10 @@ export async function startOAuth(opts: {
   const { verifier, challenge } = await createPkce()
   const statePayload: OAuthStatePayload = { p: provider.id, v: verifier, t: Date.now() }
   if (callbackUrl) statePayload.r = callbackUrl
-  const sealed = await sealState(new TextEncoder().encode(secrets.authSecret), statePayload)
+  const sealed = await sealState(
+    new Uint8Array(Buffer.from(secrets.authSecret, 'base64url')),
+    statePayload,
+  )
 
   const authUrl = new URL(provider.authorization.url)
   const params = {
@@ -66,7 +69,11 @@ export async function completeOAuth(opts: {
   const parts = (stateParam as string).split('.')
   if (parts.length !== 2) throw new Error('state_bad_format')
   const [nonce, ct] = parts as [string, string]
-  const st = await openState(new TextEncoder().encode(secrets.authSecret), nonce, ct)
+  const st = await openState(
+    new Uint8Array(Buffer.from(secrets.authSecret, 'base64url')),
+    nonce,
+    ct,
+  )
   if (st.p !== provider.id) throw new Error('state_wrong_provider')
   if (Date.now() - st.t > 10 * 60_000) throw new Error('state_expired')
 

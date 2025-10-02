@@ -18,7 +18,7 @@ const provider: OAuthProvider & { clientId: string; clientSecret: string } = {
 
 const baseUrl = 'https://app.test'
 const callbackPath = `/api/auth/oauth/${provider.id}/callback`
-const secrets = { authSecret: '0123456789abcdef0123456789abcdef' }
+const secrets = { authSecret: 'MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY' } // base64url-encoded 32-byte secret
 
 afterEach(() => {
   vi.resetModules()

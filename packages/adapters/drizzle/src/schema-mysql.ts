@@ -143,6 +143,28 @@ export const memberships = mysqlTable(
   }),
 )
 
+export const userGlobalRoles = mysqlTable(
+  'UserGlobalRole',
+  {
+    id: varchar('id', { length: 191 }).primaryKey(),
+    userId: varchar('userId', { length: 191 })
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    role: varchar('role', { length: 191 }).notNull(),
+    status: varchar('status', { length: 191 }).notNull().default('active'),
+    createdAt: timestamp('createdAt').defaultNow().notNull(),
+    updatedAt: timestamp('updatedAt').defaultNow().onUpdateNow().notNull(),
+  },
+  (table) => ({
+    userIdx: uniqueIndex('UserGlobalRole_userId_key').on(table.userId),
+    userRoleStatusIdx: index('UserGlobalRole_userId_role_status_idx').on(
+      table.userId,
+      table.role,
+      table.status,
+    ),
+  }),
+)
+
 export const invites = mysqlTable(
   'Invite',
   {

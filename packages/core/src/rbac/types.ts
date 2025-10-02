@@ -22,6 +22,16 @@ export type Membership = {
   updatedAt: Date
 }
 
+export type GlobalRoleStatus = 'active' | 'suspended'
+export type UserGlobalRole = {
+  id: ID
+  userId: ID
+  role: Role
+  status: GlobalRoleStatus
+  createdAt: Date
+  updatedAt: Date
+}
+
 export type Invite = {
   id: ID
   orgId: ID
@@ -69,4 +79,14 @@ export interface RbacAdapter {
   // Entitlements (optional)
   getEntitlements(orgId: ID): Promise<Entitlements | null>
   setEntitlements(orgId: ID, ent: Entitlements): Promise<void>
+
+  // Global Roles
+  assignGlobalRole(data: { userId: ID; role: Role }): Promise<UserGlobalRole>
+  updateGlobalRole(
+    id: ID,
+    data: Partial<Pick<UserGlobalRole, 'role' | 'status'>>,
+  ): Promise<UserGlobalRole>
+  removeGlobalRole(id: ID): Promise<void>
+  getUserGlobalRole(userId: ID): Promise<UserGlobalRole | null>
+  listUsersWithGlobalRole(role: Role): Promise<(UserGlobalRole & { userEmail?: string | null })[]>
 }

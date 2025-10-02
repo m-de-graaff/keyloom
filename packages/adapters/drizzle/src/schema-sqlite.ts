@@ -155,6 +155,32 @@ export const memberships = sqliteTable(
   }),
 )
 
+export const userGlobalRoles = sqliteTable(
+  'UserGlobalRole',
+  {
+    id: text('id').primaryKey(),
+    userId: text('userId')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    role: text('role').notNull(),
+    status: text('status').notNull().default('active'),
+    createdAt: integer('createdAt', { mode: 'timestamp' })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer('updatedAt', { mode: 'timestamp' })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => ({
+    userIdx: uniqueIndex('UserGlobalRole_userId_key').on(table.userId),
+    userRoleStatusIdx: index('UserGlobalRole_userId_role_status_idx').on(
+      table.userId,
+      table.role,
+      table.status,
+    ),
+  }),
+)
+
 export const invites = sqliteTable(
   'Invite',
   {

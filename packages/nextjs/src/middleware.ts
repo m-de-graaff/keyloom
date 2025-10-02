@@ -101,8 +101,12 @@ export function createAuthMiddleware(config: NextKeyloomConfig, opts: Options = 
         (rule.roles && rule.roles.length > 0) ||
         (typeof effectiveVisibility === 'string' && effectiveVisibility.startsWith('role:'))
 
+      const needsGlobalRole =
+        (rule.globalRoles && rule.globalRoles.length > 0) ||
+        (typeof effectiveVisibility === 'string' && effectiveVisibility.startsWith('global:'))
+
       // We may need session JSON to resolve userId when role checks are needed
-      const verify = needsRole ? 'session' : (rule.verify ?? 'cookie')
+      const verify = needsRole || needsGlobalRole ? 'session' : (rule.verify ?? 'cookie')
       let userId: string | null = null
       if (authed && verify !== 'cookie') {
         try {
@@ -179,6 +183,43 @@ export function createAuthMiddleware(config: NextKeyloomConfig, opts: Options = 
           const m = await (config as any).adapter?.getMembership?.(userId, orgId)
           if (!m || !required.includes(m.role)) {
             // Role denied: API => 401, Pages => redirect to /403
+            if (isApi)
+              return new NextResponse(JSON.stringify({ error: 'forbidden' }), {
+                status: 401,
+                headers: { 'content-type': 'application/json' },
+              })
+            return NextResponse.redirect(new URL('/403', url))
+          }
+        } catch {
+          // If check fails (edge/db), allow and rely on server guard for final enforcement
+          return NextResponse.next()
+        }
+      }
+
+      // Global role-based routes: check global roles without organization context
+      if (needsGlobalRole && config?.rbac?.enabled !== false) {
+        // Collect required global roles
+        const requiredGlobal: string[] = []
+        if (typeof effectiveVisibility === 'string' && effectiveVisibility.startsWith('global:')) {
+          requiredGlobal.push(effectiveVisibility.slice(7))
+        }
+        if (Array.isArray(rule.globalRoles)) requiredGlobal.push(...rule.globalRoles)
+
+        try {
+          if (!userId) {
+            // Attempt to retrieve session if not already fetched
+            const r = await fetch(new URL('/api/auth/session', url).toString(), {
+              headers: { cookie: cookieHeader ?? '' },
+            })
+            const j = await r.json()
+            userId = j?.user?.id ?? null
+            if (!j?.session) return handleUnauthorized(rule, url, isApi)
+          }
+
+          const gr = await (config as any).adapter?.getUserGlobalRole?.(userId)
+          const globalRole = gr?.role ?? null
+          if (!globalRole || !requiredGlobal.includes(globalRole)) {
+            // Global role denied: API => 401, Pages => redirect to /403
             if (isApi)
               return new NextResponse(JSON.stringify({ error: 'forbidden' }), {
                 status: 401,

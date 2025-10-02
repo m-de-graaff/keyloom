@@ -1,4 +1,10 @@
-import type { Entitlements, Invite, Membership, Organization } from '../../rbac/types'
+import type {
+  Entitlements,
+  Invite,
+  Membership,
+  Organization,
+  UserGlobalRole,
+} from '../../rbac/types'
 import type { Account, ID, Session, User, VerificationToken } from '../../types'
 
 export type MemoryStore = {
@@ -28,6 +34,8 @@ export type MemoryStore = {
   invites: Map<ID, Invite>
   inviteByOrgToken: Map<string, ID> // `${orgId}:${tokenHash}` -> inviteId
   entitlements: Map<ID, Entitlements>
+  globalRoles: Map<ID, UserGlobalRole>
+  globalRoleByUserId: Map<ID, ID> // userId -> globalRoleId
 
   // Secondary indexes
   byEmail: Map<string, ID>
@@ -50,6 +58,8 @@ export function newStore(): MemoryStore {
     invites: new Map(),
     inviteByOrgToken: new Map(),
     entitlements: new Map(),
+    globalRoles: new Map(),
+    globalRoleByUserId: new Map(),
     // Indexes
     byEmail: new Map(),
     byProvider: new Map(),

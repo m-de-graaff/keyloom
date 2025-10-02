@@ -15,6 +15,20 @@ export function can(role: Role, perm: Permission, map: PermissionMap) {
   return allowed.includes(role)
 }
 
+// Global role utilities
+export function hasGlobalRole(role: Role, required: Role) {
+  return role === required
+}
+
+export function hasAnyGlobalRole(role: Role, required: Role[]) {
+  return required.includes(role)
+}
+
+export function canGlobal(role: Role, perm: Permission, map: PermissionMap) {
+  const allowed = map[perm] ?? []
+  return allowed.includes(role)
+}
+
 export function isRbacMappingConfigured(rbac?: RbacConfig | null): boolean {
   if (!rbac) return false
   const roles = (rbac as RbacConfig).roles as unknown

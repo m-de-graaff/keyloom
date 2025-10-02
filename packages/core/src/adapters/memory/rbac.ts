@@ -4,143 +4,123 @@ import type {
   Membership,
   Organization,
   RbacAdapter,
-} from "../../rbac/types";
-import type { ID } from "../../types";
-import { newId } from "../../util/ids";
-import { now } from "../../util/time";
-import type { MemoryStore } from "./store";
+  UserGlobalRole,
+} from '../../rbac/types'
+import type { ID } from '../../types'
+import { newId } from '../../util/ids'
+import { now } from '../../util/time'
+import type { MemoryStore } from './store'
 
 export function memoryRbac(store: MemoryStore): RbacAdapter {
   return {
-    async createOrganization(data: {
-      name: string;
-      slug?: string | null;
-    }): Promise<Organization> {
-      const id = newId();
-      const dt = now();
+    async createOrganization(data: { name: string; slug?: string | null }): Promise<Organization> {
+      const id = newId()
+      const dt = now()
       const org: Organization = {
         id,
         name: data.name,
         slug: data.slug ?? null,
         createdAt: dt,
         updatedAt: dt,
-      };
-      store.orgs.set(id, org);
-      return org;
+      }
+      store.orgs.set(id, org)
+      return org
     },
 
     async getOrganization(id: ID) {
-      return store.orgs.get(id) ?? null;
+      return store.orgs.get(id) ?? null
     },
 
     async getOrganizationsByUser(userId: ID) {
-      const orgIds = new Set<ID>();
+      const orgIds = new Set<ID>()
       for (const m of store.memberships.values()) {
-        if (m.userId === userId && m.status === "active") orgIds.add(m.orgId);
+        if (m.userId === userId && m.status === 'active') orgIds.add(m.orgId)
       }
       return Array.from(orgIds)
         .map((oid) => store.orgs.get(oid)!)
-        .filter(Boolean);
+        .filter(Boolean)
     },
 
-    async addMember(data: {
-      userId: ID;
-      orgId: ID;
-      role: string;
-    }): Promise<Membership> {
-      const key = `${data.userId}:${data.orgId}`;
+    async addMember(data: { userId: ID; orgId: ID; role: string }): Promise<Membership> {
+      const key = `${data.userId}:${data.orgId}`
       if (store.membershipByUserOrg.has(key)) {
-        const existing = store.memberships.get(
-          store.membershipByUserOrg.get(key)!
-        )!;
-        return existing;
+        const existing = store.memberships.get(store.membershipByUserOrg.get(key)!)!
+        return existing
       }
-      const id = newId();
-      const dt = now();
+      const id = newId()
+      const dt = now()
       const m: Membership = {
         id,
         userId: data.userId,
         orgId: data.orgId,
         role: data.role,
-        status: "active",
+        status: 'active',
         createdAt: dt,
         updatedAt: dt,
-      };
-      store.memberships.set(id, m);
-      store.membershipByUserOrg.set(key, id);
-      return m;
+      }
+      store.memberships.set(id, m)
+      store.membershipByUserOrg.set(key, id)
+      return m
     },
 
     async updateMember(
       id: ID,
-      data: Partial<Pick<Membership, "role" | "status">>
+      data: Partial<Pick<Membership, 'role' | 'status'>>,
     ): Promise<Membership> {
-      const prev = store.memberships.get(id);
-      if (!prev) throw new Error("membership_not_found");
+      const prev = store.memberships.get(id)
+      if (!prev) throw new Error('membership_not_found')
 
       // Last owner protection: prevent downgrading the last 'owner'
       const isDowngradeOwner =
-        prev.role === "owner" &&
-        typeof data.role !== "undefined" &&
-        data.role !== "owner";
+        prev.role === 'owner' && typeof data.role !== 'undefined' && data.role !== 'owner'
       if (isDowngradeOwner) {
-        let ownerCount = 0;
+        let ownerCount = 0
         for (const m of store.memberships.values())
-          if (
-            m.orgId === prev.orgId &&
-            m.role === "owner" &&
-            m.status === "active"
-          )
-            ownerCount++;
-        if (ownerCount <= 1) throw new Error("last_owner");
+          if (m.orgId === prev.orgId && m.role === 'owner' && m.status === 'active') ownerCount++
+        if (ownerCount <= 1) throw new Error('last_owner')
       }
 
-      const next: Membership = { ...prev, ...data, updatedAt: now() };
-      store.memberships.set(id, next);
-      return next;
+      const next: Membership = { ...prev, ...data, updatedAt: now() }
+      store.memberships.set(id, next)
+      return next
     },
 
     async removeMember(id: ID): Promise<void> {
-      const prev = store.memberships.get(id);
-      if (!prev) return;
+      const prev = store.memberships.get(id)
+      if (!prev) return
 
       // Last owner protection: prevent removing the last 'owner'
-      if (prev.role === "owner") {
-        let ownerCount = 0;
+      if (prev.role === 'owner') {
+        let ownerCount = 0
         for (const m of store.memberships.values())
-          if (
-            m.orgId === prev.orgId &&
-            m.role === "owner" &&
-            m.status === "active"
-          )
-            ownerCount++;
-        if (ownerCount <= 1) throw new Error("last_owner");
+          if (m.orgId === prev.orgId && m.role === 'owner' && m.status === 'active') ownerCount++
+        if (ownerCount <= 1) throw new Error('last_owner')
       }
 
-      store.memberships.delete(id);
-      store.membershipByUserOrg.delete(`${prev.userId}:${prev.orgId}`);
+      store.memberships.delete(id)
+      store.membershipByUserOrg.delete(`${prev.userId}:${prev.orgId}`)
     },
 
     async getMembership(userId: ID, orgId: ID) {
-      const mid = store.membershipByUserOrg.get(`${userId}:${orgId}`);
-      return mid ? store.memberships.get(mid) ?? null : null;
+      const mid = store.membershipByUserOrg.get(`${userId}:${orgId}`)
+      return mid ? (store.memberships.get(mid) ?? null) : null
     },
 
     async listMembers(orgId: ID) {
-      const out: (Membership & { userEmail?: string | null })[] = [];
+      const out: (Membership & { userEmail?: string | null })[] = []
       for (const m of store.memberships.values())
-        if (m.orgId === orgId) out.push({ ...m, userEmail: null });
-      return out;
+        if (m.orgId === orgId) out.push({ ...m, userEmail: null })
+      return out
     },
 
     async createInvite(data: {
-      orgId: ID;
-      email: string;
-      role: string;
-      tokenHash: string;
-      expiresAt: Date;
+      orgId: ID
+      email: string
+      role: string
+      tokenHash: string
+      expiresAt: Date
     }): Promise<Invite> {
-      const id = newId();
+      const id = newId()
       const inv: Invite = {
         id,
         orgId: data.orgId,
@@ -150,29 +130,82 @@ export function memoryRbac(store: MemoryStore): RbacAdapter {
         expiresAt: data.expiresAt,
         createdAt: now(),
         acceptedAt: null,
-      };
-      store.invites.set(id, inv);
-      store.inviteByOrgToken.set(`${data.orgId}:${data.tokenHash}`, id);
-      return inv;
+      }
+      store.invites.set(id, inv)
+      store.inviteByOrgToken.set(`${data.orgId}:${data.tokenHash}`, id)
+      return inv
     },
 
     async getInviteByTokenHash(orgId: ID, tokenHash: string) {
-      const id = store.inviteByOrgToken.get(`${orgId}:${tokenHash}`);
-      return id ? store.invites.get(id) ?? null : null;
+      const id = store.inviteByOrgToken.get(`${orgId}:${tokenHash}`)
+      return id ? (store.invites.get(id) ?? null) : null
     },
 
     async consumeInvite(inviteId: ID) {
-      const inv = store.invites.get(inviteId);
-      if (!inv) return;
-      store.invites.set(inviteId, { ...inv, acceptedAt: now() });
+      const inv = store.invites.get(inviteId)
+      if (!inv) return
+      store.invites.set(inviteId, { ...inv, acceptedAt: now() })
     },
 
     async getEntitlements(orgId: ID): Promise<Entitlements | null> {
-      return store.entitlements.get(orgId) ?? null;
+      return store.entitlements.get(orgId) ?? null
     },
 
     async setEntitlements(orgId: ID, ent: Entitlements): Promise<void> {
-      store.entitlements.set(orgId, ent);
+      store.entitlements.set(orgId, ent)
     },
-  };
+
+    // Global Roles implementation
+    async assignGlobalRole(data: { userId: ID; role: string }): Promise<UserGlobalRole> {
+      if (store.globalRoleByUserId.has(data.userId)) {
+        const existing = store.globalRoles.get(store.globalRoleByUserId.get(data.userId)!)!
+        return existing
+      }
+      const id = newId()
+      const dt = now()
+      const globalRole: UserGlobalRole = {
+        id,
+        userId: data.userId,
+        role: data.role,
+        status: 'active',
+        createdAt: dt,
+        updatedAt: dt,
+      }
+      store.globalRoles.set(id, globalRole)
+      store.globalRoleByUserId.set(data.userId, id)
+      return globalRole
+    },
+
+    async updateGlobalRole(
+      id: ID,
+      data: Partial<Pick<UserGlobalRole, 'role' | 'status'>>,
+    ): Promise<UserGlobalRole> {
+      const prev = store.globalRoles.get(id)
+      if (!prev) throw new Error('global_role_not_found')
+      const next: UserGlobalRole = { ...prev, ...data, updatedAt: now() }
+      store.globalRoles.set(id, next)
+      return next
+    },
+
+    async removeGlobalRole(id: ID): Promise<void> {
+      const prev = store.globalRoles.get(id)
+      if (!prev) return
+      store.globalRoles.delete(id)
+      store.globalRoleByUserId.delete(prev.userId)
+    },
+
+    async getUserGlobalRole(userId: ID): Promise<UserGlobalRole | null> {
+      const id = store.globalRoleByUserId.get(userId)
+      return id ? (store.globalRoles.get(id) ?? null) : null
+    },
+
+    async listUsersWithGlobalRole(
+      role: string,
+    ): Promise<(UserGlobalRole & { userEmail?: string | null })[]> {
+      const out: (UserGlobalRole & { userEmail?: string | null })[] = []
+      for (const gr of store.globalRoles.values())
+        if (gr.role === role && gr.status === 'active') out.push({ ...gr, userEmail: null })
+      return out
+    },
+  }
 }

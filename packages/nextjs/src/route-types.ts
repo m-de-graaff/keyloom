@@ -1,8 +1,15 @@
-export type Visibility = 'public' | '!public' | '!authed' | 'private' | `role:${string}`
+export type Visibility =
+  | 'public'
+  | '!public'
+  | '!authed'
+  | 'private'
+  | `role:${string}`
+  | `global:${string}`
 
 export type KeyloomRouteRule = {
   visibility: Visibility
   roles?: string[]
+  globalRoles?: string[]
   org?: boolean | 'required'
   redirectTo?: string
   mode?: 'redirect' | '401'

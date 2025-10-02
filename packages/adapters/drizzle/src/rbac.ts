@@ -1,4 +1,12 @@
-import type { Entitlements, ID, Invite, Membership, Organization, RbacAdapter } from '@keyloom/core'
+import type {
+  Entitlements,
+  ID,
+  Invite,
+  Membership,
+  Organization,
+  RbacAdapter,
+  UserGlobalRole,
+} from '@keyloom/core'
 import { and, desc, eq, isNull } from 'drizzle-orm'
 import { withErrorMapping } from './errors'
 import type { DrizzleAdapterConfig } from './index'
@@ -327,6 +335,92 @@ export function createRbacAdapter(db: DrizzleDatabase, _config: DrizzleAdapterCo
           createdAt: result.createdAt,
           updatedAt: result.updatedAt,
         } as Entitlements & { orgId: ID; createdAt: Date; updatedAt: Date }
+      })
+    },
+
+    // Global Roles implementation
+    async assignGlobalRole(data: { userId: ID; role: string }): Promise<UserGlobalRole> {
+      return withErrorMapping(async () => {
+        // Check if user already has a global role
+        const [existing] = await (db as any)
+          .select()
+          .from(schema.userGlobalRoles)
+          .where(eq(schema.userGlobalRoles.userId, data.userId))
+          .limit(1)
+
+        if (existing) return existing as UserGlobalRole
+
+        const globalRoleData = {
+          id: crypto.randomUUID(),
+          userId: data.userId,
+          role: data.role,
+          status: 'active',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }
+
+        const [globalRole] = await (db as any)
+          .insert(schema.userGlobalRoles)
+          .values(globalRoleData)
+          .returning()
+        return globalRole as UserGlobalRole
+      })
+    },
+
+    async updateGlobalRole(
+      id: ID,
+      data: Partial<Pick<UserGlobalRole, 'role' | 'status'>>,
+    ): Promise<UserGlobalRole> {
+      return withErrorMapping(async () => {
+        const updateData = {
+          ...data,
+          updatedAt: new Date(),
+        }
+
+        const [globalRole] = await (db as any)
+          .update(schema.userGlobalRoles)
+          .set(updateData)
+          .where(eq(schema.userGlobalRoles.id, id))
+          .returning()
+
+        if (!globalRole) throw new Error('global_role_not_found')
+        return globalRole as UserGlobalRole
+      })
+    },
+
+    async removeGlobalRole(id: ID): Promise<void> {
+      return withErrorMapping(async () => {
+        await (db as any).delete(schema.userGlobalRoles).where(eq(schema.userGlobalRoles.id, id))
+      })
+    },
+
+    async getUserGlobalRole(userId: ID): Promise<UserGlobalRole | null> {
+      return withErrorMapping(async () => {
+        const [globalRole] = await (db as any)
+          .select()
+          .from(schema.userGlobalRoles)
+          .where(eq(schema.userGlobalRoles.userId, userId))
+          .limit(1)
+
+        return (globalRole as UserGlobalRole) || null
+      })
+    },
+
+    async listUsersWithGlobalRole(
+      role: string,
+    ): Promise<(UserGlobalRole & { userEmail?: string | null })[]> {
+      return withErrorMapping(async () => {
+        const globalRoles = await (db as any)
+          .select()
+          .from(schema.userGlobalRoles)
+          .where(
+            and(eq(schema.userGlobalRoles.role, role), eq(schema.userGlobalRoles.status, 'active')),
+          )
+
+        return globalRoles.map((gr: any) => ({
+          ...gr,
+          userEmail: null, // Best-effort: would need join with users table
+        })) as (UserGlobalRole & { userEmail?: string | null })[]
       })
     },
   }
