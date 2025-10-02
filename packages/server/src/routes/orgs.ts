@@ -1,4 +1,4 @@
-import { PrismaAdapter } from '@keyloom/adapters/prisma'
+import { PrismaAdapter } from '@keyloom/adapters'
 import { getCurrentSession } from '@keyloom/core/runtime/current-session'
 import { tokenHash } from '@keyloom/core/crypto/token-hash'
 import * as Prisma from '@prisma/client'

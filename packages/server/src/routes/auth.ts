@@ -1,4 +1,4 @@
-import { PrismaAdapter } from '@keyloom/adapters/prisma'
+import { PrismaAdapter } from '@keyloom/adapters'
 import { register } from '@keyloom/core/runtime/register'
 import { login } from '@keyloom/core/runtime/login'
 import { logout } from '@keyloom/core/runtime/logout'

@@ -5,5 +5,9 @@
     "rootDir": "src",
     "types": ["optional-deps", "node"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "src/types/**/*"],
+  "references": [
+    { "path": "../adapters" },
+    { "path": "../core" }
+  ]
 }
