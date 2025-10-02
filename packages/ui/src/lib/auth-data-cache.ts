@@ -49,7 +49,11 @@ class AuthDataCache {
   }
 
   setRefetching(key: string, v: boolean) {
-    const prev = this.cache.get(key) ?? { data: undefined, timestamp: Date.now(), isRefetching: false }
+    const prev = this.cache.get(key) ?? {
+      data: undefined,
+      timestamp: Date.now(),
+      isRefetching: false,
+    }
     this.cache.set(key, { ...prev, isRefetching: v })
     this.notify(key)
   }
@@ -69,3 +73,28 @@ class AuthDataCache {
 
 export const authDataCache = new AuthDataCache()
 
+// Export the class for testing or custom instances
+export { AuthDataCache }
+
+// Helper function to generate cache keys
+export function createCacheKey(prefix: string, params?: Record<string, any>): string {
+  if (!params || Object.keys(params).length === 0) {
+    return prefix
+  }
+
+  const sortedParams = Object.keys(params)
+    .sort()
+    .map((key) => `${key}:${JSON.stringify(params[key])}`)
+    .join('|')
+
+  return `${prefix}:${sortedParams}`
+}
+
+// Cache expiration utilities
+export function isCacheExpired(entry: CacheEntry<unknown>, maxAge: number): boolean {
+  return Date.now() - entry.timestamp > maxAge
+}
+
+export function getCacheAge(entry: CacheEntry<unknown>): number {
+  return Date.now() - entry.timestamp
+}

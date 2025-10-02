@@ -36,6 +36,8 @@ export function memoryAdapter(init?: { store?: MemoryStore; tokenSecret?: string
           image: (data.image ?? null) as string | null,
           createdAt: nowDt,
           updatedAt: nowDt,
+          // Preserve any additional fields from profile overrides
+          ...data,
         }
         store.users.set(id, u)
         if (u.email) store.byEmail.set(u.email, id)

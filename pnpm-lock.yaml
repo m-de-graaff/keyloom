@@ -322,6 +322,12 @@ importers:
 
   packages/ui:
     dependencies:
+      '@keyloom/core':
+        specifier: workspace:*
+        version: link:../core
+      '@noble/hashes':
+        specifier: ^1.4.0
+        version: 1.8.0
       '@radix-ui/react-avatar':
         specifier: '>=1.0.0'
         version: 1.1.10(@types/react-dom@19.1.9(@types/react@19.1.13))(@types/react@19.1.13)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -1139,6 +1145,10 @@ packages:
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
+
+  '@noble/hashes@1.8.0':
+    resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
+    engines: {node: ^14.21.3 || >=16}
 
   '@node-rs/argon2-android-arm-eabi@2.0.2':
     resolution: {integrity: sha512-DV/H8p/jt40lrao5z5g6nM9dPNPGEHL+aK6Iy/og+dbL503Uj0AHLqj1Hk9aVUSCNnsDdUEKp4TVMi0YakDYKw==}
@@ -5412,6 +5422,8 @@ snapshots:
 
   '@next/swc-win32-x64-msvc@15.5.3':
     optional: true
+
+  '@noble/hashes@1.8.0': {}
 
   '@node-rs/argon2-android-arm-eabi@2.0.2':
     optional: true

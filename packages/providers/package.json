@@ -65,6 +65,54 @@
       "typescript": "./src/dev/index.ts",
       "import": "./dist/dev.js",
       "require": "./dist/dev.cjs"
+    },
+    "./authentik": {
+      "types": "./dist/authentik/index.d.ts",
+      "typescript": "./src/authentik/index.ts",
+      "import": "./dist/authentik.js",
+      "require": "./dist/authentik.cjs"
+    },
+    "./facebook": {
+      "types": "./dist/facebook/index.d.ts",
+      "typescript": "./src/facebook/index.ts",
+      "import": "./dist/facebook.js",
+      "require": "./dist/facebook.cjs"
+    },
+    "./instagram": {
+      "types": "./dist/instagram/index.d.ts",
+      "typescript": "./src/instagram/index.ts",
+      "import": "./dist/instagram.js",
+      "require": "./dist/instagram.cjs"
+    },
+    "./linkedin": {
+      "types": "./dist/linkedin/index.d.ts",
+      "typescript": "./src/linkedin/index.ts",
+      "import": "./dist/linkedin.js",
+      "require": "./dist/linkedin.cjs"
+    },
+    "./reddit": {
+      "types": "./dist/reddit/index.d.ts",
+      "typescript": "./src/reddit/index.ts",
+      "import": "./dist/reddit.js",
+      "require": "./dist/reddit.cjs"
+    },
+    "./spotify": {
+      "types": "./dist/spotify/index.d.ts",
+      "typescript": "./src/spotify/index.ts",
+      "import": "./dist/spotify.js",
+      "require": "./dist/spotify.cjs"
+    },
+    "./tiktok": {
+      "types": "./dist/tiktok/index.d.ts",
+      "typescript": "./src/tiktok/index.ts",
+      "import": "./dist/tiktok.js",
+      "require": "./dist/tiktok.cjs"
+    },
+    "./twitch": {
+      "types": "./dist/twitch/index.d.ts",
+      "typescript": "./src/twitch/index.ts",
+      "import": "./dist/twitch.js",
+      "require": "./dist/twitch.cjs"
     }
   },
   "files": [

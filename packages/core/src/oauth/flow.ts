@@ -81,8 +81,14 @@ export async function completeOAuth(opts: {
   const tokens = await exchangeToken(provider, code, `${baseUrl}${callbackPath}`, st.v)
   const profile = await fetchUserInfo(provider, tokens)
 
-  const existingAcc = profile?.id
-    ? await adapter.getAccountByProvider(provider.id, profile.id)
+  // Apply profile overrides if provided
+  const finalProfile =
+    profile && provider.profileOverrides
+      ? { ...profile, ...provider.profileOverrides(profile) }
+      : profile
+
+  const existingAcc = finalProfile?.id
+    ? await adapter.getAccountByProvider(provider.id, finalProfile.id)
     : null
 
   // If linking to an existing signed-in user
@@ -99,7 +105,7 @@ export async function completeOAuth(opts: {
         id: undefined as any,
         userId: user.id,
         provider: provider.id,
-        providerAccountId: profile?.id ?? 'no-id',
+        providerAccountId: finalProfile?.id ?? 'no-id',
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token ?? null,
         tokenType: tokens.token_type ?? null,
@@ -114,20 +120,26 @@ export async function completeOAuth(opts: {
   let user = existingAcc ? await adapter.getUser(existingAcc.userId) : null
 
   if (!user) {
-    user = profile?.email ? await adapter.getUserByEmail(profile.email) : null
+    user = finalProfile?.email ? await adapter.getUserByEmail(finalProfile.email) : null
     if (!user) {
-      user = await adapter.createUser({
-        email: profile?.email ?? null,
-        emailVerified: profile?.emailVerified ? new Date() : null,
-        name: profile?.name ?? null,
-        image: profile?.image ?? null,
-      })
+      // Build user data with profile overrides already applied in finalProfile
+      const { emailVerified: _, ...additionalFields } = finalProfile || {}
+      const userData = {
+        email: finalProfile?.email ?? null,
+        emailVerified: finalProfile?.emailVerified ? new Date() : null,
+        name: finalProfile?.name ?? null,
+        image: finalProfile?.image ?? null,
+        // Spread any additional fields from finalProfile (which includes overrides)
+        ...additionalFields,
+      }
+
+      user = await adapter.createUser(userData)
     }
     await adapter.linkAccount({
       id: undefined as any,
       userId: user?.id,
       provider: provider.id,
-      providerAccountId: profile?.id ?? 'no-id',
+      providerAccountId: finalProfile?.id ?? 'no-id',
       accessToken: tokens.access_token,
       refreshToken: tokens.refresh_token ?? null,
       tokenType: tokens.token_type ?? null,

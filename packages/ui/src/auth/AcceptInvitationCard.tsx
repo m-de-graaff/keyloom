@@ -4,7 +4,7 @@ import { CheckIcon, Loader2, XIcon } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, useContext } from "react"
 
 import { authDataCache } from "../lib/auth-data-cache"
-import { AuthUIContext } from "../lib/auth-ui-provider"
+import { AuthUIProviderContext } from "../lib/auth-ui-provider"
 import { cn, getLocalizedError, getSearchParam } from "../lib/utils"
 import type { FetchError } from "../types/fetch-error"
 import { Button } from "../components/button"
@@ -41,7 +41,7 @@ export function useAuthData<T>({
     hooks: { useSession },
     toast,
     localization,
-  } = useContext(AuthUIContext)!
+  } = useContext(AuthUIProviderContext)!
   const { data: sessionData, isPending: sessionPending } = useSession()
 
   const queryFnRef = useRef(queryFn)
@@ -134,13 +134,13 @@ export function useAuthData<T>({
 }
 
 export function AcceptInvitationCard({ className, classNames, localization: localizationProp }: AcceptInvitationCardProps) {
-  const { localization: contextLocalization, redirectTo, replace, toast } = useContext(AuthUIContext)!
+  const { localization: contextLocalization, redirectTo, replace, toast } = useContext(AuthUIProviderContext)!
 
   const localization = useMemo(() => ({ ...contextLocalization, ...localizationProp }) as Record<string, string>, [contextLocalization, localizationProp])
 
   const {
     hooks: { useSession },
-  } = useContext(AuthUIContext)!
+  } = useContext(AuthUIProviderContext)!
   const { data: sessionData } = useSession()
   const [invitationId, setInvitationId] = useState<string | null>(null)
 
@@ -174,7 +174,7 @@ function AcceptInvitationContent({ className, classNames, localization: localiza
     redirectTo,
     replace,
     toast,
-  } = useContext(AuthUIContext)!
+  } = useContext(AuthUIProviderContext)!
 
   const localization = useMemo(() => ({ ...contextLocalization, ...localizationProp }) as Record<string, string>, [contextLocalization, localizationProp])
 
@@ -182,7 +182,7 @@ function AcceptInvitationContent({ className, classNames, localization: localiza
   const [isAccepting, setIsAccepting] = useState(false)
   const isProcessing = isRejecting || isAccepting
 
-  const { data: invitation, isPending } = (useInvitation?.({ query: { id: invitationId } }) ?? { data: null, isPending: true }) as {
+  const { data: invitation, isPending } = (useInvitation?.() ?? { data: null, isPending: true }) as {
     data: null | {
       id: string
       organizationId: string
@@ -248,7 +248,8 @@ function AcceptInvitationContent({ className, classNames, localization: localiza
   ]
 
   const roles = [...builtInRoles, ...(organization?.customRoles || [])]
-  const roleLabel = roles.find((r) => r.role === invitation?.role)?.label || invitation?.role
+  const role = roles.find((r) => ('id' in r ? r.id : r.role) === invitation?.role)
+  const roleLabel = role ? ('name' in role ? role.name : role.label) : invitation?.role
 
   if (!invitation) return <AcceptInvitationSkeleton className={className} classNames={classNames} />
 

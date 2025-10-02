@@ -23,7 +23,7 @@
   },
   "scripts": {
     "build": "tsup && pnpm build:types",
-    "build:types": "tsc src/index.ts src/auth/index.ts src/components/index.ts src/primitives/index.ts src/org/index.ts src/rbac/index.ts src/icons/index.tsx src/theme/tokens.ts --declaration --emitDeclarationOnly --outDir dist --jsx react-jsx --moduleResolution bundler --module ES2022 --target ES2022 --skipLibCheck",
+    "build:types": "tsc src/index.ts src/auth/index.ts src/components/index.ts src/primitives/index.ts src/org/index.ts src/rbac/index.ts src/icons/index.tsx src/theme/tokens.ts src/types/index.ts src/localization/index.ts src/lib/index.ts --declaration --emitDeclarationOnly --outDir dist --jsx react-jsx --moduleResolution bundler --module ES2022 --target ES2022 --skipLibCheck",
     "dev": "tsup --watch",
     "typecheck": "tsc -b",
     "test": "vitest run --passWithNoTests",
@@ -71,7 +71,22 @@
       "require": "./dist/theme/tokens.cjs"
     },
     "./theme/tailwind-preset.cjs": "./src/theme/tailwind-preset.cjs",
-    "./theme/css-vars.css": "./src/theme/css-vars.css"
+    "./theme/css-vars.css": "./src/theme/css-vars.css",
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.js",
+      "require": "./dist/types/index.cjs"
+    },
+    "./localization": {
+      "types": "./dist/localization/index.d.ts",
+      "import": "./dist/localization/index.js",
+      "require": "./dist/localization/index.cjs"
+    },
+    "./lib": {
+      "types": "./dist/lib/index.d.ts",
+      "import": "./dist/lib/index.js",
+      "require": "./dist/lib/index.cjs"
+    }
   },
   "peerDependencies": {
     "@radix-ui/react-avatar": ">=1.0.0",
@@ -89,6 +104,10 @@
     "next": {
       "optional": true
     }
+  },
+  "dependencies": {
+    "@keyloom/core": "workspace:*",
+    "@noble/hashes": "^1.4.0"
   },
   "devDependencies": {
     "@types/react": "^19.1.13",

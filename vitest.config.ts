@@ -18,6 +18,7 @@ export default defineConfig({
       'packages/providers/tests/**/*.test.ts',
       'packages/adapters/tests/**/*.test.ts',
       'packages/adapters/**/tests/**/*.test.ts',
+      'packages/ui/src/**/*.test.ts',
     ],
     exclude: ['**/node_modules/**', '**/dist/**'],
     environment: 'node',

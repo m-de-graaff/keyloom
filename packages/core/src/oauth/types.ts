@@ -18,6 +18,7 @@ export type OAuthProvider = {
     map?: (raw: any, tokens: Tokens) => Profile
   }
   profileFromIdToken?: (claims: Record<string, any>) => Profile
+  profileOverrides?: (profile: Profile) => Record<string, any>
   scopes?: string[]
 }
 
