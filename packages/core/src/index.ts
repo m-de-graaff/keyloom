@@ -42,5 +42,9 @@ export * from "./session/model";
 export * from "./tokens/verification";
 export * from "./types";
 export * as plugins from "./plugins";
+// email functionality
+export * as email from "./email";
+// magic link authentication
+export * as magicLink from "./magic-link";
 // utilities & facades
 export * as util from "./util/time";
