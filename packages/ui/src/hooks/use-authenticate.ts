@@ -1,10 +1,10 @@
-import { useContext, useEffect } from "react"
-import { AuthUIContext } from "../lib/auth-ui-provider"
-import type { AuthView } from "../types"
+import { useContext, useEffect } from "react";
+import { AuthUIProviderContext } from "../lib/auth-ui-provider";
+import type { AuthView } from "../types";
 
 interface AuthenticateOptions {
-  authView?: AuthView
-  enabled?: boolean
+  authView?: AuthView;
+  enabled?: boolean;
 }
 
 /**
@@ -12,38 +12,32 @@ interface AuthenticateOptions {
  * Automatically redirects to auth flow if user is not authenticated
  */
 export function useAuthenticate(options?: AuthenticateOptions) {
-  const { authView = "sign-in", enabled = true } = options ?? {}
+  const { authView = "sign-in", enabled = true } = options ?? {};
 
   const {
     hooks: { useSession },
     basePath,
     viewPaths,
-    replace
-  } = useContext(AuthUIContext)
+    replace,
+  } = useContext(AuthUIProviderContext);
 
-  const { data, isPending, error, refetch } = useSession()
+  const { data, isPending, error, refetch } = useSession();
 
   useEffect(() => {
-    if (!enabled || isPending || data) return
+    if (!enabled || isPending || data) return;
 
-    const currentUrl = new URL(window.location.href)
+    const currentUrl = new URL(window.location.href);
     const redirectTo =
       currentUrl.searchParams.get("redirectTo") ||
-      window.location.href.replace(window.location.origin, "")
+      window.location.href.replace(window.location.origin, "");
 
-    const authPath = viewPaths.auth[authView]
+    const authPath = viewPaths.auth[authView];
     if (authPath) {
-      replace(`${basePath}/${authPath}?redirectTo=${encodeURIComponent(redirectTo)}`)
+      replace(
+        `${basePath}/${authPath}?redirectTo=${encodeURIComponent(redirectTo)}`
+      );
     }
-  }, [
-    isPending,
-    data,
-    basePath,
-    viewPaths,
-    replace,
-    authView,
-    enabled
-  ])
+  }, [isPending, data, basePath, viewPaths, replace, authView, enabled]);
 
   return {
     data,
@@ -51,6 +45,6 @@ export function useAuthenticate(options?: AuthenticateOptions) {
     isPending,
     error,
     refetch,
-    isAuthenticated: !!data?.user
-  }
+    isAuthenticated: !!data?.user,
+  };
 }

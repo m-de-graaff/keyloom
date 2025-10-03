@@ -1,37 +1,37 @@
-"use client"
+"use client";
 
-import React, { useState, useContext } from "react"
-import { Button } from "../components/button"
-import { Input } from "../components/input"
-import { Label } from "../components/label"
-import { Loader2, Mail, CheckCircle } from "lucide-react"
-import { AuthUIProviderContext } from "./auth-ui-provider"
-import type { FetchError } from "../types/errors"
+import React, { useState, useContext } from "react";
+import { Button } from "../components/button";
+import { Input } from "../components/input";
+import { Label } from "../components/label";
+import { Loader2, Mail, CheckCircle } from "lucide-react";
+import { AuthUIProviderContext } from "../lib/auth-ui-provider";
+import type { FetchError } from "../types/fetch-error";
 
 export interface MagicLinkFormProps {
   /** Custom API endpoint for magic link request */
-  requestEndpoint?: string
+  requestEndpoint?: string;
   /** Custom redirect URL after successful authentication */
-  redirectTo?: string
+  redirectTo?: string;
   /** Custom TTL for magic link in minutes */
-  ttlMinutes?: number
+  ttlMinutes?: number;
   /** Initial email value */
-  email?: string
+  email?: string;
   /** Custom CSS classes */
-  className?: string
+  className?: string;
   /** Custom success handler */
-  onSuccess?: (result: any) => void
+  onSuccess?: (result: any) => void;
   /** Custom error handler */
-  onError?: (error: FetchError) => void
+  onError?: (error: FetchError) => void;
   /** Custom CSS classes for different parts */
   classNames?: {
-    container?: string
-    form?: string
-    input?: string
-    button?: string
-    success?: string
-    error?: string
-  }
+    container?: string;
+    form?: string;
+    input?: string;
+    button?: string;
+    success?: string;
+    error?: string;
+  };
 }
 
 export function MagicLinkForm({
@@ -44,24 +44,24 @@ export function MagicLinkForm({
   onError,
   classNames,
 }: MagicLinkFormProps) {
-  const context = useContext(AuthUIProviderContext)
-  const { localization, toast, navigate, viewPaths, basePath } = context || {}
+  const context = useContext(AuthUIProviderContext);
+  const { localization, toast, navigate, viewPaths, basePath } = context || {};
 
-  const [email, setEmail] = useState(initialEmail)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [email, setEmail] = useState(initialEmail);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+
     if (!email || !email.includes("@")) {
-      setError("Please enter a valid email address")
-      return
+      setError("Please enter a valid email address");
+      return;
     }
 
-    setError(null)
-    setIsLoading(true)
+    setError(null);
+    setIsLoading(true);
 
     try {
       const response = await fetch(requestEndpoint, {
@@ -74,57 +74,60 @@ export function MagicLinkForm({
           redirectTo,
           ttlMinutes,
         }),
-      })
+      });
 
-      const result = await response.json().catch(() => ({}))
+      const result = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        const errorMessage = result.error || result.message || "Failed to send magic link"
-        throw new Error(errorMessage)
+        const errorMessage =
+          result.error || result.message || "Failed to send magic link";
+        throw new Error(errorMessage);
       }
 
-      setIsSuccess(true)
+      setIsSuccess(true);
 
       // Show success toast
       if (toast) {
         toast({
           variant: "success",
-          message: localization?.MAGIC_LINK_SENT || "Magic link sent! Check your email.",
-        })
+          message:
+            localization?.MAGIC_LINK_SENT ||
+            "Magic link sent! Check your email.",
+        });
       }
 
       // Call custom success handler
       if (onSuccess) {
-        onSuccess(result)
+        onSuccess(result);
       }
     } catch (err: any) {
-      const errorMessage = err.message || "Failed to send magic link"
-      setError(errorMessage)
+      const errorMessage = err.message || "Failed to send magic link";
+      setError(errorMessage);
 
       // Show error toast
       if (toast) {
         toast({
           variant: "error",
           message: errorMessage,
-        })
+        });
       }
 
       // Call custom error handler
       if (onError) {
-        onError(err)
+        onError(err);
       }
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleBackToSignIn = () => {
-    if (navigate && viewPaths?.signIn) {
-      navigate(viewPaths.signIn)
+    if (navigate && viewPaths?.auth?.signIn) {
+      navigate(viewPaths.auth.signIn);
     } else if (typeof window !== "undefined") {
-      window.location.href = `${basePath || ""}/sign-in`
+      window.location.href = `${basePath || ""}/sign-in`;
     }
-  }
+  };
 
   if (isSuccess) {
     return (
@@ -138,13 +141,13 @@ export function MagicLinkForm({
               {localization?.MAGIC_LINK_SENT_TITLE || "Check your email"}
             </h2>
             <p className="text-muted-foreground mt-2">
-              {localization?.MAGIC_LINK_SENT_DESCRIPTION || 
+              {localization?.MAGIC_LINK_SENT_DESCRIPTION ||
                 `We've sent a magic link to ${email}. Click the link in the email to sign in.`}
             </p>
           </div>
           <div className="text-sm text-muted-foreground">
             <p>
-              {localization?.MAGIC_LINK_EXPIRES || 
+              {localization?.MAGIC_LINK_EXPIRES ||
                 `The link will expire in ${ttlMinutes} minutes.`}
             </p>
           </div>
@@ -157,7 +160,7 @@ export function MagicLinkForm({
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -170,12 +173,15 @@ export function MagicLinkForm({
           {localization?.MAGIC_LINK_TITLE || "Sign in with magic link"}
         </h2>
         <p className="text-muted-foreground">
-          {localization?.MAGIC_LINK_DESCRIPTION || 
+          {localization?.MAGIC_LINK_DESCRIPTION ||
             "Enter your email address and we'll send you a magic link to sign in."}
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className={`space-y-4 ${classNames?.form || ""}`}>
+      <form
+        onSubmit={handleSubmit}
+        className={`space-y-4 ${classNames?.form || ""}`}
+      >
         <div className="space-y-2">
           <Label htmlFor="email">
             {localization?.EMAIL_LABEL || "Email address"}
@@ -193,7 +199,9 @@ export function MagicLinkForm({
         </div>
 
         {error && (
-          <div className={`text-sm text-destructive ${classNames?.error || ""}`}>
+          <div
+            className={`text-sm text-destructive ${classNames?.error || ""}`}
+          >
             {error}
           </div>
         )}
@@ -227,5 +235,5 @@ export function MagicLinkForm({
         </Button>
       </div>
     </div>
-  )
+  );
 }

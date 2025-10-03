@@ -113,6 +113,18 @@
       "typescript": "./src/tokens/verification.ts",
       "import": "./dist/tokens/verification.js",
       "require": "./dist/tokens/verification.cjs"
+    },
+    "./email": {
+      "types": "./dist/email/index.d.ts",
+      "typescript": "./src/email/index.ts",
+      "import": "./dist/email/index.js",
+      "require": "./dist/email/index.cjs"
+    },
+    "./magic-link": {
+      "types": "./dist/magic-link/index.d.ts",
+      "typescript": "./src/magic-link/index.ts",
+      "import": "./dist/magic-link/index.js",
+      "require": "./dist/magic-link/index.cjs"
     }
   },
   "files": [

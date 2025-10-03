@@ -3,45 +3,57 @@
  * Supports standard SMTP servers with authentication
  */
 
-import type { EmailProvider, EmailMessage, EmailResult, SMTPConfig } from '../types'
+import type {
+  EmailProvider,
+  EmailMessage,
+  EmailResult,
+  SMTPConfig,
+} from "../types";
 
 /**
  * SMTP email provider
  */
 export class SMTPEmailProvider implements EmailProvider {
-  public readonly id = 'smtp'
-  private config: SMTPConfig
+  public readonly id = "smtp";
+  private config: SMTPConfig;
 
   constructor(config: SMTPConfig) {
-    this.config = config
-    this.validateConfig()
+    this.config = config;
+    this.validateConfig();
   }
 
   private validateConfig(): void {
     if (!this.config.host) {
-      throw new Error('SMTP host is required')
+      throw new Error("SMTP host is required");
     }
     if (!this.config.port || this.config.port <= 0) {
-      throw new Error('SMTP port must be a positive number')
+      throw new Error("SMTP port must be a positive number");
     }
     if (!this.config.auth?.user) {
-      throw new Error('SMTP username is required')
+      throw new Error("SMTP username is required");
     }
     if (!this.config.auth?.pass) {
-      throw new Error('SMTP password is required')
+      throw new Error("SMTP password is required");
     }
   }
 
   async send(message: EmailMessage): Promise<EmailResult> {
     try {
       // Dynamic import to avoid bundling nodemailer in client-side code
-      const nodemailer = await import('nodemailer')
-      
+      let nodemailer: typeof import("nodemailer");
+      try {
+        nodemailer = await import("nodemailer");
+      } catch (error) {
+        throw new Error(
+          "nodemailer package not found. Install with: npm install nodemailer @types/nodemailer"
+        );
+      }
+
       // Create transporter
       const transporter = nodemailer.createTransporter({
         host: this.config.host,
         port: this.config.port,
-        secure: this.config.secure ?? (this.config.port === 465),
+        secure: this.config.secure ?? this.config.port === 465,
         auth: {
           user: this.config.auth.user,
           pass: this.config.auth.pass,
@@ -50,27 +62,33 @@ export class SMTPEmailProvider implements EmailProvider {
         socketTimeout: this.config.options?.socketTimeout ?? 60000,
         ignoreTLS: this.config.options?.ignoreTLS ?? false,
         requireTLS: this.config.options?.requireTLS ?? false,
-      })
+      });
 
       // Send email
-      const info = await transporter.sendMail({
+      const mailOptions: any = {
         from: message.from,
         to: message.to,
         subject: message.subject,
         html: message.html,
-        text: message.text,
-      })
+      };
+
+      // Only add text if it's defined (exactOptionalPropertyTypes compliance)
+      if (message.text !== undefined) {
+        mailOptions.text = message.text;
+      }
+
+      const info = await transporter.sendMail(mailOptions);
 
       return {
         success: true,
         messageId: info.messageId,
-      }
+      };
     } catch (error) {
-      console.error('SMTP email sending failed:', error)
+      console.error("SMTP email sending failed:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown SMTP error',
-      }
+        error: error instanceof Error ? error.message : "Unknown SMTP error",
+      };
     }
   }
 }
@@ -79,7 +97,7 @@ export class SMTPEmailProvider implements EmailProvider {
  * Create an SMTP email provider
  */
 export function createSMTPProvider(config: SMTPConfig): EmailProvider {
-  return new SMTPEmailProvider(config)
+  return new SMTPEmailProvider(config);
 }
 
 /**
@@ -87,36 +105,36 @@ export function createSMTPProvider(config: SMTPConfig): EmailProvider {
  */
 export const smtpPresets = {
   gmail: {
-    host: 'smtp.gmail.com',
+    host: "smtp.gmail.com",
     port: 587,
     secure: false,
   },
   outlook: {
-    host: 'smtp-mail.outlook.com',
+    host: "smtp-mail.outlook.com",
     port: 587,
     secure: false,
   },
   yahoo: {
-    host: 'smtp.mail.yahoo.com',
+    host: "smtp.mail.yahoo.com",
     port: 587,
     secure: false,
   },
   sendgrid: {
-    host: 'smtp.sendgrid.net',
+    host: "smtp.sendgrid.net",
     port: 587,
     secure: false,
   },
   mailgun: {
-    host: 'smtp.mailgun.org',
+    host: "smtp.mailgun.org",
     port: 587,
     secure: false,
   },
   ses: {
-    host: 'email-smtp.us-east-1.amazonaws.com',
+    host: "email-smtp.us-east-1.amazonaws.com",
     port: 587,
     secure: false,
   },
-} as const
+} as const;
 
 /**
  * Create SMTP provider with preset configuration
@@ -126,13 +144,13 @@ export function createSMTPProviderWithPreset(
   auth: { user: string; pass: string },
   options?: Partial<SMTPConfig>
 ): EmailProvider {
-  const presetConfig = smtpPresets[preset]
+  const presetConfig = smtpPresets[preset];
   const config: SMTPConfig = {
     ...presetConfig,
     ...options,
     auth,
-  }
-  return createSMTPProvider(config)
+  };
+  return createSMTPProvider(config);
 }
 
 /**
@@ -140,23 +158,30 @@ export function createSMTPProviderWithPreset(
  */
 export async function validateSMTPConfig(config: SMTPConfig): Promise<boolean> {
   try {
-    const provider = new SMTPEmailProvider(config)
+    const provider = new SMTPEmailProvider(config);
     // Try to create transporter and verify connection
-    const nodemailer = await import('nodemailer')
+    let nodemailer: typeof import("nodemailer");
+    try {
+      nodemailer = await import("nodemailer");
+    } catch (error) {
+      throw new Error(
+        "nodemailer package not found. Install with: npm install nodemailer @types/nodemailer"
+      );
+    }
     const transporter = nodemailer.createTransporter({
       host: config.host,
       port: config.port,
-      secure: config.secure ?? (config.port === 465),
+      secure: config.secure ?? config.port === 465,
       auth: {
         user: config.auth.user,
         pass: config.auth.pass,
       },
-    })
-    
-    await transporter.verify()
-    return true
+    });
+
+    await transporter.verify();
+    return true;
   } catch (error) {
-    console.error('SMTP configuration validation failed:', error)
-    return false
+    console.error("SMTP configuration validation failed:", error);
+    return false;
   }
 }

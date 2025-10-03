@@ -2,9 +2,9 @@
  * Magic link authentication core logic for Keyloom
  */
 
-import { KeyloomError } from '../errors'
-import { issueVerificationToken } from '../tokens/verification'
-import { newSession } from '../session/model'
+import { KeyloomError } from "../errors";
+import { issueVerificationToken } from "../tokens/verification";
+import { newSession } from "../session/model";
 import type {
   MagicLinkRequestInput,
   MagicLinkVerifyInput,
@@ -14,8 +14,8 @@ import type {
   MagicLinkVerifyResult,
   MagicLinkUrlOptions,
   MagicLinkConfig,
-} from './types'
-import type { MagicLinkEmailData } from '../email/types'
+} from "./types";
+import type { MagicLinkEmailData } from "../email/types";
 
 /**
  * Default magic link configuration
@@ -25,24 +25,30 @@ export const defaultMagicLinkConfig: Required<MagicLinkConfig> = {
   defaultSessionTtlMinutes: 60,
   autoCreateUser: true,
   requireEmailVerification: false,
-  verifyPath: '/api/auth/magic-link/verify',
-}
+  verifyPath: "/api/auth/magic-link/verify",
+};
 
 /**
  * Generate a magic link URL
  */
 export function generateMagicLinkUrl(options: MagicLinkUrlOptions): string {
-  const { baseUrl, email, token, redirectTo, verifyPath = '/api/auth/magic-link/verify' } = options
-  
-  const url = new URL(verifyPath, baseUrl)
-  url.searchParams.set('email', email)
-  url.searchParams.set('token', token)
-  
+  const {
+    baseUrl,
+    email,
+    token,
+    redirectTo,
+    verifyPath = "/api/auth/magic-link/verify",
+  } = options;
+
+  const url = new URL(verifyPath, baseUrl);
+  url.searchParams.set("email", email);
+  url.searchParams.set("token", token);
+
   if (redirectTo) {
-    url.searchParams.set('redirectTo', redirectTo)
+    url.searchParams.set("redirectTo", redirectTo);
   }
-  
-  return url.toString()
+
+  return url.toString();
 }
 
 /**
@@ -53,50 +59,56 @@ export async function requestMagicLink(
   context: MagicLinkRequestContext,
   config: Partial<MagicLinkConfig> = {}
 ): Promise<MagicLinkRequestResult> {
-  const { email, redirectTo, ttlMinutes } = input
-  const { adapter, emailService, baseUrl, appName = 'Keyloom App' } = context
-  const finalConfig = { ...defaultMagicLinkConfig, ...config }
+  const { email, redirectTo, ttlMinutes } = input;
+  const { adapter, emailService, baseUrl, appName = "Keyloom App" } = context;
+  const finalConfig = { ...defaultMagicLinkConfig, ...config };
 
   try {
     // Validate email format
-    if (!email || typeof email !== 'string' || !email.includes('@')) {
+    if (!email || typeof email !== "string" || !email.includes("@")) {
       return {
         success: false,
-        error: 'Invalid email address',
-      }
+        error: "Invalid email address",
+      };
     }
 
-    const normalizedEmail = email.toLowerCase().trim()
-    const tokenTtl = ttlMinutes || finalConfig.defaultTtlMinutes
+    const normalizedEmail = email.toLowerCase().trim();
+    const tokenTtl = ttlMinutes || finalConfig.defaultTtlMinutes;
 
     // Check if user exists (optional - depends on autoCreateUser setting)
-    let user = await adapter.getUserByEmail(normalizedEmail)
-    
+    let user = await adapter.getUserByEmail(normalizedEmail);
+
     if (!user && !finalConfig.autoCreateUser) {
       return {
         success: false,
-        error: 'User not found',
-      }
+        error: "User not found",
+      };
     }
 
     // Generate verification token
-    const verificationToken = issueVerificationToken(normalizedEmail, tokenTtl)
-    
+    const verificationToken = issueVerificationToken(normalizedEmail, tokenTtl);
+
     // Store verification token in database
     await adapter.createVerificationToken({
       identifier: verificationToken.identifier,
       token: verificationToken.token,
       expiresAt: verificationToken.expiresAt,
-    })
+    });
 
     // Generate magic link URL
-    const magicLinkUrl = generateMagicLinkUrl({
+    const urlOptions: MagicLinkUrlOptions = {
       baseUrl,
       email: normalizedEmail,
       token: verificationToken.token,
-      redirectTo,
       verifyPath: finalConfig.verifyPath,
-    })
+    };
+
+    // Only add redirectTo if it's defined (exactOptionalPropertyTypes compliance)
+    if (redirectTo !== undefined) {
+      urlOptions.redirectTo = redirectTo;
+    }
+
+    const magicLinkUrl = generateMagicLinkUrl(urlOptions);
 
     // Prepare email data
     const emailData: MagicLinkEmailData = {
@@ -104,29 +116,33 @@ export async function requestMagicLink(
       magicLinkUrl,
       appName,
       expirationMinutes: tokenTtl,
-      userName: user?.name || undefined,
+    };
+
+    // Only add userName if it's defined (exactOptionalPropertyTypes compliance)
+    if (user?.name !== undefined && user.name !== null) {
+      emailData.userName = user.name;
     }
 
     // Send magic link email
-    const emailResult = await emailService.sendMagicLink(emailData)
-    
+    const emailResult = await emailService.sendMagicLink(emailData);
+
     if (!emailResult.success) {
       return {
         success: false,
-        error: emailResult.error || 'Failed to send magic link email',
-      }
+        error: emailResult.error || "Failed to send magic link email",
+      };
     }
 
     return {
       success: true,
       email: normalizedEmail,
-    }
+    };
   } catch (error) {
-    console.error('Magic link request failed:', error)
+    console.error("Magic link request failed:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }
 
@@ -138,86 +154,102 @@ export async function verifyMagicLink(
   context: MagicLinkVerifyContext,
   config: Partial<MagicLinkConfig> = {}
 ): Promise<MagicLinkVerifyResult> {
-  const { email, token, sessionTtlMinutes } = input
-  const { adapter, audit } = context
-  const finalConfig = { ...defaultMagicLinkConfig, ...config }
+  const { email, token, sessionTtlMinutes } = input;
+  const { adapter, audit } = context;
+  const finalConfig = { ...defaultMagicLinkConfig, ...config };
 
   try {
     // Validate input
     if (!email || !token) {
       return {
         success: false,
-        error: 'Email and token are required',
-      }
+        error: "Email and token are required",
+      };
     }
 
-    const normalizedEmail = email.toLowerCase().trim()
+    const normalizedEmail = email.toLowerCase().trim();
 
     // Verify and consume the token
-    const tokenUsed = await adapter.useVerificationToken(normalizedEmail, token)
-    
+    const tokenUsed = await adapter.useVerificationToken(
+      normalizedEmail,
+      token
+    );
+
     if (!tokenUsed) {
       return {
         success: false,
-        error: 'Invalid or expired magic link',
-      }
+        error: "Invalid or expired magic link",
+      };
     }
 
     // Get or create user
-    let user = await adapter.getUserByEmail(normalizedEmail)
-    
+    let user = await adapter.getUserByEmail(normalizedEmail);
+
     if (!user) {
       if (!finalConfig.autoCreateUser) {
         return {
           success: false,
-          error: 'User not found',
-        }
+          error: "User not found",
+        };
       }
 
       // Create new user
       user = await adapter.createUser({
         email: normalizedEmail,
         emailVerified: finalConfig.requireEmailVerification ? null : new Date(),
-      })
+      });
 
       if (audit) {
-        await audit('user.created', { userId: user.id, method: 'magic_link' })
+        await audit("user.created", { userId: user.id, method: "magic_link" });
       }
     } else {
       // Update email verification if not already verified
       if (!user.emailVerified && !finalConfig.requireEmailVerification) {
-        await adapter.updateUser(user.id, { emailVerified: new Date() })
+        await adapter.updateUser(user.id, { emailVerified: new Date() });
       }
     }
 
     // Create session
-    const sessionTtl = sessionTtlMinutes || finalConfig.defaultSessionTtlMinutes
-    const session = await adapter.createSession(newSession(user.id, sessionTtl))
+    const sessionTtl =
+      sessionTtlMinutes || finalConfig.defaultSessionTtlMinutes;
+    const session = await adapter.createSession(
+      newSession(user.id, sessionTtl)
+    );
 
     if (audit) {
-      await audit('user.login', { userId: user.id, method: 'magic_link' })
+      await audit("user.login", { userId: user.id, method: "magic_link" });
+    }
+
+    // Build user object with proper optional property handling
+    const userResult: any = {
+      id: user.id,
+      email: user.email,
+      emailVerified: user.emailVerified,
+    };
+
+    // Only add optional properties if they're not null/undefined
+    if (user.name !== null && user.name !== undefined) {
+      userResult.name = user.name;
+    }
+
+    if (user.image !== null && user.image !== undefined) {
+      userResult.image = user.image;
     }
 
     return {
       success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        image: user.image,
-        emailVerified: user.emailVerified,
-      },
+      user: userResult,
       session: {
         id: session.id,
         userId: session.userId,
         expiresAt: session.expiresAt,
       },
-    }
+    };
   } catch (error) {
-    console.error('Magic link verification failed:', error)
+    console.error("Magic link verification failed:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }
