@@ -1,157 +1,181 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useState, useContext } from "react"
-import clsx from "clsx"
-import { 
-  BuildingIcon, 
-  UsersIcon, 
-  SettingsIcon, 
+import * as React from "react";
+import { useState, useContext } from "react";
+import clsx from "clsx";
+import {
+  BuildingIcon,
+  UsersIcon,
+  SettingsIcon,
   CreditCardIcon,
   ShieldIcon,
   KeyIcon,
   MailIcon,
   MenuIcon,
-  XIcon
-} from "lucide-react"
-import { AuthUIProviderContext } from "../lib/auth-ui-provider"
-import { Button } from "../components/button"
-import { Card } from "../components/card"
-import type { OrganizationView as OrganizationViewType } from "../types"
+  XIcon,
+} from "lucide-react";
+import { AuthUIProviderContext } from "../lib/auth-ui-provider";
+import { Button } from "../components/button";
+import { Card } from "../components/card";
+import type { OrganizationView as OrganizationViewType } from "../types";
 
 export interface OrganizationViewProps {
   /** Current active view */
-  currentView?: OrganizationViewType
+  currentView?: OrganizationViewType;
   /** Organization data */
   organization?: {
-    id?: string
-    name?: string
-    slug?: string
-    description?: string
-    image?: string
-    memberCount?: number
-    role?: string
-    [key: string]: any
-  }
+    id?: string;
+    name?: string;
+    slug?: string;
+    description?: string;
+    image?: string;
+    memberCount?: number;
+    role?: string;
+    [key: string]: any;
+  };
   /** Custom CSS classes */
-  className?: string
+  className?: string;
   /** Layout variant */
-  variant?: 'sidebar' | 'tabs' | 'mobile'
+  variant?: "sidebar" | "tabs" | "mobile";
   /** Whether to show navigation */
-  showNavigation?: boolean
+  showNavigation?: boolean;
   /** Custom navigation items */
   navigationItems?: Array<{
-    key: OrganizationViewType
-    label: string
-    icon?: React.ComponentType<{ className?: string }>
-    href?: string
-    disabled?: boolean
-    requiresRole?: string[]
-  }>
+    key: OrganizationViewType;
+    label: string;
+    icon?: React.ComponentType<{ className?: string }>;
+    href?: string;
+    disabled?: boolean;
+    requiresRole?: string[];
+  }>;
   /** Main content */
-  children: React.ReactNode
+  children: React.ReactNode;
   /** Custom CSS classes for different parts */
   classNames?: {
-    container?: string
-    navigation?: string
-    sidebar?: string
-    tabs?: string
-    mobileMenu?: string
-    navItem?: string
-    content?: string
-  }
+    container?: string;
+    navigation?: string;
+    sidebar?: string;
+    tabs?: string;
+    mobileMenu?: string;
+    navItem?: string;
+    content?: string;
+  };
   /** Navigation item click handler */
-  onNavigate?: (view: OrganizationViewType) => void
+  onNavigate?: (view: OrganizationViewType) => void;
 }
 
 export function OrganizationView({
-  currentView = 'overview',
+  currentView = "overview",
   organization,
   className,
-  variant = 'sidebar',
+  variant = "sidebar",
   showNavigation = true,
   navigationItems,
   children,
   classNames,
   onNavigate,
 }: OrganizationViewProps) {
-  const context = useContext(AuthUIProviderContext)
-  const { localization, organization: orgContext } = context || {}
-  
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const context = useContext(AuthUIProviderContext);
+  const { localization, organization: orgContext } = context || {};
+
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Default navigation items
   const defaultNavigationItems = [
     {
-      key: 'overview' as OrganizationViewType,
+      key: "overview" as OrganizationViewType,
       label: localization?.OVERVIEW || "Overview",
       icon: BuildingIcon,
-      href: orgContext ? `${orgContext.basePath}/${orgContext.viewPaths.overview}` : "/organization",
+      href: orgContext
+        ? `${orgContext.basePath}/${orgContext.viewPaths.overview}`
+        : "/organization",
+      disabled: false,
     },
     {
-      key: 'members' as OrganizationViewType,
+      key: "members" as OrganizationViewType,
       label: localization?.MEMBERS || "Members",
       icon: UsersIcon,
-      href: orgContext ? `${orgContext.basePath}/${orgContext.viewPaths.members}` : "/organization/members",
+      href: orgContext
+        ? `${orgContext.basePath}/${orgContext.viewPaths.members}`
+        : "/organization/members",
+      disabled: false,
     },
     {
-      key: 'invitations' as OrganizationViewType,
+      key: "invitations" as OrganizationViewType,
       label: localization?.INVITATIONS || "Invitations",
       icon: MailIcon,
-      href: orgContext ? `${orgContext.basePath}/${orgContext.viewPaths.invitations}` : "/organization/invitations",
+      href: orgContext
+        ? `${orgContext.basePath}/${orgContext.viewPaths.invitations}`
+        : "/organization/invitations",
+      disabled: false,
     },
     {
-      key: 'settings' as OrganizationViewType,
+      key: "settings" as OrganizationViewType,
       label: localization?.SETTINGS || "Settings",
       icon: SettingsIcon,
-      href: orgContext ? `${orgContext.basePath}/${orgContext.viewPaths.settings}` : "/organization/settings",
-      requiresRole: ['admin', 'owner'],
+      href: orgContext
+        ? `${orgContext.basePath}/${orgContext.viewPaths.settings}`
+        : "/organization/settings",
+      requiresRole: ["admin", "owner"],
+      disabled: false,
     },
     {
-      key: 'billing' as OrganizationViewType,
+      key: "billing" as OrganizationViewType,
       label: localization?.BILLING || "Billing",
       icon: CreditCardIcon,
-      href: orgContext ? `${orgContext.basePath}/${orgContext.viewPaths.billing}` : "/organization/billing",
-      requiresRole: ['admin', 'owner'],
+      href: orgContext
+        ? `${orgContext.basePath}/${orgContext.viewPaths.billing}`
+        : "/organization/billing",
+      requiresRole: ["admin", "owner"],
+      disabled: false,
     },
     {
-      key: 'security' as OrganizationViewType,
+      key: "security" as OrganizationViewType,
       label: localization?.SECURITY || "Security",
       icon: ShieldIcon,
-      href: orgContext ? `${orgContext.basePath}/${orgContext.viewPaths.security}` : "/organization/security",
-      requiresRole: ['admin', 'owner'],
+      href: orgContext
+        ? `${orgContext.basePath}/${orgContext.viewPaths.security}`
+        : "/organization/security",
+      requiresRole: ["admin", "owner"],
+      disabled: false,
     },
     {
-      key: 'api-keys' as OrganizationViewType,
+      key: "api-keys" as OrganizationViewType,
       label: localization?.API_KEYS || "API Keys",
       icon: KeyIcon,
-      href: orgContext ? `${orgContext.basePath}/${orgContext.viewPaths["api-keys"]}` : "/organization/api-keys",
-      requiresRole: ['admin', 'owner'],
+      href: orgContext
+        ? `${orgContext.basePath}/${orgContext.viewPaths["api-keys"]}`
+        : "/organization/api-keys",
+      requiresRole: ["admin", "owner"],
+      disabled: false,
     },
-  ]
+  ];
 
-  const navItems = navigationItems || defaultNavigationItems
+  const navItems = navigationItems || defaultNavigationItems;
 
   // Filter navigation items based on user role
-  const filteredNavItems = navItems.filter(item => {
-    if (!item.requiresRole) return true
-    if (!organization?.role) return false
-    return item.requiresRole.includes(organization.role)
-  })
+  const filteredNavItems = navItems.filter((item) => {
+    if (!item.requiresRole) return true;
+    if (!organization?.role) return false;
+    return item.requiresRole.includes(organization.role);
+  });
 
   const handleNavigate = (view: OrganizationViewType, href?: string) => {
     if (onNavigate) {
-      onNavigate(view)
+      onNavigate(view);
     } else if (href) {
-      window.location.href = href
+      window.location.href = href;
     }
-    setIsMobileMenuOpen(false)
-  }
+    setIsMobileMenuOpen(false);
+  };
 
-  const renderNavigationItem = (item: typeof filteredNavItems[0], isMobile = false) => {
-    const Icon = item.icon
-    const isActive = currentView === item.key
-    
+  const renderNavigationItem = (
+    item: (typeof filteredNavItems)[0],
+    isMobile = false
+  ) => {
+    const Icon = item.icon;
+    const isActive = currentView === item.key;
+
     return (
       <button
         key={item.key}
@@ -159,8 +183,8 @@ export function OrganizationView({
         disabled={item.disabled}
         className={clsx(
           "flex items-center gap-3 w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors",
-          isActive 
-            ? "bg-primary text-primary-foreground" 
+          isActive
+            ? "bg-primary text-primary-foreground"
             : "text-muted-foreground hover:text-foreground hover:bg-muted",
           item.disabled && "opacity-50 cursor-not-allowed",
           isMobile && "text-base py-3",
@@ -170,22 +194,24 @@ export function OrganizationView({
         {Icon && <Icon className={clsx("h-4 w-4", isMobile && "h-5 w-5")} />}
         {item.label}
       </button>
-    )
-  }
+    );
+  };
 
   const renderSidebarNavigation = () => (
-    <nav className={clsx(
-      "w-64 space-y-1 p-4",
-      classNames?.sidebar,
-      classNames?.navigation
-    )}>
+    <nav
+      className={clsx(
+        "w-64 space-y-1 p-4",
+        classNames?.sidebar,
+        classNames?.navigation
+      )}
+    >
       {/* Organization header */}
       {organization && (
         <div className="mb-6 p-3 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-3">
             {organization.image ? (
-              <img 
-                src={organization.image} 
+              <img
+                src={organization.image}
                 alt={organization.name}
                 className="h-8 w-8 rounded"
               />
@@ -195,7 +221,9 @@ export function OrganizationView({
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">{organization.name}</p>
+              <p className="font-medium text-sm truncate">
+                {organization.name}
+              </p>
               <p className="text-xs text-muted-foreground">
                 {organization.memberCount} {localization?.MEMBERS || "members"}
               </p>
@@ -203,22 +231,24 @@ export function OrganizationView({
           </div>
         </div>
       )}
-      
-      {filteredNavItems.map(item => renderNavigationItem(item))}
+
+      {filteredNavItems.map((item) => renderNavigationItem(item))}
     </nav>
-  )
+  );
 
   const renderTabsNavigation = () => (
-    <nav className={clsx(
-      "border-b border-border",
-      classNames?.tabs,
-      classNames?.navigation
-    )}>
+    <nav
+      className={clsx(
+        "border-b border-border",
+        classNames?.tabs,
+        classNames?.navigation
+      )}
+    >
       <div className="flex space-x-8 px-4">
-        {filteredNavItems.map(item => {
-          const Icon = item.icon
-          const isActive = currentView === item.key
-          
+        {filteredNavItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = currentView === item.key;
+
           return (
             <button
               key={item.key}
@@ -236,11 +266,11 @@ export function OrganizationView({
               {Icon && <Icon className="h-4 w-4" />}
               {item.label}
             </button>
-          )
+          );
         })}
       </div>
     </nav>
-  )
+  );
 
   const renderMobileNavigation = () => (
     <>
@@ -248,8 +278,8 @@ export function OrganizationView({
       <div className="flex items-center justify-between p-4 border-b lg:hidden">
         <div className="flex items-center gap-3">
           {organization?.image ? (
-            <img 
-              src={organization.image} 
+            <img
+              src={organization.image}
               alt={organization.name}
               className="h-6 w-6 rounded"
             />
@@ -257,7 +287,11 @@ export function OrganizationView({
             <BuildingIcon className="h-6 w-6 text-muted-foreground" />
           )}
           <h1 className="text-lg font-semibold">
-            {organization?.name || filteredNavItems.find(item => item.key === currentView)?.label || localization?.ORGANIZATION || "Organization"}
+            {organization?.name ||
+              filteredNavItems.find((item) => item.key === currentView)
+                ?.label ||
+              localization?.ORGANIZATION ||
+              "Organization"}
           </h1>
         </div>
         <Button
@@ -272,16 +306,21 @@ export function OrganizationView({
       {/* Mobile menu overlay */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setIsMobileMenuOpen(false)} />
-          <div className={clsx(
-            "fixed left-0 top-0 h-full w-80 bg-background border-r shadow-lg",
-            classNames?.mobileMenu
-          )}>
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          <div
+            className={clsx(
+              "fixed left-0 top-0 h-full w-80 bg-background border-r shadow-lg",
+              classNames?.mobileMenu
+            )}
+          >
             <div className="flex items-center justify-between p-4 border-b">
               <div className="flex items-center gap-3">
                 {organization?.image ? (
-                  <img 
-                    src={organization.image} 
+                  <img
+                    src={organization.image}
                     alt={organization.name}
                     className="h-6 w-6 rounded"
                   />
@@ -289,7 +328,9 @@ export function OrganizationView({
                   <BuildingIcon className="h-6 w-6 text-muted-foreground" />
                 )}
                 <h2 className="text-lg font-semibold">
-                  {organization?.name || localization?.ORGANIZATION || "Organization"}
+                  {organization?.name ||
+                    localization?.ORGANIZATION ||
+                    "Organization"}
                 </h2>
               </div>
               <Button
@@ -301,43 +342,53 @@ export function OrganizationView({
               </Button>
             </div>
             <nav className="p-4 space-y-2">
-              {filteredNavItems.map(item => renderNavigationItem(item, true))}
+              {filteredNavItems.map((item) => renderNavigationItem(item, true))}
             </nav>
           </div>
         </div>
       )}
     </>
-  )
+  );
 
-  if (variant === 'tabs') {
+  if (variant === "tabs") {
     return (
-      <div className={clsx("min-h-screen bg-background", classNames?.container, className)}>
+      <div
+        className={clsx(
+          "min-h-screen bg-background",
+          classNames?.container,
+          className
+        )}
+      >
         {showNavigation && renderTabsNavigation()}
-        <main className={clsx("p-4", classNames?.content)}>
-          {children}
-        </main>
+        <main className={clsx("p-4", classNames?.content)}>{children}</main>
       </div>
-    )
+    );
   }
 
-  if (variant === 'mobile') {
+  if (variant === "mobile") {
     return (
-      <div className={clsx("min-h-screen bg-background", classNames?.container, className)}>
+      <div
+        className={clsx(
+          "min-h-screen bg-background",
+          classNames?.container,
+          className
+        )}
+      >
         {showNavigation && renderMobileNavigation()}
-        <main className={clsx("p-4", classNames?.content)}>
-          {children}
-        </main>
+        <main className={clsx("p-4", classNames?.content)}>{children}</main>
       </div>
-    )
+    );
   }
 
   // Sidebar variant (default)
   return (
-    <div className={clsx(
-      "min-h-screen bg-background flex",
-      classNames?.container,
-      className
-    )}>
+    <div
+      className={clsx(
+        "min-h-screen bg-background flex",
+        classNames?.container,
+        className
+      )}
+    >
       {showNavigation && (
         <aside className="border-r border-border bg-muted/10">
           {renderSidebarNavigation()}
@@ -347,5 +398,5 @@ export function OrganizationView({
         {children}
       </main>
     </div>
-  )
+  );
 }

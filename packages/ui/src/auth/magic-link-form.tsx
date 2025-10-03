@@ -122,8 +122,8 @@ export function MagicLinkForm({
   };
 
   const handleBackToSignIn = () => {
-    if (navigate && viewPaths?.auth?.signIn) {
-      navigate(viewPaths.auth.signIn);
+    if (navigate && viewPaths?.auth?.["sign-in"]) {
+      navigate(viewPaths.auth["sign-in"]);
     } else if (typeof window !== "undefined") {
       window.location.href = `${basePath || ""}/sign-in`;
     }

@@ -2,7 +2,15 @@ import * as React from "react";
 import clsx from "clsx";
 
 export type BadgeProps = React.HTMLAttributes<HTMLSpanElement> & {
-  variant?: "default" | "primary" | "success" | "warning" | "danger";
+  variant?:
+    | "default"
+    | "primary"
+    | "success"
+    | "warning"
+    | "danger"
+    | "secondary"
+    | "destructive"
+    | "outline";
 };
 export function Badge({
   className,
@@ -15,6 +23,10 @@ export function Badge({
     success: "bg-success text-white",
     warning: "bg-warning text-black",
     danger: "bg-danger text-white",
+    secondary: "bg-secondary text-secondary-foreground",
+    destructive: "bg-destructive text-destructive-foreground",
+    outline:
+      "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
   }[variant];
   return (
     <span

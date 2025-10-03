@@ -21,7 +21,14 @@ export function useAuthenticate(options?: AuthenticateOptions) {
     replace,
   } = useContext(AuthUIProviderContext);
 
-  const { data, isPending, error, refetch } = useSession();
+  const sessionResult = useSession();
+  const { data, isPending, error } = sessionResult;
+  const refetch =
+    "refetch" in sessionResult
+      ? sessionResult.refetch
+      : "refresh" in sessionResult
+      ? sessionResult.refresh
+      : undefined;
 
   useEffect(() => {
     if (!enabled || isPending || data) return;

@@ -3,18 +3,18 @@
  * Provides comprehensive validation functions with error handling and browser compatibility.
  */
 
-import type { FieldValidation } from '../types'
+import type { FieldValidation } from "../types";
 
 /**
  * Validation result interface
  */
 export interface ValidationResult {
   /** Whether the validation passed */
-  valid: boolean
+  valid: boolean;
   /** Error message if validation failed */
-  error?: string
+  error?: string;
   /** Additional validation metadata */
-  metadata?: Record<string, any>
+  metadata?: Record<string, any>;
 }
 
 /**
@@ -22,13 +22,13 @@ export interface ValidationResult {
  */
 export interface EmailValidationOptions {
   /** Whether to allow plus addressing (e.g., user+tag@domain.com) */
-  allowPlusAddressing?: boolean
+  allowPlusAddressing?: boolean;
   /** Whether to allow international domain names */
-  allowInternationalDomains?: boolean
+  allowInternationalDomains?: boolean;
   /** Custom domain whitelist */
-  allowedDomains?: string[]
+  allowedDomains?: string[];
   /** Custom domain blacklist */
-  blockedDomains?: string[]
+  blockedDomains?: string[];
 }
 
 /**
@@ -36,21 +36,21 @@ export interface EmailValidationOptions {
  */
 export interface PasswordRequirements {
   /** Minimum password length */
-  minLength?: number
+  minLength?: number;
   /** Maximum password length */
-  maxLength?: number
+  maxLength?: number;
   /** Require at least one uppercase letter */
-  requireUppercase?: boolean
+  requireUppercase?: boolean;
   /** Require at least one lowercase letter */
-  requireLowercase?: boolean
+  requireLowercase?: boolean;
   /** Require at least one number */
-  requireNumbers?: boolean
+  requireNumbers?: boolean;
   /** Require at least one special character */
-  requireSymbols?: boolean
+  requireSymbols?: boolean;
   /** Custom forbidden patterns */
-  forbiddenPatterns?: RegExp[]
+  forbiddenPatterns?: RegExp[];
   /** Common passwords to reject */
-  forbiddenPasswords?: string[]
+  forbiddenPasswords?: string[];
 }
 
 /**
@@ -68,17 +68,17 @@ const DEFAULT_PASSWORD_REQUIREMENTS: Required<PasswordRequirements> = {
     /123456|654321|abcdef|qwerty/i, // Common sequences
   ],
   forbiddenPasswords: [
-    'password',
-    'password123',
-    '123456789',
-    'qwerty123',
-    'admin',
-    'letmein',
-    'welcome',
-    'monkey',
-    'dragon',
+    "password",
+    "password123",
+    "123456789",
+    "qwerty123",
+    "admin",
+    "letmein",
+    "welcome",
+    "monkey",
+    "dragon",
   ],
-}
+};
 
 /**
  * Validates an email address with comprehensive checks.
@@ -97,92 +97,95 @@ const DEFAULT_PASSWORD_REQUIREMENTS: Required<PasswordRequirements> = {
  */
 export function validateEmail(
   email: string,
-  options: EmailValidationOptions = {},
+  options: EmailValidationOptions = {}
 ): ValidationResult {
   try {
     // Basic presence check
-    if (!email || typeof email !== 'string') {
-      return { valid: false, error: 'email is required' }
+    if (!email || typeof email !== "string") {
+      return { valid: false, error: "email is required" };
     }
 
-    const trimmedEmail = email.trim()
+    const trimmedEmail = email.trim();
 
     // Length check
     if (trimmedEmail.length === 0) {
-      return { valid: false, error: 'email is required' }
+      return { valid: false, error: "email is required" };
     }
 
     if (trimmedEmail.length > 254) {
-      return { valid: false, error: 'email is too long' }
+      return { valid: false, error: "email is too long" };
     }
 
     // Basic format validation using HTML5 email pattern
     const emailPattern =
-      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
     if (!emailPattern.test(trimmedEmail)) {
-      return { valid: false, error: 'invalid email format' }
+      return { valid: false, error: "invalid email format" };
     }
 
-    const parts = trimmedEmail.split('@')
+    const parts = trimmedEmail.split("@");
     if (parts.length !== 2) {
-      return { valid: false, error: 'invalid email format' }
+      return { valid: false, error: "invalid email format" };
     }
-    const [localPart, domain] = parts as [string, string]
+    const [localPart, domain] = parts as [string, string];
 
     // Local part validation
     if (localPart.length > 64) {
-      return { valid: false, error: 'email local part too long' }
+      return { valid: false, error: "email local part too long" };
     }
 
     // Check for consecutive dots in local part
-    if (localPart.includes('..')) {
-      return { valid: false, error: 'consecutive dots not allowed in email' }
+    if (localPart.includes("..")) {
+      return { valid: false, error: "consecutive dots not allowed in email" };
     }
 
     // Plus addressing check (default: allow)
-    if (options.allowPlusAddressing === false && localPart.includes('+')) {
-      return { valid: false, error: 'plus addressing not allowed' }
+    if (options.allowPlusAddressing === false && localPart.includes("+")) {
+      return { valid: false, error: "plus addressing not allowed" };
     }
 
     // Domain validation
     if (domain.length > 253) {
-      return { valid: false, error: 'email domain too long' }
+      return { valid: false, error: "email domain too long" };
     }
 
     // Check for valid TLD (at least one dot in domain)
-    if (!domain.includes('.')) {
-      return { valid: false, error: 'domain must have a valid TLD' }
+    if (!domain.includes(".")) {
+      return { valid: false, error: "domain must have a valid TLD" };
     }
 
     // International domain check (default: allow)
-    if (options.allowInternationalDomains === false && !/^[\x00-\x7F]*$/.test(domain)) {
-      return { valid: false, error: 'international domains not allowed' }
+    if (
+      options.allowInternationalDomains === false &&
+      !/^[\x00-\x7F]*$/.test(domain)
+    ) {
+      return { valid: false, error: "international domains not allowed" };
     }
 
     // Domain whitelist check
     if (options.allowedDomains && options.allowedDomains.length > 0) {
-      const domainLower = domain.toLowerCase()
+      const domainLower = domain.toLowerCase();
       const isAllowed = options.allowedDomains.some(
         (allowed) =>
           domainLower === allowed.toLowerCase() ||
-          domainLower.endsWith(`.${allowed.toLowerCase()}`),
-      )
+          domainLower.endsWith(`.${allowed.toLowerCase()}`)
+      );
       if (!isAllowed) {
-        return { valid: false, error: 'email domain not allowed' }
+        return { valid: false, error: "email domain not allowed" };
       }
     }
 
     // Domain blacklist check
     if (options.blockedDomains && options.blockedDomains.length > 0) {
-      const domainLower = domain.toLowerCase()
+      const domainLower = domain.toLowerCase();
       const isBlocked = options.blockedDomains.some(
         (blocked) =>
           domainLower === blocked.toLowerCase() ||
-          domainLower.endsWith(`.${blocked.toLowerCase()}`),
-      )
+          domainLower.endsWith(`.${blocked.toLowerCase()}`)
+      );
       if (isBlocked) {
-        return { valid: false, error: 'email domain not allowed' }
+        return { valid: false, error: "email domain not allowed" };
       }
     }
 
@@ -191,14 +194,16 @@ export function validateEmail(
       metadata: {
         localPart,
         domain,
-        hasPlusAddressing: localPart.includes('+'),
+        hasPlusAddressing: localPart.includes("+"),
       },
-    }
+    };
   } catch (error) {
     return {
       valid: false,
-      error: `email validation failed: ${error instanceof Error ? error.message : 'unknown error'}`,
-    }
+      error: `email validation failed: ${
+        error instanceof Error ? error.message : "unknown error"
+      }`,
+    };
   }
 }
 
@@ -220,88 +225,93 @@ export function validateEmail(
  */
 export function validatePassword(
   password: string,
-  requirements: Partial<PasswordRequirements> = {},
+  requirements: Partial<PasswordRequirements> = {}
 ): ValidationResult {
   try {
     // Basic presence check
-    if (!password || typeof password !== 'string') {
-      return { valid: false, error: 'password is required' }
+    if (!password || typeof password !== "string") {
+      return { valid: false, error: "password is required" };
     }
 
-    const reqs = { ...DEFAULT_PASSWORD_REQUIREMENTS, ...requirements }
-    const errors: string[] = []
-    let strengthScore = 0
+    const reqs = { ...DEFAULT_PASSWORD_REQUIREMENTS, ...requirements };
+    const errors: string[] = [];
+    let strengthScore = 0;
 
     // Length validation
     if (password.length < reqs.minLength) {
-      errors.push(`password must be at least ${reqs.minLength} characters`)
+      errors.push(`password must be at least ${reqs.minLength} characters`);
     } else {
-      strengthScore += Math.min(25, (password.length / reqs.minLength) * 25)
+      strengthScore += Math.min(25, (password.length / reqs.minLength) * 25);
     }
 
     if (password.length > reqs.maxLength) {
-      errors.push(`password must be no more than ${reqs.maxLength} characters`)
+      errors.push(`password must be no more than ${reqs.maxLength} characters`);
     }
 
     // Character type requirements
     if (reqs.requireUppercase && !/[A-Z]/.test(password)) {
-      errors.push('password must contain at least one uppercase letter')
+      errors.push("password must contain at least one uppercase letter");
     } else if (reqs.requireUppercase) {
-      strengthScore += 15
+      strengthScore += 15;
     }
 
     if (reqs.requireLowercase && !/[a-z]/.test(password)) {
-      errors.push('password must contain at least one lowercase letter')
+      errors.push("password must contain at least one lowercase letter");
     } else if (reqs.requireLowercase) {
-      strengthScore += 15
+      strengthScore += 15;
     }
 
     if (reqs.requireNumbers && !/\d/.test(password)) {
-      errors.push('password must contain at least one number')
+      errors.push("password must contain at least one number");
     } else if (reqs.requireNumbers) {
-      strengthScore += 15
+      strengthScore += 15;
     }
 
-    if (reqs.requireSymbols && !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
-      errors.push('password must contain at least one special character')
+    if (
+      reqs.requireSymbols &&
+      !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)
+    ) {
+      errors.push("password must contain at least one special character");
     } else if (reqs.requireSymbols) {
-      strengthScore += 15
+      strengthScore += 15;
     }
 
     // Forbidden patterns check
     for (const pattern of reqs.forbiddenPatterns) {
       if (pattern.test(password)) {
-        errors.push('password contains forbidden pattern')
-        strengthScore -= 20
-        break
+        errors.push("password contains forbidden pattern");
+        strengthScore -= 20;
+        break;
       }
     }
 
     // Common passwords check
-    const passwordLower = password.toLowerCase()
+    const passwordLower = password.toLowerCase();
     if (
-      reqs.forbiddenPasswords.some((forbidden) => passwordLower.includes(forbidden.toLowerCase()))
+      reqs.forbiddenPasswords.some((forbidden) =>
+        passwordLower.includes(forbidden.toLowerCase())
+      )
     ) {
-      errors.push('password is too common')
-      strengthScore -= 30
+      errors.push("password is too common");
+      strengthScore -= 30;
     }
 
     // Additional strength factors
-    const uniqueChars = new Set(password).size
-    strengthScore += Math.min(15, (uniqueChars / password.length) * 15)
+    const uniqueChars = new Set(password).size;
+    strengthScore += Math.min(15, (uniqueChars / password.length) * 15);
 
     // Ensure score is within bounds
-    strengthScore = Math.max(0, Math.min(100, strengthScore))
+    strengthScore = Math.max(0, Math.min(100, strengthScore));
 
     if (errors.length > 0) {
       return {
         valid: false,
-        error: errors[0], // Return first error
+        error: errors[0] || "Password validation failed", // Return first error with fallback
         metadata: {
           allErrors: errors,
           strength: strengthScore,
         },
-      }
+      };
     }
 
     return {
@@ -310,12 +320,14 @@ export function validatePassword(
         strength: strengthScore,
         strengthLevel: getPasswordStrengthLevel(strengthScore),
       },
-    }
+    };
   } catch (error) {
     return {
       valid: false,
-      error: `password validation failed: ${error instanceof Error ? error.message : 'unknown error'}`,
-    }
+      error: `password validation failed: ${
+        error instanceof Error ? error.message : "unknown error"
+      }`,
+    };
   }
 }
 
@@ -326,11 +338,11 @@ export function validatePassword(
  * @returns Strength level description
  */
 function getPasswordStrengthLevel(score: number): string {
-  if (score >= 80) return 'very strong'
-  if (score >= 60) return 'strong'
-  if (score >= 40) return 'moderate'
-  if (score >= 20) return 'weak'
-  return 'very weak'
+  if (score >= 80) return "very strong";
+  if (score >= 60) return "strong";
+  if (score >= 40) return "moderate";
+  if (score >= 20) return "weak";
+  return "very weak";
 }
 
 /**
@@ -352,14 +364,14 @@ function getPasswordStrengthLevel(score: number): string {
 export function validateUsername(
   username: string,
   options: {
-    minLength?: number
-    maxLength?: number
-    allowUnderscore?: boolean
-    allowDash?: boolean
-    allowNumbers?: boolean
-    requireLetters?: boolean
-    forbiddenUsernames?: string[]
-  } = {},
+    minLength?: number;
+    maxLength?: number;
+    allowUnderscore?: boolean;
+    allowDash?: boolean;
+    allowNumbers?: boolean;
+    requireLetters?: boolean;
+    forbiddenUsernames?: string[];
+  } = {}
 ): ValidationResult {
   try {
     const opts = {
@@ -369,58 +381,82 @@ export function validateUsername(
       allowDash: true,
       allowNumbers: true,
       requireLetters: true,
-      forbiddenUsernames: ['admin', 'root', 'user', 'test', 'null', 'undefined'],
+      forbiddenUsernames: [
+        "admin",
+        "root",
+        "user",
+        "test",
+        "null",
+        "undefined",
+      ],
       ...options,
-    }
+    };
 
     // Basic presence check
-    if (!username || typeof username !== 'string') {
-      return { valid: false, error: 'username is required' }
+    if (!username || typeof username !== "string") {
+      return { valid: false, error: "username is required" };
     }
 
-    const trimmedUsername = username.trim()
+    const trimmedUsername = username.trim();
 
     // Length validation
     if (trimmedUsername.length < opts.minLength) {
-      return { valid: false, error: `username must be at least ${opts.minLength} characters` }
+      return {
+        valid: false,
+        error: `username must be at least ${opts.minLength} characters`,
+      };
     }
 
     if (trimmedUsername.length > opts.maxLength) {
-      return { valid: false, error: `username must be no more than ${opts.maxLength} characters` }
+      return {
+        valid: false,
+        error: `username must be no more than ${opts.maxLength} characters`,
+      };
     }
 
     // Character validation
-    let allowedPattern = 'a-zA-Z'
-    if (opts.allowNumbers) allowedPattern += '0-9'
-    if (opts.allowUnderscore) allowedPattern += '_'
-    if (opts.allowDash) allowedPattern += '-'
+    let allowedPattern = "a-zA-Z";
+    if (opts.allowNumbers) allowedPattern += "0-9";
+    if (opts.allowUnderscore) allowedPattern += "_";
+    if (opts.allowDash) allowedPattern += "-";
 
-    const regex = new RegExp(`^[${allowedPattern}]+$`)
+    const regex = new RegExp(`^[${allowedPattern}]+$`);
     if (!regex.test(trimmedUsername)) {
-      return { valid: false, error: 'username contains invalid characters' }
+      return { valid: false, error: "username contains invalid characters" };
     }
 
     // Must start and end with alphanumeric
-    if (!/^[a-zA-Z0-9].*[a-zA-Z0-9]$/.test(trimmedUsername) && trimmedUsername.length > 1) {
-      return { valid: false, error: 'username must start and end with letter or number' }
+    if (
+      !/^[a-zA-Z0-9].*[a-zA-Z0-9]$/.test(trimmedUsername) &&
+      trimmedUsername.length > 1
+    ) {
+      return {
+        valid: false,
+        error: "username must start and end with letter or number",
+      };
     }
 
     // Require letters check
     if (opts.requireLetters && !/[a-zA-Z]/.test(trimmedUsername)) {
-      return { valid: false, error: 'username must contain at least one letter' }
+      return {
+        valid: false,
+        error: "username must contain at least one letter",
+      };
     }
 
     // Forbidden usernames check
     if (opts.forbiddenUsernames.includes(trimmedUsername.toLowerCase())) {
-      return { valid: false, error: 'username is not available' }
+      return { valid: false, error: "username is not available" };
     }
 
-    return { valid: true }
+    return { valid: true };
   } catch (error) {
     return {
       valid: false,
-      error: `username validation failed: ${error instanceof Error ? error.message : 'unknown error'}`,
-    }
+      error: `username validation failed: ${
+        error instanceof Error ? error.message : "unknown error"
+      }`,
+    };
   }
 }
 
@@ -444,50 +480,52 @@ export function validateUsername(
 export function validateField(
   value: string,
   validation: FieldValidation,
-  fieldName: string = 'field',
+  fieldName: string = "field"
 ): ValidationResult {
   try {
     // Basic presence check
-    if (!value || typeof value !== 'string') {
-      return { valid: false, error: `${fieldName} is required` }
+    if (!value || typeof value !== "string") {
+      return { valid: false, error: `${fieldName} is required` };
     }
 
-    const trimmedValue = value.trim()
+    const trimmedValue = value.trim();
 
     // Length validation
     if (validation.minLength && trimmedValue.length < validation.minLength) {
       return {
         valid: false,
         error: `${fieldName} must be at least ${validation.minLength} characters`,
-      }
+      };
     }
 
     if (validation.maxLength && trimmedValue.length > validation.maxLength) {
       return {
         valid: false,
         error: `${fieldName} must be no more than ${validation.maxLength} characters`,
-      }
+      };
     }
 
     // Pattern validation
     if (validation.pattern && !validation.pattern.test(trimmedValue)) {
-      return { valid: false, error: `${fieldName} format is invalid` }
+      return { valid: false, error: `${fieldName} format is invalid` };
     }
 
     // Custom validation
     if (validation.customValidator) {
-      const customError = validation.customValidator(trimmedValue)
+      const customError = validation.customValidator(trimmedValue);
       if (customError) {
-        return { valid: false, error: customError }
+        return { valid: false, error: customError };
       }
     }
 
-    return { valid: true }
+    return { valid: true };
   } catch (error) {
     return {
       valid: false,
-      error: `${fieldName} validation failed: ${error instanceof Error ? error.message : 'unknown error'}`,
-    }
+      error: `${fieldName} validation failed: ${
+        error instanceof Error ? error.message : "unknown error"
+      }`,
+    };
   }
 }
 
@@ -513,18 +551,18 @@ export function validateFields(
   fields: Record<
     string,
     {
-      value: string
-      validation: FieldValidation
+      value: string;
+      validation: FieldValidation;
     }
-  >,
+  >
 ): Record<string, ValidationResult> {
-  const results: Record<string, ValidationResult> = {}
+  const results: Record<string, ValidationResult> = {};
 
   for (const [fieldName, { value, validation }] of Object.entries(fields)) {
-    results[fieldName] = validateField(value, validation, fieldName)
+    results[fieldName] = validateField(value, validation, fieldName);
   }
 
-  return results
+  return results;
 }
 
 /**
@@ -541,8 +579,10 @@ export function validateFields(
  * }
  * ```
  */
-export function areAllValid(results: Record<string, ValidationResult>): boolean {
-  return Object.values(results).every((result) => result.valid)
+export function areAllValid(
+  results: Record<string, ValidationResult>
+): boolean {
+  return Object.values(results).every((result) => result.valid);
 }
 
 /**
@@ -560,13 +600,15 @@ export function areAllValid(results: Record<string, ValidationResult>): boolean 
  * }
  * ```
  */
-export function getFirstError(results: Record<string, ValidationResult>): string | null {
+export function getFirstError(
+  results: Record<string, ValidationResult>
+): string | null {
   for (const result of Object.values(results)) {
     if (!result.valid && result.error) {
-      return result.error
+      return result.error;
     }
   }
-  return null
+  return null;
 }
 
 /**
@@ -582,8 +624,10 @@ export function getFirstError(results: Record<string, ValidationResult>): string
  * errors.forEach(error => console.error(error))
  * ```
  */
-export function getAllErrors(results: Record<string, ValidationResult>): string[] {
+export function getAllErrors(
+  results: Record<string, ValidationResult>
+): string[] {
   return Object.values(results)
     .filter((result) => !result.valid && result.error)
-    .map((result) => result.error!)
+    .map((result) => result.error!);
 }

@@ -1,140 +1,165 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useState, useContext } from "react"
-import clsx from "clsx"
-import { 
-  UserIcon, 
-  ShieldIcon, 
-  KeyIcon, 
+import * as React from "react";
+import { useState, useContext } from "react";
+import clsx from "clsx";
+import {
+  UserIcon,
+  ShieldIcon,
+  KeyIcon,
   CreditCardIcon,
   BuildingIcon,
   SettingsIcon,
   DownloadIcon,
   TrashIcon,
   MenuIcon,
-  XIcon
-} from "lucide-react"
-import { AuthUIProviderContext } from "../lib/auth-ui-provider"
-import { Button } from "../components/button"
-import { Card } from "../components/card"
-import type { AccountView as AccountViewType } from "../types"
+  XIcon,
+} from "lucide-react";
+import { AuthUIProviderContext } from "../lib/auth-ui-provider";
+import { Button } from "../components/button";
+import { Card } from "../components/card";
+import type { AccountView as AccountViewType } from "../types";
 
 export interface AccountViewProps {
   /** Current active view */
-  currentView?: AccountViewType
+  currentView?: AccountViewType;
   /** Custom CSS classes */
-  className?: string
+  className?: string;
   /** Layout variant */
-  variant?: 'sidebar' | 'tabs' | 'mobile'
+  variant?: "sidebar" | "tabs" | "mobile";
   /** Whether to show navigation */
-  showNavigation?: boolean
+  showNavigation?: boolean;
   /** Custom navigation items */
   navigationItems?: Array<{
-    key: AccountViewType
-    label: string
-    icon?: React.ComponentType<{ className?: string }>
-    href?: string
-    disabled?: boolean
-  }>
+    key: AccountViewType;
+    label: string;
+    icon?: React.ComponentType<{ className?: string }>;
+    href?: string;
+    disabled?: boolean;
+  }>;
   /** Main content */
-  children: React.ReactNode
+  children: React.ReactNode;
   /** Custom CSS classes for different parts */
   classNames?: {
-    container?: string
-    navigation?: string
-    sidebar?: string
-    tabs?: string
-    mobileMenu?: string
-    navItem?: string
-    content?: string
-  }
+    container?: string;
+    navigation?: string;
+    sidebar?: string;
+    tabs?: string;
+    mobileMenu?: string;
+    navItem?: string;
+    content?: string;
+  };
   /** Navigation item click handler */
-  onNavigate?: (view: AccountViewType) => void
+  onNavigate?: (view: AccountViewType) => void;
 }
 
 export function AccountView({
-  currentView = 'profile',
+  currentView = "profile",
   className,
-  variant = 'sidebar',
+  variant = "sidebar",
   showNavigation = true,
   navigationItems,
   children,
   classNames,
   onNavigate,
 }: AccountViewProps) {
-  const context = useContext(AuthUIProviderContext)
-  const { localization, account } = context || {}
-  
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const context = useContext(AuthUIProviderContext);
+  const { localization, account } = context || {};
+
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Default navigation items
   const defaultNavigationItems = [
     {
-      key: 'profile' as AccountViewType,
+      key: "profile" as AccountViewType,
       label: localization?.PROFILE || "Profile",
       icon: UserIcon,
-      href: account ? `${account.basePath}/${account.viewPaths.profile}` : "/account/profile",
+      href: account
+        ? `${account.basePath}/${account.viewPaths.profile}`
+        : "/account/profile",
+      disabled: false,
     },
     {
-      key: 'security' as AccountViewType,
+      key: "security" as AccountViewType,
       label: localization?.SECURITY || "Security",
       icon: ShieldIcon,
-      href: account ? `${account.basePath}/${account.viewPaths.security}` : "/account/security",
+      href: account
+        ? `${account.basePath}/${account.viewPaths.security}`
+        : "/account/security",
+      disabled: false,
     },
     {
-      key: 'api-keys' as AccountViewType,
+      key: "api-keys" as AccountViewType,
       label: localization?.API_KEYS || "API Keys",
       icon: KeyIcon,
-      href: account ? `${account.basePath}/${account.viewPaths["api-keys"]}` : "/account/api-keys",
+      href: account
+        ? `${account.basePath}/${account.viewPaths["api-keys"]}`
+        : "/account/api-keys",
+      disabled: false,
     },
     {
-      key: 'organizations' as AccountViewType,
+      key: "organizations" as AccountViewType,
       label: localization?.ORGANIZATIONS || "Organizations",
       icon: BuildingIcon,
-      href: account ? `${account.basePath}/${account.viewPaths.organizations}` : "/account/organizations",
+      href: account
+        ? `${account.basePath}/${account.viewPaths.organizations}`
+        : "/account/organizations",
+      disabled: false,
     },
     {
-      key: 'billing' as AccountViewType,
+      key: "billing" as AccountViewType,
       label: localization?.BILLING || "Billing",
       icon: CreditCardIcon,
-      href: account ? `${account.basePath}/${account.viewPaths.billing}` : "/account/billing",
+      href: account
+        ? `${account.basePath}/${account.viewPaths.billing}`
+        : "/account/billing",
+      disabled: false,
     },
     {
-      key: 'preferences' as AccountViewType,
+      key: "preferences" as AccountViewType,
       label: localization?.PREFERENCES || "Preferences",
       icon: SettingsIcon,
-      href: account ? `${account.basePath}/${account.viewPaths.preferences}` : "/account/preferences",
+      href: account
+        ? `${account.basePath}/${account.viewPaths.preferences}`
+        : "/account/preferences",
+      disabled: false,
     },
     {
-      key: 'data-export' as AccountViewType,
+      key: "data-export" as AccountViewType,
       label: localization?.DATA_EXPORT || "Data Export",
       icon: DownloadIcon,
-      href: account ? `${account.basePath}/${account.viewPaths["data-export"]}` : "/account/data-export",
+      href: account
+        ? `${account.basePath}/${account.viewPaths["data-export"]}`
+        : "/account/data-export",
     },
     {
-      key: 'delete-account' as AccountViewType,
+      key: "delete-account" as AccountViewType,
       label: localization?.DELETE_ACCOUNT || "Delete Account",
       icon: TrashIcon,
-      href: account ? `${account.basePath}/${account.viewPaths["delete-account"]}` : "/account/delete",
+      href: account
+        ? `${account.basePath}/${account.viewPaths["delete-account"]}`
+        : "/account/delete",
     },
-  ]
+  ];
 
-  const navItems = navigationItems || defaultNavigationItems
+  const navItems = navigationItems || defaultNavigationItems;
 
   const handleNavigate = (view: AccountViewType, href?: string) => {
     if (onNavigate) {
-      onNavigate(view)
+      onNavigate(view);
     } else if (href) {
-      window.location.href = href
+      window.location.href = href;
     }
-    setIsMobileMenuOpen(false)
-  }
+    setIsMobileMenuOpen(false);
+  };
 
-  const renderNavigationItem = (item: typeof navItems[0], isMobile = false) => {
-    const Icon = item.icon
-    const isActive = currentView === item.key
-    
+  const renderNavigationItem = (
+    item: (typeof navItems)[0],
+    isMobile = false
+  ) => {
+    const Icon = item.icon;
+    const isActive = currentView === item.key;
+
     return (
       <button
         key={item.key}
@@ -142,8 +167,8 @@ export function AccountView({
         disabled={item.disabled}
         className={clsx(
           "flex items-center gap-3 w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors",
-          isActive 
-            ? "bg-primary text-primary-foreground" 
+          isActive
+            ? "bg-primary text-primary-foreground"
             : "text-muted-foreground hover:text-foreground hover:bg-muted",
           item.disabled && "opacity-50 cursor-not-allowed",
           isMobile && "text-base py-3",
@@ -153,30 +178,34 @@ export function AccountView({
         {Icon && <Icon className={clsx("h-4 w-4", isMobile && "h-5 w-5")} />}
         {item.label}
       </button>
-    )
-  }
+    );
+  };
 
   const renderSidebarNavigation = () => (
-    <nav className={clsx(
-      "w-64 space-y-1 p-4",
-      classNames?.sidebar,
-      classNames?.navigation
-    )}>
-      {navItems.map(item => renderNavigationItem(item))}
+    <nav
+      className={clsx(
+        "w-64 space-y-1 p-4",
+        classNames?.sidebar,
+        classNames?.navigation
+      )}
+    >
+      {navItems.map((item) => renderNavigationItem(item))}
     </nav>
-  )
+  );
 
   const renderTabsNavigation = () => (
-    <nav className={clsx(
-      "border-b border-border",
-      classNames?.tabs,
-      classNames?.navigation
-    )}>
+    <nav
+      className={clsx(
+        "border-b border-border",
+        classNames?.tabs,
+        classNames?.navigation
+      )}
+    >
       <div className="flex space-x-8 px-4">
-        {navItems.map(item => {
-          const Icon = item.icon
-          const isActive = currentView === item.key
-          
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = currentView === item.key;
+
           return (
             <button
               key={item.key}
@@ -194,18 +223,20 @@ export function AccountView({
               {Icon && <Icon className="h-4 w-4" />}
               {item.label}
             </button>
-          )
+          );
         })}
       </div>
     </nav>
-  )
+  );
 
   const renderMobileNavigation = () => (
     <>
       {/* Mobile menu button */}
       <div className="flex items-center justify-between p-4 border-b lg:hidden">
         <h1 className="text-lg font-semibold">
-          {navItems.find(item => item.key === currentView)?.label || localization?.ACCOUNT || "Account"}
+          {navItems.find((item) => item.key === currentView)?.label ||
+            localization?.ACCOUNT ||
+            "Account"}
         </h1>
         <Button
           variant="ghost"
@@ -219,11 +250,16 @@ export function AccountView({
       {/* Mobile menu overlay */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setIsMobileMenuOpen(false)} />
-          <div className={clsx(
-            "fixed left-0 top-0 h-full w-80 bg-background border-r shadow-lg",
-            classNames?.mobileMenu
-          )}>
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          <div
+            className={clsx(
+              "fixed left-0 top-0 h-full w-80 bg-background border-r shadow-lg",
+              classNames?.mobileMenu
+            )}
+          >
             <div className="flex items-center justify-between p-4 border-b">
               <h2 className="text-lg font-semibold">
                 {localization?.ACCOUNT || "Account"}
@@ -237,43 +273,53 @@ export function AccountView({
               </Button>
             </div>
             <nav className="p-4 space-y-2">
-              {navItems.map(item => renderNavigationItem(item, true))}
+              {navItems.map((item) => renderNavigationItem(item, true))}
             </nav>
           </div>
         </div>
       )}
     </>
-  )
+  );
 
-  if (variant === 'tabs') {
+  if (variant === "tabs") {
     return (
-      <div className={clsx("min-h-screen bg-background", classNames?.container, className)}>
+      <div
+        className={clsx(
+          "min-h-screen bg-background",
+          classNames?.container,
+          className
+        )}
+      >
         {showNavigation && renderTabsNavigation()}
-        <main className={clsx("p-4", classNames?.content)}>
-          {children}
-        </main>
+        <main className={clsx("p-4", classNames?.content)}>{children}</main>
       </div>
-    )
+    );
   }
 
-  if (variant === 'mobile') {
+  if (variant === "mobile") {
     return (
-      <div className={clsx("min-h-screen bg-background", classNames?.container, className)}>
+      <div
+        className={clsx(
+          "min-h-screen bg-background",
+          classNames?.container,
+          className
+        )}
+      >
         {showNavigation && renderMobileNavigation()}
-        <main className={clsx("p-4", classNames?.content)}>
-          {children}
-        </main>
+        <main className={clsx("p-4", classNames?.content)}>{children}</main>
       </div>
-    )
+    );
   }
 
   // Sidebar variant (default)
   return (
-    <div className={clsx(
-      "min-h-screen bg-background flex",
-      classNames?.container,
-      className
-    )}>
+    <div
+      className={clsx(
+        "min-h-screen bg-background flex",
+        classNames?.container,
+        className
+      )}
+    >
       {showNavigation && (
         <aside className="border-r border-border bg-muted/10">
           {renderSidebarNavigation()}
@@ -283,5 +329,5 @@ export function AccountView({
         {children}
       </main>
     </div>
-  )
+  );
 }

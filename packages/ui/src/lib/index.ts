@@ -47,7 +47,7 @@ export {
   generateGravatarInfo,
   checkGravatarExists,
   preloadGravatar,
-} from './gravatar-utils'
+} from "./gravatar-utils";
 
 // Re-export all image processing utilities
 export type {
@@ -55,7 +55,7 @@ export type {
   ResizeMode,
   CropOptions,
   ProcessedImage,
-} from './image-utils'
+} from "./image-utils";
 
 export {
   loadImageFromFile,
@@ -66,14 +66,14 @@ export {
   validateImageFile,
   getImageDimensions,
   processImageFile,
-} from './image-utils'
+} from "./image-utils";
 
 // Re-export all view path utilities
 export type {
   AuthViewPaths,
   AccountViewPaths,
   OrganizationViewPaths,
-} from './view-paths'
+} from "./view-paths";
 
 export {
   DEFAULT_AUTH_PATHS,
@@ -89,14 +89,14 @@ export {
   isValidViewPath,
   toKebabCase,
   getAvailableViewPaths,
-} from './view-paths'
+} from "./view-paths";
 
 // Re-export all validation utilities
 export type {
   ValidationResult,
   EmailValidationOptions,
   PasswordRequirements,
-} from './validation-utils'
+} from "./validation-utils";
 
 export {
   validateEmail,
@@ -107,10 +107,10 @@ export {
   areAllValid,
   getFirstError,
   getAllErrors,
-} from './validation-utils'
+} from "./validation-utils";
 
 // Re-export existing utilities for backward compatibility
-export { cn } from './utils'
+export { cn } from "./utils";
 
 /**
  * Utility function to safely access nested object properties.
@@ -127,21 +127,25 @@ export { cn } from './utils'
  * const age = get(user, 'profile.age', 0) // 0
  * ```
  */
-export function get<T = any>(obj: Record<string, any>, path: string, defaultValue?: T): T {
+export function get<T = any>(
+  obj: Record<string, any>,
+  path: string,
+  defaultValue?: T
+): T {
   try {
-    const keys = path.split('.')
-    let result = obj
+    const keys = path.split(".");
+    let result = obj;
 
     for (const key of keys) {
-      if (result == null || typeof result !== 'object') {
-        return defaultValue as T
+      if (result == null || typeof result !== "object") {
+        return defaultValue as T;
       }
-      result = result[key]
+      result = result[key];
     }
 
-    return result !== undefined ? (result as T) : (defaultValue as T)
+    return result !== undefined ? (result as T) : (defaultValue as T);
   } catch {
-    return defaultValue as T
+    return defaultValue as T;
   }
 }
 
@@ -163,24 +167,32 @@ export function get<T = any>(obj: Record<string, any>, path: string, defaultValu
 export function set<T = any>(
   obj: Record<string, any>,
   path: string,
-  value: T,
+  value: T
 ): Record<string, any> {
   try {
-    const keys = path.split('.')
-    let current = obj
+    const keys = path.split(".");
+    let current = obj;
 
     for (let i = 0; i < keys.length - 1; i++) {
-      const key = keys[i]
-      if (!(key in current) || typeof current[key] !== 'object' || current[key] === null) {
-        current[key] = {}
+      const key = keys[i];
+      if (!key) continue;
+      if (
+        !(key in current) ||
+        typeof current[key] !== "object" ||
+        current[key] === null
+      ) {
+        current[key] = {};
       }
-      current = current[key]
+      current = current[key];
     }
 
-    current[keys[keys.length - 1]] = value
-    return obj
+    const lastKey = keys[keys.length - 1];
+    if (lastKey) {
+      current[lastKey] = value;
+    }
+    return obj;
   } catch {
-    return obj
+    return obj;
   }
 }
 
@@ -202,14 +214,14 @@ export function set<T = any>(
  */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
-  delay: number,
+  delay: number
 ): (...args: Parameters<T>) => void {
-  let timeoutId: ReturnType<typeof setTimeout>
+  let timeoutId: ReturnType<typeof setTimeout>;
 
   return (...args: Parameters<T>) => {
-    clearTimeout(timeoutId)
-    timeoutId = setTimeout(() => func(...args), delay)
-  }
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
 }
 
 /**
@@ -230,17 +242,17 @@ export function debounce<T extends (...args: any[]) => any>(
  */
 export function throttle<T extends (...args: any[]) => any>(
   func: T,
-  delay: number,
+  delay: number
 ): (...args: Parameters<T>) => void {
-  let lastCall = 0
+  let lastCall = 0;
 
   return (...args: Parameters<T>) => {
-    const now = Date.now()
+    const now = Date.now();
     if (now - lastCall >= delay) {
-      lastCall = now
-      func(...args)
+      lastCall = now;
+      func(...args);
     }
-  }
+  };
 }
 
 /**
@@ -258,15 +270,15 @@ export function throttle<T extends (...args: any[]) => any>(
  * ```
  */
 export function formatFileSize(bytes: number, decimals: number = 1): string {
-  if (bytes === 0) return '0 Bytes'
+  if (bytes === 0) return "0 Bytes";
 
-  const k = 1024
-  const dm = decimals < 0 ? 0 : decimals
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
 
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-  return `${parseFloat((bytes / k ** i).toFixed(dm))} ${sizes[i]}`
+  return `${parseFloat((bytes / k ** i).toFixed(dm))} ${sizes[i]}`;
 }
 
 /**
@@ -284,13 +296,13 @@ export function formatFileSize(bytes: number, decimals: number = 1): string {
  */
 export function randomString(
   length: number = 8,
-  charset: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
+  charset: string = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 ): string {
-  let result = ''
+  let result = "";
   for (let i = 0; i < length; i++) {
-    result += charset.charAt(Math.floor(Math.random() * charset.length))
+    result += charset.charAt(Math.floor(Math.random() * charset.length));
   }
-  return result
+  return result;
 }
 
 /**
@@ -312,23 +324,25 @@ export function randomString(
 export async function copyToClipboard(text: string): Promise<void> {
   try {
     if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text)
+      await navigator.clipboard.writeText(text);
     } else {
       // Fallback for older browsers
-      const textArea = document.createElement('textarea')
-      textArea.value = text
-      textArea.style.position = 'fixed'
-      textArea.style.left = '-999999px'
-      textArea.style.top = '-999999px'
-      document.body.appendChild(textArea)
-      textArea.focus()
-      textArea.select()
-      document.execCommand('copy')
-      textArea.remove()
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand("copy");
+      textArea.remove();
     }
   } catch (error) {
     throw new Error(
-      `Failed to copy to clipboard: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    )
+      `Failed to copy to clipboard: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
   }
 }
